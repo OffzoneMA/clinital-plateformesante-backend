@@ -66,7 +66,7 @@ public class AuthController {
 	public ResponseEntity<?> registerUser( @RequestBody SignupRequest signUpRequest) throws Exception {
 		
 		userServices.RegistreNewUser(signUpRequest);
-		return ResponseEntity.ok(new ApiResponse(true, "User registered successfully et un lien de verification a ete enovyé par mail "));
+		return ResponseEntity.ok(new ApiResponse(true, "User registered successfully"));
 			
 	}
 }
