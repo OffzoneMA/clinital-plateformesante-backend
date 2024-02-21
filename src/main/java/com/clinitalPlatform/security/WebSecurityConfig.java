@@ -37,8 +37,8 @@ public class WebSecurityConfig {
     }
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    	String[] permitAllRoutes = {"/api/auth/**"};
-    	 String[] authenticatedRoutes = {"",};
+    	String[] permitAllRoutes = {"/api/auth/**","/api/users/activity/**"};
+    	 String[] authenticatedRoutes = {""};
     	return http.csrf().disable()
     			.cors().and() 
                 .authorizeHttpRequests()
