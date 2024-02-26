@@ -3,7 +3,6 @@ package com.clinitalPlatform.controllers;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,7 +32,7 @@ public class ActivityController {
     @Autowired
 	ClinitalModelMapper mapper;
 
-// Get All Users activities : 
+
     @GetMapping("/allactivity")
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     Iterable<ActivityDTO> activity() {
@@ -41,7 +40,6 @@ public class ActivityController {
                 .collect(Collectors.toList());
     }
 
-// Get Activity By User Id
     @GetMapping("/getActivityByIdUser/{id}")
 	@ResponseBody
 	Iterable<ActivityDTO> findById(@PathVariable(value = "id") Long userID) throws Exception {
@@ -50,7 +48,7 @@ public class ActivityController {
                 .collect(Collectors.toList());
 
 	}
-// Get activity of the current User
+
     @GetMapping("/myactivity")
 	@ResponseBody
 	Iterable<ActivityDTO> findMyactivity(@PathVariable(value = "id") Long userID) throws Exception {

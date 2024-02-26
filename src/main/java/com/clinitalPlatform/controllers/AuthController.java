@@ -1,6 +1,6 @@
 package com.clinitalPlatform.controllers;
 
-import java.util.Date;
+import java.util.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -13,8 +13,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.clinitalPlatform.util.GlobalVariables;
-import com.clinitalPlatform.services.ActivityServices;
 import com.clinitalPlatform.models.User;
 import com.clinitalPlatform.payload.request.LoginRequest;
 import com.clinitalPlatform.payload.request.SignupRequest;
@@ -22,6 +24,7 @@ import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.payload.response.JwtResponse;
 import com.clinitalPlatform.security.config.UserInfoUserDetails;
 import com.clinitalPlatform.security.jwt.JwtService;
+import com.clinitalPlatform.services.ActivityServices;
 import com.clinitalPlatform.services.AutService;
 import com.clinitalPlatform.services.UserService;
 
@@ -34,7 +37,10 @@ public class AuthController {
 	AuthenticationManager authenticationManager;
 	
 	@Autowired
-	  private JwtService jwtService;
+	private JwtService jwtService;
+	
+	@Autowired
+	ActivityServices  activityServices;
 	
 	@Autowired
 	UserService userServices;
@@ -45,8 +51,8 @@ public class AuthController {
 	@Autowired
     private GlobalVariables globalVariables;
 	
-	@Autowired
-	ActivityServices activityServices;
+	
+	private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 	
 	@PostMapping("/signin")
     public ResponseEntity<?> authenticateAndGetToken( @RequestBody LoginRequest loginRequest) {
@@ -59,11 +65,11 @@ public class AuthController {
         if(userDetails.isEnabled()==false){
 			return ResponseEntity.ok("Your Account is Blocked please try to Contact Clinital Admin");
 		}
+        	
         if (user.getEmailVerified() == true) {
-
         	autService.updateLastLoginDate(userDetails.getId());
         	activityServices.createActivity(new Date(), "Login", "Authentication reussi", user);
-
+        	LOGGER.info("Authentication reussi");
 			 return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getId(), userDetails.getEmail(),
 			 		userDetails.getTelephone(), userDetails.getRole()));
 			
@@ -80,4 +86,5 @@ public class AuthController {
 		return ResponseEntity.ok(new ApiResponse(true, "User registered successfully"));
 			
 	}
+	
 }
