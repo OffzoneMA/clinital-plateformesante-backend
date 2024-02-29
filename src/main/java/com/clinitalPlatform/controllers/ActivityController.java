@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.clinitalPlatform.dto.ActivityDTO;
 import com.clinitalPlatform.repository.ActivityRespository;
-import com.clinitalPlatform.security.config.UserInfoUserDetails;
+import com.clinitalPlatform.security.services.UserDetailsImpl;
 import com.clinitalPlatform.services.interfaces.historyservices;
 import com.clinitalPlatform.util.ClinitalModelMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -53,7 +53,7 @@ public class ActivityController {
 	@ResponseBody
 	Iterable<ActivityDTO> findMyactivity(@PathVariable(value = "id") Long userID) throws Exception {
 
-    	UserInfoUserDetails user = (UserInfoUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    	UserDetailsImpl user = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return activityRepo.findActivityByIdUsers(user.getId()).stream().map(activity -> mapper.map(activity, ActivityDTO.class))
                 .collect(Collectors.toList());
 

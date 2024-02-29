@@ -8,18 +8,17 @@ import org.springframework.stereotype.Component;
 
 import com.clinitalPlatform.models.User;
 import com.clinitalPlatform.repository.UserRepository;
-import com.clinitalPlatform.security.config.UserInfoUserDetails;
 
 import java.util.Optional;
 
 @Component
-public class UserInfoUserDetailsService implements UserDetailsService {
+public class UserDetailsServiceImpl implements UserDetailsService {
     @Autowired
     private UserRepository repository;
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Optional<User> userInfo = repository.findUserByEmail(username);
-        return userInfo.map(UserInfoUserDetails::new)
+        return userInfo.map(UserDetailsImpl::new)
                 .orElseThrow(() -> new UsernameNotFoundException("user not found " + username));
     }
 }

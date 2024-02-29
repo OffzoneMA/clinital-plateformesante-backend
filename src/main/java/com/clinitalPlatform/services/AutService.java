@@ -18,9 +18,6 @@ public class AutService {
     @Autowired
     private UserRepository userRepository;
     
-    @Autowired
-	PasswordEncoder encoder;
-
 	public void updateLastLoginDate(Long userId) {
 		User user = userRepository.findById(userId)
 				.orElseThrow(() -> new UsernameNotFoundException("User Not Found with id: " + userId));

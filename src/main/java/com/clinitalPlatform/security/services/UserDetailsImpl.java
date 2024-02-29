@@ -1,4 +1,4 @@
-package com.clinitalPlatform.security.config;
+package com.clinitalPlatform.security.services;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Objects;
 
 
-public class UserInfoUserDetails implements UserDetails {
+public class UserDetailsImpl implements UserDetails {
 	private Long id;
 
 	private String email;
@@ -29,7 +29,7 @@ public class UserInfoUserDetails implements UserDetails {
 
 	private Boolean isEnabled;
 	
-    public UserInfoUserDetails(User user) {
+    public UserDetailsImpl(User user) {
         this.id = user.getId();
         this.email = user.getEmail();
         this.telephone = user.getTelephone();
@@ -38,9 +38,9 @@ public class UserInfoUserDetails implements UserDetails {
         this.isEnabled = user.isEnabled();
     }
 	
-	public static UserInfoUserDetails build(User user) {
+	public static UserDetailsImpl build(User user) {
 
-		return new UserInfoUserDetails(user);
+		return new UserDetailsImpl(user);
 				
 	}
 	
@@ -93,7 +93,7 @@ public class UserInfoUserDetails implements UserDetails {
 			return true;
 		if (o == null || getClass() != o.getClass())
 			return false;
-		UserInfoUserDetails user = (UserInfoUserDetails) o;
+		UserDetailsImpl user = (UserDetailsImpl) o;
 		return Objects.equals(id, user.id);
 	}
 

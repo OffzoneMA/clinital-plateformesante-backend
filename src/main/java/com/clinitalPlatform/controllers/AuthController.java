@@ -22,8 +22,8 @@ import com.clinitalPlatform.payload.request.LoginRequest;
 import com.clinitalPlatform.payload.request.SignupRequest;
 import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.payload.response.JwtResponse;
-import com.clinitalPlatform.security.config.UserInfoUserDetails;
 import com.clinitalPlatform.security.jwt.JwtService;
+import com.clinitalPlatform.security.services.UserDetailsImpl;
 import com.clinitalPlatform.services.ActivityServices;
 import com.clinitalPlatform.services.AutService;
 import com.clinitalPlatform.services.UserService;
@@ -58,7 +58,7 @@ public class AuthController {
     public ResponseEntity<?> authenticateAndGetToken( @RequestBody LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        UserInfoUserDetails userDetails=(UserInfoUserDetails) authentication.getPrincipal();
+        UserDetailsImpl userDetails=(UserDetailsImpl) authentication.getPrincipal();
         String jwt=jwtService.generateToken(loginRequest.getEmail());
         User user = userServices.findById(userDetails.getId());
         globalVariables.setConnectedUser(user);
