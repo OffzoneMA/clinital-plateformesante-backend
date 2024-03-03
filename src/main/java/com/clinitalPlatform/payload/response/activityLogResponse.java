@@ -1,10 +1,9 @@
 package com.clinitalPlatform.payload.response;
 
-import java.util.Date;
-
-import com.clinitalPlatform.dto.UserDTO;
-
+import com.clinital.dto.UserDTO;
 import lombok.Data;
+
+import java.util.Date;
 
 @Data
 public class activityLogResponse {

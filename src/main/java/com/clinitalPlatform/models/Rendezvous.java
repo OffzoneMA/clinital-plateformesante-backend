@@ -4,6 +4,8 @@ import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -17,6 +19,8 @@ import lombok.Data;
 @Entity
 @Table(name = "rendezvous")
 @Data
+@Setter
+@Getter
 public class Rendezvous {
 
 	@Id
@@ -87,5 +91,7 @@ public class Rendezvous {
 		this.LinkVideoCall=LinkVideoCall;
 		this.cabinet=cabinet;
 	}
+
+
 
 }
