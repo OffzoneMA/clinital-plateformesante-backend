@@ -8,20 +8,24 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.clinitalPlatform.util.GlobalVariables;
+import com.clinitalPlatform.exception.BadRequestException;
 import com.clinitalPlatform.models.User;
 import com.clinitalPlatform.payload.request.LoginRequest;
 import com.clinitalPlatform.payload.request.SignupRequest;
 import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.payload.response.JwtResponse;
+import com.clinitalPlatform.security.jwt.ConfirmationToken;
 import com.clinitalPlatform.security.jwt.JwtService;
 import com.clinitalPlatform.security.services.UserDetailsImpl;
 import com.clinitalPlatform.services.ActivityServices;
@@ -85,6 +89,31 @@ public class AuthController {
 		userServices.RegistreNewUser(signUpRequest);
 		return ResponseEntity.ok(new ApiResponse(true, "User registered successfully"));
 			
+	}
+	
+	@GetMapping("confirmaccount")
+	public ResponseEntity<?> getMethodName(@RequestParam String token) {
+
+		ConfirmationToken confirmationToken = autService.findByConfirmationToken(token);
+
+		if (confirmationToken == null) {
+			throw new BadRequestException("Invalid token");
+		}
+
+		User user = confirmationToken.getUser();
+		Calendar calendar = Calendar.getInstance();
+
+		if ((confirmationToken.getExpiryDate().getTime() - calendar.getTime().getTime()) <= 0) {
+			return ResponseEntity.badRequest()
+					.body("Lien expiré, generez un nouveau lien http://localhost:8080/signin");
+		}
+
+		user.setEmailVerified(true);
+		user.setEnabled(true);
+		autService.save(user);
+		LOGGER.info("Account verified successfully :"+user.getEmail());
+		return ResponseEntity.ok("this Account verified successfully!");
+		
 	}
 	
 }
