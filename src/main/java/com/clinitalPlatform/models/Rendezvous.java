@@ -4,6 +4,8 @@ import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import javax.validation.constraints.NotBlank;
+
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -70,7 +72,7 @@ public class Rendezvous {
 		super();
 	}
 
-	public Rendezvous(DayOfWeek day, String motif, LocalDateTime start, LocalDateTime end,
+	public Rendezvous(DayOfWeek day, @NotBlank String motif, LocalDateTime start, LocalDateTime end,
 			LocalDateTime canceledAt, RdvStatutEnum statut,MotifConsultation motifconsul, Medecin medecin,Boolean iSnewPatient, Patient patient,ModeConsultation modeConsultation,String Commantaire,String LinkVideoCall,Cabinet cabinet) {
 		super();
 		this.day = day;

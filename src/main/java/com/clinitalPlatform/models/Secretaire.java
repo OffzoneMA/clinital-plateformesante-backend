@@ -4,6 +4,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -35,7 +40,8 @@ public class Secretaire{
 		super();
 	}
 
-	public Secretaire(  String email,  String telephone, String password, String nom, String prenom, Date dateNaissance, String adresse,User user) 
+	public Secretaire(@NotBlank @Size(max = 50) @Email String email, @NotNull String telephone,
+			@NotBlank @Size(max = 120) String password, String nom, String prenom, Date dateNaissance, String adresse,User user) 
 			 {
 		super();
 		this.nom = nom;
