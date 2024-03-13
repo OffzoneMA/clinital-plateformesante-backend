@@ -36,6 +36,7 @@ public class ActivityController {
     @GetMapping("/allactivity")
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     Iterable<ActivityDTO> activity() {
+    	
         return activityRepo.findAll().stream().map(activity -> mapper.map(activity, ActivityDTO.class))
                 .collect(Collectors.toList());
     }
@@ -43,7 +44,7 @@ public class ActivityController {
     @GetMapping("/getActivityByIdUser/{id}")
 	@ResponseBody
 	Iterable<ActivityDTO> findById(@PathVariable(value = "id") Long userID) throws Exception {
-		//return mapper.map(historyservices.getactivityByIdUser(userID), activityLogResponse.class);
+    	
         return activityRepo.findActivityByIdUsers(userID).stream().map(activity -> mapper.map(activity, ActivityDTO.class))
                 .collect(Collectors.toList());
 

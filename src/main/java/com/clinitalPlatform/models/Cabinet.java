@@ -2,6 +2,8 @@ package com.clinitalPlatform.models;
 
 import java.util.List;
 
+import javax.validation.constraints.NotNull;
+
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
@@ -24,6 +26,7 @@ public class Cabinet {
 	private String phoneNumber;
 
 	@ManyToOne(cascade = CascadeType.ALL)
+	@JsonIgnore
 	private Ville ville;
 
 	@OneToMany(cascade = CascadeType.ALL,mappedBy = "cabinet",fetch = FetchType.LAZY)
@@ -41,6 +44,7 @@ public class Cabinet {
 	private List<Secretaire> secretaire;
 
 	@ManyToOne(cascade = CascadeType.ALL)
+	@JsonIgnore
 	private Medecin creator;
 
 	private Boolean state;
@@ -48,7 +52,7 @@ public class Cabinet {
 		super();
 	}
 
-	public Cabinet( String nom,  String adresse,  String code_post,String phoneNumber,  Ville ville,Medecin creator,Boolean state
+	public Cabinet(@NotNull String nom, @NotNull String adresse, @NotNull String code_post,String phoneNumber, @NotNull Ville ville,Medecin creator,Boolean state
 			) {
 		super();
 		this.nom = nom;

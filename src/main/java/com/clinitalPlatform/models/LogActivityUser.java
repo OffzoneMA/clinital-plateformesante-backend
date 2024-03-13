@@ -2,6 +2,8 @@ package com.clinitalPlatform.models;
 
 import java.util.Date;
 
+import javax.validation.constraints.NotBlank;
+
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -21,7 +23,7 @@ public class LogActivityUser {
 
     
     
-    public LogActivityUser( Date TimeActivity, String typeActivity, String description, User user) {
+    public LogActivityUser(@NotBlank Date TimeActivity, String typeActivity, String description, User user) {
         super();
         this.TimeActivity = TimeActivity;
         this.typeActivity = typeActivity;

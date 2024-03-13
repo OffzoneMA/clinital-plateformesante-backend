@@ -2,6 +2,11 @@ package com.clinitalPlatform.models;
 
 import java.util.Date;
 
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
 import org.hibernate.annotations.CreationTimestamp;
 
 import com.clinitalPlatform.enums.ProviderEnum;
@@ -55,16 +60,16 @@ public class User {
 	public User() {
 		super();
 	}
-	public User( String email, String telephone,
-			 String password) {
+	public User(@NotBlank @Size(max = 50) @Email String email, @NotNull String telephone,
+			@NotBlank @Size(max = 120) String password) {
 		super();
 		this.email = email;
 		this.telephone = telephone;
 		this.password = password;
 	}
 
-	public User( String email,  String telephone,
-			 String password, ERole role) {
+	public User(@NotBlank @Size(max = 50) @Email String email, @NotNull String telephone,
+			@NotBlank @Size(max = 120) String password, ERole role) {
 		super();
 		this.email = email;
 		this.telephone = telephone;
