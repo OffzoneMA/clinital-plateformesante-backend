@@ -1,5 +1,6 @@
 package com.clinitalPlatform.controllers;
 
+import com.clinitalPlatform.models.Demande;
 import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.models.MedecinSchedule;
 import com.clinitalPlatform.payload.request.MedecinScheduleRequest;
@@ -16,9 +17,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("api/medecinSchedule/")
@@ -34,38 +38,33 @@ public class MedecinScheduleController {
     private ClinitalModelMapper modelMapper;
 
     @Autowired
-    private MedecinServiceImpl medserice;
+    private MedecinServiceImpl medservice;
 
-    @Autowired
-    private MedecinScheduleRepository medsrepo;
 
     @Autowired
     GlobalVariables globalVariables;
     // Creat a new Schedule : %OK%
     @PostMapping("create")
-    @PostAuthorize("hasAuthority('ROLE_MEDECIN')")
-    public MedecinSchedule create(@RequestBody MedecinScheduleRequest
+    //@PreAuthorize("hasAuthority('ROLE_MEDECIN')")
+    public ResponseEntity<?> create(@Validated @RequestBody MedecinScheduleRequest
                                             medecinScheduleRequest) throws Exception{
 
         MedecinSchedule medecinSchedule = medecinScheduleService.create(medecinScheduleRequest,globalVariables.getConnectedUser().getId());
-        return medecinSchedule;
+        return ResponseEntity.ok(modelMapper.map(medecinSchedule,MedecinSchedule.class));
     }
 
 
     @PostMapping("update/{id}")
     @ResponseBody
     @JsonSerialize(using = LocalDateTimeSerializer.class)
-    //@PostAuthorize("hasAuthority('MEDECIN')")
-    public ResponseEntity<?> update(@RequestBody MedecinScheduleRequest medecinScheduleRequest, @PathVariable Long id) throws Exception {
-
+    public ResponseEntity<?> update(@Validated @RequestBody MedecinScheduleRequest medecinScheduleRequest, @PathVariable Long id) throws Exception {
         try {
-            Optional<MedecinSchedule> isSchedule=medsrepo.findById(id);
-            if(isSchedule.isPresent()){
+            MedecinSchedule isSchedule=medshrep.getById(id);
+            if(isSchedule!=null){
                 return ResponseEntity.ok(medecinScheduleService.update(medecinScheduleRequest,id));
             }else{
                 return ResponseEntity.accepted().body(new ApiError(HttpStatus.BAD_REQUEST, "update failed", null));
             }
-
         } catch (Exception e) {
             // TODO: handle exception
             throw new Exception(e);
@@ -76,7 +75,7 @@ public class MedecinScheduleController {
     }
 
     @DeleteMapping("delete/{id}")
-    public ResponseEntity<?> deleteById(@PathVariable Long id) throws Exception{
+    public ResponseEntity<?> deleteById( @PathVariable Long id) throws Exception{
 
         medecinScheduleService.deleteById(id);
 
@@ -86,29 +85,24 @@ public class MedecinScheduleController {
 
     @GetMapping("shedulebyMed")
     @ResponseBody
-    public ResponseEntity<?> GetAllSchedulesByMedId() throws Exception{
-        // UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Medecin med = medserice.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+    public ResponseEntity<?> getAllSchedulesByMedId() throws Exception{
+        Medecin med = medservice.getMedecinByUserId(globalVariables.getConnectedUser().getId());
         try {
-
-            return ResponseEntity.ok(modelMapper.map(medecinScheduleService.GetAllSchedulesByMedId(med.getId()),MedecinSchedule.class));
+            return ResponseEntity.ok(medecinScheduleService.getAllSchedulesByMedId(med.getId())
+                    .stream().map(sched -> modelMapper.map(sched, MedecinSchedule.class))
+                    .collect(Collectors.toList()));
         } catch (Exception e) {
             throw new Exception(e);
         }
-
-
-
     }
     @GetMapping("shedulebyMedandIdconsult/{id}")
     @ResponseBody
-    public ResponseEntity<?> GetAllSchedulesByMedIdandIdConsult(@PathVariable long id) throws Exception{
-        // UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Medecin med = medserice.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+    public ResponseEntity<?> getAllSchedulesByMedIdandIdConsult(@PathVariable long id) throws Exception{
+        Medecin med = medservice.getMedecinByUserId(globalVariables.getConnectedUser().getId());
         try {
-
-            return ResponseEntity.ok(modelMapper.map(medecinScheduleService.GetAllSchedulesByMedIdandIdCOnsult(med.getId(),id), MedecinSchedule.class));
-
-
+            return ResponseEntity.ok(medecinScheduleService.getAllSchedulesByMedIdandIdConsult(med.getId(),id)
+                    .stream().map(sched -> modelMapper.map(sched, MedecinSchedule.class))
+                    .collect(Collectors.toList()));
         } catch (Exception e) {
             throw new Exception(e);
         }
@@ -118,7 +112,7 @@ public class MedecinScheduleController {
     @ResponseBody
     public ResponseEntity<?> GetAllSchedulesByid(@PathVariable long id) throws Exception{
         // UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Medecin med = medserice.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+        Medecin med = medservice.getMedecinByUserId(globalVariables.getConnectedUser().getId());
         try {
             Optional<MedecinSchedule> Sched = medshrep.findById(id);
             if(Sched.isPresent()){

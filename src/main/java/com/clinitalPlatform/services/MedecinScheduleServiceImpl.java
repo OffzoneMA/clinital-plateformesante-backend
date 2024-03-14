@@ -1,13 +1,11 @@
 package com.clinitalPlatform.services;
 
 import com.clinitalPlatform.exception.BadRequestException;
-import com.clinitalPlatform.models.Cabinet;
-import com.clinitalPlatform.models.Medecin;
-import com.clinitalPlatform.models.MedecinSchedule;
-import com.clinitalPlatform.models.User;
+import com.clinitalPlatform.models.*;
 import com.clinitalPlatform.payload.request.MedecinScheduleRequest;
 import com.clinitalPlatform.repository.CabinetRepository;
 import com.clinitalPlatform.repository.MedecinScheduleRepository;
+import com.clinitalPlatform.repository.ModeConsultationRepository;
 import com.clinitalPlatform.services.interfaces.MedecinScheduleService;
 import com.clinitalPlatform.util.ClinitalModelMapper;
 import com.clinitalPlatform.util.GlobalVariables;
@@ -34,8 +32,8 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
     @Autowired
     private MedecinScheduleRepository medecinScheduleRepository;
 
-//    @Autowired
-//    private ModeConsultRespository moderepo;
+   @Autowired
+    private ModeConsultationRepository moderepo;
 
     @Autowired
     private ClinitalModelMapper modelMapper;
@@ -62,9 +60,8 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
     public MedecinSchedule create(MedecinScheduleRequest medecinScheduleRequest, Long id) throws Exception {
         // Create a new instance of MedecinSchedule
         MedecinSchedule schedule = new MedecinSchedule();
-        //Medecin Med = medecinservices.getMedecinByUserId(id);
         Medecin Med = medecinservices.getMedecinByUserId(id);
-        Cabinet cabinet=cabinetrepo.findById(medecinScheduleRequest.getCabinet_id())
+       Cabinet cabinet=cabinetrepo.findById(medecinScheduleRequest.getCabinet_id())
                 .orElseThrow(()->new BadRequestException("No matching found for this Cabinet"));
 
         // Set attribut of MedecinSchedule
@@ -77,11 +74,9 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
         schedule.setMedecin(Med);
         schedule.setCabinet(cabinet);
         schedule.setIsnewpatient(medecinScheduleRequest.getIsnewpatient());
-        LOGGER.info("I'm in schedule implementation");
          medecinScheduleRepository.save(schedule);
         // Save it
-        entityManger.persist(schedule);
-        // MedecinSchedule medecinSchedule1 = medecinScheduleRepository.save(schedule);
+        //entityManger.persist(schedule);
         activityServices.createActivity(new Date(),"Add","Create New Schedule ID :"+schedule.getId(),globalVariables.getConnectedUser());
         LOGGER.info("Create New Schedule ID :"+schedule.getId()+", UserID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
         return modelMapper.map(schedule, MedecinSchedule.class);
@@ -90,23 +85,27 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
     // Updating the MedecinSchedule.
     @Override
     public MedecinSchedule update(MedecinScheduleRequest req, Long id) throws Exception {
-        Optional<MedecinSchedule> IsSchedule = medecinScheduleRepository.findById(id);
-        if (IsSchedule.isPresent()) {
+        MedecinSchedule isSchedule=medecinScheduleRepository.getById(id);
+        if(isSchedule!=null){
 
             Medecin Med = medecinservices.findById(req.getMedecin_id());
             MedecinSchedule schedule = medecinScheduleRepository.getById(id);
-            //Cabinet cabinet=cabinetrepo.findById(req.getCabinet_id())
-                  //  .orElseThrow(()->new BadRequestException("No matching found for this Cabinet"));
-            // Set attribut of MedecinSchedule
+            Cabinet cabinet=cabinetrepo.findById(req.getCabinet_id())
+                  .orElseThrow(()->new BadRequestException("No matching found for this Cabinet"));
+
             // Set attribut of MedecinSchedule
             schedule.setDay(DayOfWeek.valueOf(req.getDay()));
             schedule.setAvailabilityStart(req.getAvailabilityStart());
             schedule.setAvailabilityEnd(req.getAvailabilityEnd());
-            schedule.setModeconsultation(req.getModeconsultation());
             schedule.setPeriod(req.getPeriod());
-            schedule.setMedecin(Med);
-            //schedule.setCabinet(cabinet);
             schedule.setIsnewpatient(req.getIsnewpatient());
+            //motifs and modes
+            schedule.setModeconsultation(req.getModeconsultation());
+            schedule.setMotifConsultation(req.getMotifconsultation());
+
+            schedule.setMedecin(Med);
+            schedule.setCabinet(cabinet);
+
             medecinScheduleRepository.save(schedule);
 
             activityServices.createActivity(new Date(),"Update","Update New Schedule ID :"+schedule.getId(),globalVariables.getConnectedUser());
@@ -114,30 +113,31 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
 
             return schedule;
 
-        } else
+        } else{
             activityServices.createActivity(new Date(),"Error","Cant Update Schedule",globalVariables.getConnectedUser());
         LOGGER.error("Error to Update Schedule , UserID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
-        throw new Exception("Failed to update");
+        throw new Exception("Failed to update");}
     }
 
     @Override
     public void deleteById(Long id) throws Exception {
-        Optional<MedecinSchedule> medecinSchedule = medecinScheduleRepository.findById(id);
-        if (medecinSchedule.isPresent()) {
+        MedecinSchedule medecinSchedule = medecinScheduleRepository.getById(id);
+        if (medecinSchedule!=null) {
             medecinScheduleRepository.deleteById(id);
             activityServices.createActivity(new Date(),"Delete","Delete Schedule ID :"+id,globalVariables.getConnectedUser());
             LOGGER.info("Delete Schedule ID :"+id+", UserID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
-        } else
-            activityServices.createActivity(new Date(),"Warning","Cant Delete Schedule ID :"+id,globalVariables.getConnectedUser());
-        LOGGER.warn("Cant Delete Schedule ID :"+id+", UserID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
-        throw new Exception("Fail to delete");
+        } else {
+            activityServices.createActivity(new Date(), "Warning", "Cant Delete Schedule ID :" + id, globalVariables.getConnectedUser());
+            LOGGER.warn("Cant Delete Schedule ID :" + id + ", UserID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+            throw new Exception("Fail to delete");
+        }
     }
 
     // A method that returns a list of MedecinSchedule objects by id Medecin.
-    public List<MedecinSchedule> GetAllSchedulesByMedId(long idmed) throws Exception {
+    public List<MedecinSchedule> getAllSchedulesByMedId(long idmed) throws Exception {
         activityServices.createActivity(new Date(),"Read","Consulting All Schedules",globalVariables.getConnectedUser());
         LOGGER.info("Consulting All Schedules , UserID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
-        return medecinScheduleRepository.GetAllSchedulesByMedId(idmed)
+        return medecinScheduleRepository.getAllSchedulesByMedId(idmed)
                 .stream()
                 .map(schedule -> modelMapper.map(schedule, MedecinSchedule.class))
                 .collect(Collectors.toList());
@@ -155,11 +155,11 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
 
     // A method that returns a list of MedecinSchedule objects by id Medecin and id
     // TypeConsultation.
-    public List<MedecinSchedule> GetAllSchedulesByMedIdandIdCOnsult(long idmed, long idconsult) throws Exception {
+    public List<MedecinSchedule> getAllSchedulesByMedIdandIdConsult(long idmed, long idconsult) throws Exception {
 
         activityServices.createActivity(new Date(),"Read","Consulting Schedule by id Med :"+idmed+" and ID Consultation : "+idconsult,globalVariables.getConnectedUser());
         LOGGER.info("Consulting Schedule by id Med :"+idmed+" and ID Consultation : "+idconsult+" , UserID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
-        return medecinScheduleRepository.GetAllSchedulesByMedIdandIdConsult(idmed, idconsult)
+        return medecinScheduleRepository.getAllSchedulesByMedIdandIdConsult(idmed, idconsult)
                 .stream()
                 .map(schedule -> modelMapper.map(schedule, MedecinSchedule.class))
                 .collect(Collectors.toList());

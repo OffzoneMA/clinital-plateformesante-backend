@@ -64,7 +64,7 @@ public class Medecin {
 	@OneToMany(mappedBy = "medecin")
 	private List<ExperienceMedecin> experience_med;
 
-	@ManyToOne(cascade = CascadeType.ALL)
+	@ManyToOne(fetch = FetchType.EAGER)
 	private Ville ville;
 	
 	@ManyToOne(cascade = CascadeType.ALL)
