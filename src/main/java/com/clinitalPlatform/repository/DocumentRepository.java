@@ -21,7 +21,7 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 
 	List<Document> findByPatientId(Long patientId);
 
-	List<Document> findByPatientIdIn(List<Long> patientsId);
+	List<Document> findByPatientIdIn(List<Long> patientId);
 
 	List<Document> findByPatientIdAndArchived(Long patientId, Boolean archived);
 	
@@ -30,13 +30,13 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 	@Query("from Document d where d.rendezvous.id= ?1")
 	List<Document> getDocByIdRendezvous(Long rdvId);
 
-	@Query(value = "SELECT documents.* FROM documents  , document_medecin dm WHERE documents.id_doc=dm.document_id AND documents.patient_id IN(?1)", nativeQuery = true)
-	List<Document> getDocByPatientIdAndMedecin(List<Long> patientsId);
+	@Query(value = "SELECT documents.* FROM documents, document_medecin dm WHERE documents.id_doc=dm.document_id AND documents.patient_id= ?1", nativeQuery = true)
+	List<Document> getDocByPatientIdAndMedecin(Long patientId);
 
-	@Query(value = "SELECT d.* FROM documents d, patients p WHERE d.patient_id=p.id AND p.patient_type='PROCH' AND d.patient_id IN(?1)", nativeQuery = true)
-	List<Document> getDocPatientPROCH(List<Long> patientsId);
-	@Query(value = "SELECT d.* FROM documents d, patients p WHERE d.patient_id=p.id AND p.patient_type='MOI' AND d.patient_id IN(?1)", nativeQuery = true)
-	List<Document> getDocPatientMOI(List<Long> patientsId);
+	@Query(value = "SELECT d.* FROM documents d, patients p WHERE d.patient_id=p.id AND p.patient_type='PROCH' AND d.patient_id= ?1", nativeQuery = true)
+	List<Document> getDocPatientPROCH(Long patientId);
+	@Query(value = "SELECT d.* FROM documents d, patients p WHERE d.patient_id=p.id AND p.patient_type='MOI' AND d.patient_id= ?1", nativeQuery = true)
+	List<Document> getDocPatientMOI(Long patientId);
 
     @Query(value = "SELECT d.* FROM documents d WHERE d.id_dossier=?1", nativeQuery = true)
 	List<Document> findByIdDossier(long iddoss);

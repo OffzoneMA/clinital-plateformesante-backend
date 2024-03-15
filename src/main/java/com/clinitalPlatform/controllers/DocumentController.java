@@ -38,25 +38,25 @@ import java.util.stream.Collectors;
 public class DocumentController {
 
     @Autowired
-    DocumentRepository docrepository;
+    private DocumentRepository docrepository;
 
     @Autowired
-    GlobalVariables globalVariables;
+    private GlobalVariables globalVariables;
 
     @Autowired
-    RdvRepository rdvRepository;
+    private RdvRepository rdvRepository;
 
     @Autowired
-    DocumentPatientServices docservices;
+    private DocumentPatientServices docservices;
 
     @Autowired
-    PatientRepository patientRepo;
+    private PatientRepository patientRepo;
 
     @Autowired
-    TypeDocumentRepository typeDocumentRepo;
+    private TypeDocumentRepository typeDocumentRepo;
 
     @Autowired
-    ClinitalModelMapper mapper;
+    private ClinitalModelMapper mapper;
 
     //@Autowired
     //private AzureServices azureAdapter;
@@ -72,18 +72,16 @@ public class DocumentController {
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     Iterable<DocumentResponse> documents() throws Exception {
 
-        List<Long> patientIds = Collections.singletonList(globalVariables.getConnectedUser().getId());
-        List<Patient> allPatients = patientRepo.findAllById(patientIds);
+        Optional<Patient> patient = patientRepo.findById(globalVariables.getConnectedUser().getId());
 
         // Verify if the list of patient is empty
-        if (allPatients.isEmpty()) {
+        if (!patient.isPresent()) {
             return Collections.emptyList();
         }else {
 
             activityServices.createActivity(new Date(), "Read", "Consulting all Documents", globalVariables.getConnectedUser());
             LOGGER.info("Conslting All documents By User ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
-            return docrepository
-                    .findByPatientIdIn(allPatients.stream().map(patient -> patient.getId()).collect(Collectors.toList()))
+            return docrepository.findByPatientId(patient.get().getId())
                     .stream().map(document -> mapper.map(document, DocumentResponse.class)).collect(Collectors.toList());
         }
     }
@@ -153,6 +151,7 @@ public class DocumentController {
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
     @ResponseBody
     public List<DocumentResponse> findDocByIdRdv(@RequestParam Long rdvId) throws Exception {
+
         activityServices.createActivity(new Date(),"Read","Conslting  documents By Rdv  ID :"+rdvId,globalVariables.getConnectedUser());
         LOGGER.info("Conslting  documents by RDV ID :"+rdvId+" By User ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
         return docrepository.getDocByIdRendezvous(rdvId).stream().map(doc -> mapper.map(doc, DocumentResponse.class))
@@ -164,6 +163,7 @@ public class DocumentController {
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
     @ResponseBody
     public List<DocumentResponse> findDocByNomPatient(@RequestParam String nomPatient) throws Exception {
+
         activityServices.createActivity(new Date(),"Read","Conslting  documents Pateint  name :"+nomPatient,globalVariables.getConnectedUser());
         LOGGER.info("Consulting  documents' Patient with name :"+nomPatient+" and User ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
         return docrepository.getDocByNomPatient(nomPatient).stream().map(doc -> mapper.map(doc, DocumentResponse.class))
@@ -202,15 +202,13 @@ public class DocumentController {
     @ResponseBody
     public List<DocumentResponse> getDocByPatientIdAndMedecin() throws Exception {
 
-        List<Long> patientIds = Collections.singletonList(globalVariables.getConnectedUser().getId());
-        List<Patient> allPatients = patientRepo.findAllById(patientIds);
+        Optional<Patient> patient = patientRepo.findById(globalVariables.getConnectedUser().getId());
 
-        if (allPatients.isEmpty()) {
+        if (!patient.isPresent()) {
             return Collections.emptyList();
         }else {
 
-            List<Document> documents = docrepository.getDocByPatientIdAndMedecin(
-                    allPatients.stream().map(patient -> patient.getId()).collect(Collectors.toList()));
+            List<Document> documents = docrepository.getDocByPatientIdAndMedecin(patient.get().getId());
             activityServices.createActivity(new Date(), "Read", "Consulting All documents", globalVariables.getConnectedUser());
             LOGGER.info("Consulting All Archived  documents by patient ID, User ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
             return documents.stream().map(doc -> mapper.map(doc, DocumentResponse.class)).collect(Collectors.toList());
@@ -224,15 +222,14 @@ public class DocumentController {
     @ResponseBody
     public List<DocumentResponse> getDocProchPatientId() throws Exception {
 
-        List<Long> patientIds = Collections.singletonList(globalVariables.getConnectedUser().getId());
-        List<Patient> allPatients = patientRepo.findAllById(patientIds);
 
-        if (allPatients.isEmpty()) {
+        Optional<Patient> patient = patientRepo.findById(globalVariables.getConnectedUser().getId());
+
+        if (!patient.isPresent()) {
             return Collections.emptyList();
         }else {
 
-            List<Document> documents = docrepository.getDocPatientPROCH(
-                    allPatients.stream().map(patient -> patient.getId()).collect(Collectors.toList()));
+            List<Document> documents = docrepository.getDocPatientPROCH(patient.get().getId());
 
             if(documents.isEmpty()){
                 return Collections.emptyList();
@@ -251,15 +248,13 @@ public class DocumentController {
     @ResponseBody
     public List<DocumentResponse> getDocMoiPatientId() throws Exception {
 
-        List<Long> patientIds = Collections.singletonList(globalVariables.getConnectedUser().getId());
-        List<Patient> allPatients = patientRepo.findAllById(patientIds);
+        Optional<Patient> patient = patientRepo.findById(globalVariables.getConnectedUser().getId());
 
-        if (allPatients.isEmpty()) {
+        if (!patient.isPresent()) {
             return Collections.emptyList();
         }else {
 
-            List<Document> documents = docrepository.getDocPatientMOI(
-                    allPatients.stream().map(patient -> patient.getId()).collect(Collectors.toList()));
+            List<Document> documents = docrepository.getDocPatientMOI(patient.get().getId());
 
             if(documents.isEmpty()){
                 return Collections.emptyList();
