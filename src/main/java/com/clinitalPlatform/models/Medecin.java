@@ -10,6 +10,7 @@ import org.hibernate.annotations.FetchMode;
 
 import com.clinitalPlatform.enums.CiviliteEnum;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -37,6 +38,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Medecin {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

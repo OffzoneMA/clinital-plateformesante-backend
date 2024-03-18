@@ -2,10 +2,8 @@ package com.clinitalPlatform.services;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.clinitalPlatform.dao.IDao;
 import com.clinitalPlatform.dto.ActivityDTO;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,16 +63,19 @@ public class ActivityServices implements historyservices {
 		 List<LogActivityUser> activity= activityRespository.findActivityByIdUsers(id);
 		 return clinitalModelMapper.map(activity, ActivityDTO.class);
 	}
+    
     @Override
     public ActivityDTO create(ActivityDTO dto) {
         // TODO Auto-generated method stub
         return null;
     }
+    
     @Override
     public ActivityDTO update(ActivityDTO dto, Long id) throws Exception {
         // TODO Auto-generated method stub
         return null;
     }
+    
     @Override
     public void deleteById(Long id) throws Exception {
         // TODO Auto-generated method stub

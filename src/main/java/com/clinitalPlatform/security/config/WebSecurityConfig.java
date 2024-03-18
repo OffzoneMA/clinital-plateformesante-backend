@@ -1,4 +1,5 @@
 package com.clinitalPlatform.security.config;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -59,8 +60,9 @@ public class WebSecurityConfig {
     // Security filter chain configuration
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        String[] permitAllRoutes = {"/api/auth/**", "/api/users/activity/**","/api/demandes/create"};
-        String[] authenticatedRoutes = {"/api/demandes/**", "/api/doc/**", "/api/shares/**"};
+
+        String[] permitAllRoutes = {"/api/auth/**", "/api/users/activity/**","/api/demandes/create", "/api/cabinet/**"};
+        String[] authenticatedRoutes = {"/api/demandes/**", "/api/med/**", "/api/doc/**", "/api/shares/**"};
         return http.csrf().disable()
                 .cors().and()
                 .authorizeHttpRequests()

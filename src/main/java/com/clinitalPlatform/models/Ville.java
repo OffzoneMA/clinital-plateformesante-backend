@@ -1,5 +1,7 @@
 package com.clinitalPlatform.models;
 
+import javax.validation.constraints.NotBlank;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -26,11 +28,10 @@ public class Ville {
 		super();
 	}
 
-	public Ville(String nom_ville, Pays pays) {
+	public Ville(@NotBlank String nom_ville, Pays pays) {
 		super();
 		this.nom_ville = nom_ville;
 		this.pays = pays;
-
 	}
 
 
