@@ -113,8 +113,8 @@ public class SharingHistoryServiceImpl implements SharingHistoryService {
     public List<SharingHistory> findAllSharingHistoryByMedecinIdAndPatientId(Long id_medecin, Long id_patient)
             throws Exception {
         try {
-            Patient patient=patientrepo.findById(id_patient).orElseThrow(()->new Exception("No matchinf Found for this Patient ID"));
-            Medecin medecin=medecinRepository.findById(id_patient).orElseThrow(()->new Exception("No matchinf Found for this Medecin ID"));
+            Patient patient=patientrepo.findById(id_patient).orElseThrow(()->new Exception("No Patient Found with this ID"));
+            Medecin medecin=medecinRepository.findById(id_medecin).orElseThrow(()->new Exception("No Medecin Found with this ID"));
 
             List<SharingHistory> shares=sharinghistoryRepository.findAllSharingHistoryByMedecinIdAndPatientId(medecin.getId(), patient.getId());
 
@@ -164,14 +164,10 @@ public class SharingHistoryServiceImpl implements SharingHistoryService {
         try {
 
             Medecin medecin=medecinRepository.findById(id_medecin).orElseThrow(()->new Exception("No Medecin Found with this ID"));
-            System.out.println("11111");
+
 
             List<SharingHistory> shares=sharinghistoryRepository.findAllSharingHistoryByMedecinIdAndUserId(medecin.getId(),globalVariables.getConnectedUser().getId());
-            System.out.println("22222");
-            /*for(SharingHistory s: shares){
-                System.out.println(s);
-            }
-            System.out.println("333333");*/
+
             return shares;
         } catch (Exception e) {
 

@@ -236,7 +236,7 @@ public class DocumentController {
             }
 
             activityServices.createActivity(new Date(),"Read","Consulting All Proch patient  documents by patient",globalVariables.getConnectedUser());
-            LOGGER.info("Consulting All Proch patient documents by patient with ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+            LOGGER.info("Consulting All PROCH patient documents by patient with ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
 
             return documents.stream().map(doc -> mapper.map(doc, DocumentResponse.class)).collect(Collectors.toList());
         }
