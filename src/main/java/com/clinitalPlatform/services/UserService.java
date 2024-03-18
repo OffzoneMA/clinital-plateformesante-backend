@@ -90,6 +90,7 @@ public class UserService {
 						// save patient with dossier medical automatically
 						Ville ville = new Ville();
 						ville.setId_ville(1L);
+						System.out.println("id_ville dans userservice class: "+ ville.getId_ville());
 						// generer un dossier medical par defaut
 						DossierMedical dossierMedical = new DossierMedical();
 						dossierMedical.setAlchole(false);
@@ -177,8 +178,12 @@ public class UserService {
 
 			user.setProvider(ProviderEnum.LOCAL);
 			// save user
+			System.out.println("before save in userservice's class");
 			userRepository.save(user);
-			this.save(user,null);
+			System.out.println("after save in userservice's class");
+			System.out.println("before this.save in userservice's class");
+			this.save(user,null);//here problem
+			System.out.println("after this.save in userservice's class");
 			
 			activityServices.createActivity(new Date(), "add", "signup seccussefuly done", user);
 			LOGGER.info("Inscription reussi");

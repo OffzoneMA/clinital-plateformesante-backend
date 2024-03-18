@@ -15,13 +15,14 @@ import javassist.NotFoundException;
 @Component
 public class GlobalVariables {
 
-    @Autowired UserRepository userRepository;
+    @Autowired
+    UserRepository userRepository;
 
     private User user;
 
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
   
-    // Méthode pour obtenir l'utilisateur connecté
+    // Get connected user
     public User getConnectedUser() throws NotFoundException {
         try {
         	 // Obtient le principal de l'authentification actuelle
@@ -45,9 +46,10 @@ public class GlobalVariables {
             throw new RuntimeException("Error fetching current user");
         }
     }
-    
- // Méthode pour définir l'utilisateur connecté
+
+    // Set connected user
     public void setConnectedUser(User user) {
        this.user=user;
     }
+
 }

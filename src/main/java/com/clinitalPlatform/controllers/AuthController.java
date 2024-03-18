@@ -61,6 +61,7 @@ public class AuthController {
 	
 	@PostMapping("/signin")
     public ResponseEntity<?> authenticateAndGetToken( @RequestBody LoginRequest loginRequest) {
+		System.out.println(loginRequest);
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
         SecurityContextHolder.getContext().setAuthentication(authentication);
         UserDetailsImpl userDetails=(UserDetailsImpl) authentication.getPrincipal();
@@ -86,9 +87,11 @@ public class AuthController {
 	
 	@PostMapping("/signup")
 	public ResponseEntity<?> registerUser( @RequestBody SignupRequest signUpRequest) throws Exception {
+
+		System.out.println(signUpRequest);
 		
 		userServices.RegistreNewUser(signUpRequest);
-		return ResponseEntity.ok(new ApiResponse(true, "User registered successfully"));
+		return ResponseEntity.ok(new ApiResponse(true, "User hhhhh registered successfully"));
 			
 	}
 	
