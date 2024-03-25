@@ -43,4 +43,18 @@ public class AutService {
 	        return confirmationTokenRepository.findByConfirmationToken(token);
 	    }
 
+
+	 public ConfirmationToken getConfirmationTokenByUserId(Long userid){
+		return confirmationTokenRepository.getConfirmationTokenByUserId(userid);
+	 }
+
+
+	public Boolean existsByEmail(String email) {
+		return userRepository.existsByEmail(email);
+	}
+
+
+	public User findByEmail(String email){
+		return userRepository.findByEmail(email);
+	 }
 }

@@ -2,6 +2,7 @@ package com.clinitalPlatform.controllers;
 
 import java.util.*;
 
+import com.clinitalPlatform.payload.request.VerifyEmailRequest;
 import com.clinitalPlatform.security.services.UserDetailsServiceImpl;
 import com.clinitalPlatform.services.EmailSenderService;
 import com.clinitalPlatform.util.ApiError;
@@ -153,10 +154,16 @@ public class AuthController {
 		User user = confirmationToken.getUser();
 		Calendar calendar = Calendar.getInstance();
 
+		/*if (user.getEmailVerified()) {
+			return ResponseEntity.badRequest().body("Votre compte est déjà activé.");
+		}*/
+
+
 		if ((confirmationToken.getExpiryDate().getTime() - calendar.getTime().getTime()) <= 0) {
 
 			String newLink = "http://localhost:8080/api/auth/generateNewLink?token=" + token;
-			return ResponseEntity.badRequest().body("Lien expiré, générer un nouveau " + newLink);
+			return ResponseEntity.badRequest().body("Lien expiré, générer un nouveau <a href=\"" + newLink + "\">Ici</a>");
+
 		}
 
 		user.setEmailVerified(true);
@@ -167,6 +174,7 @@ public class AuthController {
 	}
 
     //Generate a new link for the user
+
 	@GetMapping("/generateNewLink")
 	public ResponseEntity<String> generateNewLink(@RequestParam String token) {
 		ConfirmationToken confirmationToken = autService.findByConfirmationToken(token);
@@ -190,16 +198,56 @@ public class AuthController {
 
 		emailSenderService.sendMailConfirmationNewlink(user.getEmail(), newLink);
 
-		return ResponseEntity.ok(newLink);
+		return ResponseEntity.ok("Un nouveau lien vous a été envoyer");
 	}
 
+
+	//recuperation d'un token de confirmation par user_id
+	@GetMapping("/confirmationtoken/{userId}")
+	public ResponseEntity<String> getConfirmationToken(@PathVariable Long userId) {
+
+		ConfirmationToken confirmationToken = autService.getConfirmationTokenByUserId(userId);
+		System.out.println("userid"+userId);
+		if (confirmationToken == null) {
+			return ResponseEntity.notFound().build();
+		}
+
+		String tokenValue = confirmationToken.getConfirmationToken();
+		return ResponseEntity.ok(tokenValue);
+	}
 
 
 
 	@GetMapping("/checkToken/{token}")
 	public Boolean verifierValiditeToken(@PathVariable String token) {
+
 		UserDetails userDetails = userDetailsService.loadUserByUsername(jwtService.extractUsername(token));
+		System.out.println("token verifié:" +token);
 		return jwtService.validateToken(token, userDetails);
+
 	}
+
+	//Cas où un user veut demander un autre si il a egarer le premier
+	@GetMapping("/newconfirmationLink")
+	public ResponseEntity<?> sendVerificationMail(@Valid @RequestBody VerifyEmailRequest emailRequest) {
+
+		if (autService.existsByEmail(emailRequest.getEmail())) {
+
+			if (userDetailsService.isAccountVerified(emailRequest.getEmail())) {
+				throw new BadRequestException("Email est déjà vérifié ");
+			} else {
+				User user = autService.findByEmail(emailRequest.getEmail());
+				ConfirmationToken token = autService.createToken(user);
+
+				emailSenderService.sendMail(user.getEmail(), token.getConfirmationToken());
+				return ResponseEntity.ok(new ApiResponse(true, "Un lien de vérification a été envoyé par mail"));
+			}
+		} else {
+			throw new BadRequestException("Email non associé ");
+		}
+	}
+
+
+
 
 }
