@@ -1,6 +1,7 @@
 package com.clinitalPlatform.services;
 
 import com.clinitalPlatform.exception.BadRequestException;
+import com.clinitalPlatform.exception.ConflictException;
 import com.clinitalPlatform.models.*;
 import com.clinitalPlatform.payload.request.MedecinScheduleRequest;
 import com.clinitalPlatform.repository.CabinetRepository;
@@ -18,6 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -56,15 +59,56 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
     private final Logger LOGGER= LoggerFactory.getLogger(getClass());
 
     // Creating a new instance of MedecinSchedule.
-    @Override
+//    @Override
+//    public MedecinSchedule create(MedecinScheduleRequest medecinScheduleRequest, Long id) throws Exception {
+//        // Create a new instance of MedecinSchedule
+//        MedecinSchedule schedule = new MedecinSchedule();
+//        Medecin Med = medecinservices.getMedecinByUserId(id);
+//       Cabinet cabinet=cabinetrepo.findById(medecinScheduleRequest.getCabinet_id())
+//                .orElseThrow(()->new BadRequestException("No matching found for this Cabinet"));
+//        // gerer chevauchement
+//       // si la date start est compris entre un ancien creno ou commece par lui ou la date end aussi : exception
+//        // ajouter le code ici
+//        // Set attribut of MedecinSchedule
+//        schedule.setDay(DayOfWeek.valueOf(medecinScheduleRequest.getDay()));
+//        schedule.setAvailabilityStart(medecinScheduleRequest.getAvailabilityStart());
+//        schedule.setAvailabilityEnd(medecinScheduleRequest.getAvailabilityEnd());
+//        schedule.setModeconsultation(medecinScheduleRequest.getModeconsultation());
+//        schedule.setMotifConsultation(medecinScheduleRequest.getMotifconsultation());
+//        schedule.setPeriod(medecinScheduleRequest.getPeriod());
+//        schedule.setMedecin(Med);
+//        schedule.setCabinet(cabinet);
+//        schedule.setIsnewpatient(medecinScheduleRequest.getIsnewpatient());
+//         medecinScheduleRepository.save(schedule);
+//        // Save it
+//        //entityManger.persist(schedule);
+//        activityServices.createActivity(new Date(),"Add","Create New Schedule ID :"+schedule.getId(),globalVariables.getConnectedUser());
+//        LOGGER.info("Create New Schedule ID :"+schedule.getId()+", UserID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+//        return modelMapper.map(schedule, MedecinSchedule.class);
+//    }
     public MedecinSchedule create(MedecinScheduleRequest medecinScheduleRequest, Long id) throws Exception {
-        // Create a new instance of MedecinSchedule
-        MedecinSchedule schedule = new MedecinSchedule();
         Medecin Med = medecinservices.getMedecinByUserId(id);
-       Cabinet cabinet=cabinetrepo.findById(medecinScheduleRequest.getCabinet_id())
-                .orElseThrow(()->new BadRequestException("No matching found for this Cabinet"));
+        Cabinet cabinet = cabinetrepo.findById(medecinScheduleRequest.getCabinet_id())
+                .orElseThrow(() -> new BadRequestException("No matching found for this Cabinet"));
 
-        // Set attribut of MedecinSchedule
+        // Vérifier les conflits
+       List<MedecinSchedule> existingSchedules = medecinScheduleRepository.findByMedIdAndDay(Med.getId() , DayOfWeek.valueOf(medecinScheduleRequest.getDay()).getValue()-1);
+        if(existingSchedules!=null){
+            for (MedecinSchedule existingSchedule : existingSchedules) {
+                if (isConflict(existingSchedule, medecinScheduleRequest)) {
+                    throw new ConflictException("Ce créneau entre en conflit avec un créneau existant.");
+                }
+            }
+        }
+
+        // Vérifier si l'heure de fin est après l'heure de début
+        if (medecinScheduleRequest.getAvailabilityEnd().isBefore(medecinScheduleRequest.getAvailabilityStart())) {
+            throw new BadRequestException("L'heure de fin doit être après l'heure de début.");
+        }
+
+
+        // Créer un nouveau planning
+        MedecinSchedule schedule = new MedecinSchedule();
         schedule.setDay(DayOfWeek.valueOf(medecinScheduleRequest.getDay()));
         schedule.setAvailabilityStart(medecinScheduleRequest.getAvailabilityStart());
         schedule.setAvailabilityEnd(medecinScheduleRequest.getAvailabilityEnd());
@@ -74,13 +118,57 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
         schedule.setMedecin(Med);
         schedule.setCabinet(cabinet);
         schedule.setIsnewpatient(medecinScheduleRequest.getIsnewpatient());
-         medecinScheduleRepository.save(schedule);
-        // Save it
-        //entityManger.persist(schedule);
-        activityServices.createActivity(new Date(),"Add","Create New Schedule ID :"+schedule.getId(),globalVariables.getConnectedUser());
-        LOGGER.info("Create New Schedule ID :"+schedule.getId()+", UserID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+
+        // Enregistrer le nouveau planning
+        medecinScheduleRepository.save(schedule);
+        activityServices.createActivity(new Date(), "Add", "Create New Schedule ID :" + schedule.getId(), globalVariables.getConnectedUser());
+        LOGGER.info("Create New Schedule ID:" + schedule.getId() + ", UserID:" + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
         return modelMapper.map(schedule, MedecinSchedule.class);
     }
+
+
+    private boolean isConflict(MedecinSchedule existingSchedule, MedecinScheduleRequest newScheduleRequest) {
+        LocalDateTime newStart = newScheduleRequest.getAvailabilityStart();
+        LocalDateTime newEnd = newScheduleRequest.getAvailabilityEnd();
+
+        LocalDateTime existingStart = existingSchedule.getAvailabilityStart();
+        LocalDateTime existingEnd = existingSchedule.getAvailabilityEnd();
+
+        // Extraire les heures et minutes des dates
+        LocalTime newStartTime = newStart.toLocalTime();
+        LocalTime newEndTime = newEnd.toLocalTime();
+        LocalTime existingStartTime = existingStart.toLocalTime();
+        LocalTime existingEndTime = existingEnd.toLocalTime();
+
+        // Vérifier si les plages horaires se chevauchent
+
+        if (newStartTime.compareTo(existingStartTime)==0 || newEndTime.compareTo(existingEndTime)==0) {
+            // Les plages horaires sont identiques
+            return true;
+        }
+
+        if (newStartTime.isAfter(existingStartTime) && newStartTime.isBefore(existingEndTime)) {
+            // Le nouveau rendez-vous commence pendant une période déjà réservée
+            return true;
+        }
+
+        //faites attention au milliseconde peut causer conflits
+        if (newEndTime.isAfter(existingStartTime) && newEndTime.isBefore(existingEndTime) ) {
+                // Le nouveau rendez-vous se termine pendant une période déjà réservée
+                return true;
+        }
+
+        if (newStartTime.isBefore(existingStartTime) && newEndTime.isAfter(existingEndTime)) {
+            // Le nouveau rendez-vous englobe complètement une période déjà réservée
+            return true;
+        }
+
+        // Pas de conflit
+        return false;
+    }
+
+
+
 
     // Updating the MedecinSchedule.
     @Override
@@ -153,8 +241,7 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
 
     }
 
-    // A method that returns a list of MedecinSchedule objects by id Medecin and id
-    // TypeConsultation.
+    // A method that returns a list of MedecinSchedule objects by id Medecin and id TypeConsultation.
     public List<MedecinSchedule> getAllSchedulesByMedIdandIdConsult(long idmed, long idconsult) throws Exception {
 
         activityServices.createActivity(new Date(),"Read","Consulting Schedule by id Med :"+idmed+" and ID Consultation : "+idconsult,globalVariables.getConnectedUser());

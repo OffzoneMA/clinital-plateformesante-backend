@@ -190,7 +190,7 @@ public class MedecinServiceImpl implements MedecinService {
 
     // Creating a creno.
     public AgendaResponse CreateCreno(MedecinSchedule Medsch, AgendaResponse agenda, long idmed, long week,
-                                      LocalDateTime Date) {
+                                      LocalDateTime date) {
 
         long minutes = ChronoUnit.MINUTES.between(Medsch.getAvailabilityStart(),
                 Medsch.getAvailabilityEnd());
@@ -200,73 +200,95 @@ public class MedecinServiceImpl implements MedecinService {
         LocalDateTime timer = Medsch.getAvailabilityStart();
 
         agenda.setDay(Medsch.getDay());
-        agenda.setWorkingDate(Date);
+        agenda.setWorkingDate(date);
         agenda.setWeek(week);
         agenda.setPeriod(Medsch.getPeriod());
         agenda.setIsnewpatient(Medsch.getIsnewpatient());
         agenda.setMotifconsultation(Medsch.getMotifConsultation());
         agenda.setModeconsultation(Medsch.getModeconsultation());
-        List<Rendezvous> rendezvous = rendezvousService.findRendezvousByMedAndDate(idmed, Date);
+        List<Rendezvous> rendezvous = rendezvousService.findRendezvousByMedAndDate(idmed, date);
         List<RendezvousResponse> rdvrespo = rendezvous.stream()
                 .map(rdv -> clinitalModelMapper.map(rdv, RendezvousResponse.class)).collect(Collectors.toList());
-        // agenda.getAvailableSlot()
-        // .add((timer.getHour() < 10 ? "0" : "") + timer.getHour() + ":"
-        // + (timer.getMinute() < 10 ? "0" : "") + timer.getMinute());
 
+        //new
         for (int j = 0; j < totalSlots; j++) {
-            if (!rendezvous.isEmpty()) {
+            boolean isReserved = false;
+            LocalDateTime slotTime = timer; // Créneau actuel
+
                 for (RendezvousResponse rdv : rdvrespo) {
-                    int index = rdvrespo.indexOf(rdv);
-                    // if(rdv.getStart().getDayOfMonth()!=rdv.getEnd().getDayOfMonth()){
-                    // long days = ChronoUnit.DAYS.between(rdv.getStart(),rdv.getEnd());
-                    // for(int i=0;i>days;i++){
+                    //rdv.getStart().isEqual(slotTime)
+                    LocalDateTime rdvStart = rdv.getStart();
+                    LocalDateTime rdvEnd = rdv.getEnd();
 
-                    // }
-
-                    // }
-                    if (rdv.getStatut().equals(RdvStatutEnum.CONJE)) {
-
-                        continue;
-
-                    } else if (rdv.getStart().getHour() == timer.getHour()
-                            && rdv.getStart().getMinute() == timer.getMinute()
-                            && rdv.getStart().toLocalDate().isEqual(Date.toLocalDate())) {
-                        // agenda.getAvailableSlot()
-                        // .add("Unavailible");
-
-                        if (rdv.getStart().isBefore(rdv.getEnd())) {
-                            agenda.getAvailableSlot()
-                                    .add("Rsrvd" + rdv.getStart());
-                            rdvrespo.set(index, rdv);
-                            rdv.setStart(rdv.getStart().plusMinutes(Medsch.getPeriod().getValue()));
-                            break;
-                            // if(!rdv.getStart().isEqual(rdv.getEnd())){
-
-                            // }
-
-                        }else {
-                            agenda.getAvailableSlot()
-                                    .add((timer.getHour() < 10 ? "0" : "") + timer.getHour() + ":"
-                                            + (timer.getMinute() < 10 ? "0" : "") + timer.getMinute());}
-
-                    } else {
-                        agenda.getAvailableSlot()
-                                .add((timer.getHour() < 10 ? "0" : "") + timer.getHour() + ":"
-                                        + (timer.getMinute() < 10 ? "0" : "") + timer.getMinute());
+                    // Vérifier si le créneau actuel se situe entre l'heure de début et de fin du rendez-vous
+                    if (slotTime.isEqual(rdvStart) || (slotTime.isAfter(rdvStart) && slotTime.isBefore(rdvEnd))
+                            && rdvStart.toLocalDate().isEqual(date.toLocalDate()))
+                    {
+                        isReserved = true;
+                        break;
                     }
+//                if (rdv.getStart().getHour() == timer.getHour()
+//                            && rdv.getStart().getMinute() == timer.getMinute()
+//                            && rdv.getStart().toLocalDate().isEqual(date.toLocalDate())) {
+//                    isReserved = true;
+//                    break;
+//                }
+            }
 
-                }
-
-            } else {
-                agenda.getAvailableSlot()
-                        .add((timer.getHour() < 10 ? "0" : "") + timer.getHour() + ":"
-                                + (timer.getMinute() < 10 ? "0" : "") + timer.getMinute());
-
+            if (!isReserved) {
+                agenda.getAvailableSlot().add((timer.getHour() < 10 ? "0" : "") + timer.getHour() + ":" +
+                        (timer.getMinute() < 10 ? "0" : "") + timer.getMinute());
             }
 
             timer = timer.plusMinutes(Medsch.getPeriod().getValue());
-
         }
+        //end new
+
+//        for (int j = 0; j < totalSlots; j++) {
+//            if (!rendezvous.isEmpty()) {
+//                for (RendezvousResponse rdv : rdvrespo) {
+//                    int index = rdvrespo.indexOf(rdv);
+//
+//                    if (rdv.getStatut().equals(RdvStatutEnum.CONJE)) {
+//
+//                        continue;
+//
+//                    } else if (rdv.getStart().getHour() == timer.getHour()
+//                            && rdv.getStart().getMinute() == timer.getMinute()
+//                            && rdv.getStart().toLocalDate().isEqual(date.toLocalDate())) {
+//                        // agenda.getAvailableSlot()
+//                        // .add("Unavailible");
+//
+//                        if (rdv.getStart().isBefore(rdv.getEnd())) {
+//                            agenda.getAvailableSlot()
+//                                    .add("Rsrvd" + rdv.getStart());
+//                            rdvrespo.set(index, rdv);
+//                            rdv.setStart(rdv.getStart().plusMinutes(Medsch.getPeriod().getValue()));
+//                            break;
+//
+//                        }else {
+//                            agenda.getAvailableSlot()
+//                                    .add((timer.getHour() < 10 ? "0" : "") + timer.getHour() + ":"
+//                                            + (timer.getMinute() < 10 ? "0" : "") + timer.getMinute());}
+//
+//                    } else {
+//                        agenda.getAvailableSlot()
+//                                .add((timer.getHour() < 10 ? "0" : "") + timer.getHour() + ":"
+//                                        + (timer.getMinute() < 10 ? "0" : "") + timer.getMinute());
+//                    }
+//
+//                }
+//
+//            } else {
+//                agenda.getAvailableSlot()
+//                        .add((timer.getHour() < 10 ? "0" : "") + timer.getHour() + ":"
+//                                + (timer.getMinute() < 10 ? "0" : "") + timer.getMinute());
+//
+//            }
+//
+//            timer = timer.plusMinutes(Medsch.getPeriod().getValue());
+//
+//        }
 
         return agenda;
 

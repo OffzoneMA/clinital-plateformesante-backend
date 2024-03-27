@@ -1,5 +1,7 @@
 package com.clinitalPlatform.controllers;
 
+import com.clinitalPlatform.exception.BadRequestException;
+import com.clinitalPlatform.exception.ConflictException;
 import com.clinitalPlatform.models.Demande;
 import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.models.MedecinSchedule;
@@ -21,7 +23,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.DayOfWeek;
+import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @RestController
@@ -44,13 +49,21 @@ public class MedecinScheduleController {
     @Autowired
     GlobalVariables globalVariables;
     // Creat a new Schedule : %OK%
-    @PostMapping("create")
-    //@PreAuthorize("hasAuthority('ROLE_MEDECIN')")
-    public ResponseEntity<?> create(@Validated @RequestBody MedecinScheduleRequest
-                                            medecinScheduleRequest) throws Exception{
 
-        MedecinSchedule medecinSchedule = medecinScheduleService.create(medecinScheduleRequest,globalVariables.getConnectedUser().getId());
-        return ResponseEntity.ok(modelMapper.map(medecinSchedule,MedecinSchedule.class));
+    @PostMapping("create")
+//@PreAuthorize("hasAuthority('ROLE_MEDECIN')")
+    public ResponseEntity<?> create(@Validated @RequestBody MedecinScheduleRequest medecinScheduleRequest) {
+        try {
+            MedecinSchedule medecinSchedule = medecinScheduleService.create(medecinScheduleRequest, globalVariables.getConnectedUser().getId());
+            return ResponseEntity.ok(modelMapper.map(medecinSchedule, MedecinSchedule.class));
+        } catch (ConflictException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Ce créneau entre en conflit avec un créneau existant.");
+        } catch (BadRequestException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Une erreur interne est survenue.");
+        }
     }
 
 
@@ -126,4 +139,21 @@ public class MedecinScheduleController {
         }
 
     }
+    @GetMapping("shedulesByIdMedDay/{id}")
+    @ResponseBody
+    public ResponseEntity<?> GetSchedulesByDay(@PathVariable long id, @RequestBody MedecinScheduleRequest medecinScheduleRequest) throws Exception{
+        // UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        //return ResponseEntity.ok(DayOfWeek.valueOf(medecinScheduleRequest.getDay()).getValue());
+//        return ResponseEntity.ok(medshrep.findByMedIdAndDay(id , DayOfWeek.valueOf(medecinScheduleRequest.getDay()).getValue())
+//                .stream().map(sched -> modelMapper.map(sched, MedecinSchedule.class))
+//                .collect(Collectors.toList()));
+        return ResponseEntity.ok(medshrep.findByMedIdAndDay(id, DayOfWeek.valueOf(medecinScheduleRequest.getDay()).getValue()-1)
+                .stream().map(sched -> modelMapper.map(sched, MedecinSchedule.class))
+                .collect(Collectors.toList()));
+
+
+    }
+
+
 }

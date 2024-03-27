@@ -4,6 +4,7 @@ package com.clinitalPlatform.payload.response;
 import com.clinitalPlatform.enums.ConsultationPeriodEnum;
 import com.clinitalPlatform.models.ModeConsultation;
 import com.clinitalPlatform.models.MotifConsultation;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import java.time.DayOfWeek;
@@ -18,6 +19,7 @@ public class AgendaResponse {
 	LocalDateTime canceledAt;
 	ConsultationPeriodEnum period;
 	List<ModeConsultation> modeconsultation;
+	@JsonIgnore
 	List<MotifConsultation> motifconsultation;
 	Boolean isnewpatient;
 	LocalDateTime workingDate;

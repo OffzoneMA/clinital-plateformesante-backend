@@ -37,6 +37,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -105,38 +106,67 @@ public class MedecinController {
 		try {
 
 			List<AgendaResponse> agendaResponseList = new ArrayList<AgendaResponse>();
+			//afficher les schedules by week (availability start>= +week*7 and availability_end <=week*7)
 			List<MedecinSchedule> schedules = medScheduleRepo
-					.findByMedId(idmed)
+					//.findByMedIdAndStartDateAndWeeksOrderByAvailability(idmed,startDate,weeks)
+					.findByMedIdOrderByAvailability(idmed)
+					//.findByMedId(idmed)
 					.stream()
 					.map(item -> mapper.map(item, MedecinSchedule.class))
 					.collect(Collectors.toList());
 
-					
-
 			int days = medecinService.getDaysInMonth(startDate.atStartOfDay());
-
+			//parcours le nbre de semaine en parametre
 			for (int j = 1; j <= weeks; j++) {
-
+				//parcours des jours
 				for (int i = 1; i <= 7; i++) {
-					checkday = false;
-					if (!schedules.isEmpty()) {
-						for (MedecinSchedule medsch : schedules) {
+					checkday = false;  // si un jour contient des schedules
+					if (!schedules.isEmpty()) { // si la liste des creno de ce medecin pas vide
+						for (MedecinSchedule medsch : schedules) { //parcour les creno
+							//normalement on doit comparer la date avec la date pas le jour
+							if (medsch.getDay().getValue() == startDate.getDayOfWeek().getValue())
+									//medsch.getAvailabilityStart().toLocalDate().isAfter(startDate)) // a retirer
+							{
 
-							if (medsch.getDay().getValue() == startDate.getDayOfWeek().getValue()) {
-								checkday = true;
-								AgendaResponse agenda = new AgendaResponse();
+							checkday = true;
+								AgendaResponse agenda = null;
+								// Rechercher une AgendaResponse correspondante dans agendaResponseList
 								for (AgendaResponse ag : agendaResponseList) {
 									if (ag.getDay().getValue() == medsch.getDay().getValue() && ag.getWeek() == j) {
-										int index = agendaResponseList.indexOf(ag);
-										agenda = agendaResponseList.get(index);
-										agenda = medecinService.CreateCreno(medsch, agenda, idmed, j,
-												startDate.atStartOfDay());
-										agendaResponseList.set(index, agenda);
-
+										agenda = ag;
+										break;
 									}
 								}
-								agenda = medecinService.CreateCreno(medsch, agenda, idmed, j, startDate.atStartOfDay());
-								// diffrance hourse :
+
+								// Si une AgendaResponse correspondante est trouvée, la mettre à jour
+								if (agenda != null) {
+									agenda = medecinService.CreateCreno(medsch, agenda, idmed, j, startDate.atStartOfDay());
+									agendaResponseList.set(agendaResponseList.indexOf(agenda), agenda);
+								} else {
+									// Sinon, créer une nouvelle AgendaResponse
+									agenda = new AgendaResponse();
+									agenda.setDay(startDate.getDayOfWeek());
+									agenda.setWorkingDate(startDate.atStartOfDay());
+									agenda = medecinService.CreateCreno(medsch, agenda, idmed, j, startDate.atStartOfDay());
+									agendaResponseList.add(agenda);
+								}
+								//here
+
+
+//								for (AgendaResponse ag : agendaResponseList) {
+//									if (ag.getDay().getValue() == medsch.getDay().getValue() && ag.getWeek() == j) {
+//										int index = agendaResponseList.indexOf(ag);
+//										agenda = agendaResponseList.get(index);
+//										agenda = medecinService.CreateCreno(medsch, agenda, idmed, j,
+//												startDate.atStartOfDay());
+//										agendaResponseList.set(index, agenda);
+//
+//									}
+//								}
+
+								//agenda = medecinService.CreateCreno(medsch, agenda, idmed, j, startDate.atStartOfDay());
+
+								// diffrance hours :
 								long Hours = ChronoUnit.HOURS.between(medsch.getAvailabilityStart(),
 										medsch.getAvailabilityEnd());
 								agenda.getMedecinTimeTable().add(new GeneralResponse("startTime",
@@ -197,6 +227,72 @@ public class MedecinController {
 		}
 
 	}
+	// Vérifiez les conflits avant d'ajouter un créneau
+//								boolean isConflicting = false;
+//								for (AgendaResponse ag : agendaResponseList) {
+//									if (ag.getDay().getValue() == medsch.getDay().getValue() && ag.getWeek() == j) {
+//										// Vérifiez les conflits
+//										if (isConflicting(ag, medsch)) {
+//											isConflicting = true;
+//											break;
+//										}
+//										// Pas de conflit, ajoutez le créneau à l'agenda existant
+//										int index = agendaResponseList.indexOf(ag);
+//										agenda = agendaResponseList.get(index);
+//										agenda = medecinService.CreateCreno(medsch, agenda, idmed, j, startDate.atStartOfDay());
+//										agendaResponseList.set(index, agenda);
+//									}
+//								}
+//								// Si pas de conflit, ajoutez un nouvel agendaResponse
+//								if (!isConflicting) {
+//									//AgendaResponse agenda = new AgendaResponse();
+//									agenda = medecinService.CreateCreno(medsch, agenda, idmed, j, startDate.atStartOfDay());
+//									// Ajoutez le reste de votre logique pour ajouter des informations d'agenda
+//									long Hours = ChronoUnit.HOURS.between(medsch.getAvailabilityStart(),
+//											medsch.getAvailabilityEnd());
+//									agenda.getMedecinTimeTable().add(new GeneralResponse("startTime",
+//											medsch.getAvailabilityStart()));
+//									agenda.getMedecinTimeTable().add(new GeneralResponse("endTime",
+//											medsch.getAvailabilityStart().plusHours(Hours)));
+//									String startTime = medsch.getAvailabilityStart().getHour() + ":"
+//											+ medsch.getAvailabilityStart().getMinute();
+//
+//									String endTime = medsch.getAvailabilityEnd().getHour() + ":"
+//											+ medsch.getAvailabilityEnd().getMinute();
+//
+//									agenda.getWorkingHours().add(new HorairesResponse(startTime,
+//											endTime));
+//									agendaResponseList.add(agenda);
+//								}
+
+//	private boolean isConflicting(AgendaResponse existingAgenda, MedecinSchedule newSchedule) {
+//		LocalDateTime existingStart = existingAgenda.getWorkingDate();
+//		LocalDateTime existingEnd = existingAgenda.getWorkingDate().plusDays(1); // Fin de la journée de travail
+//
+//		LocalDateTime newStart = newSchedule.getAvailabilityStart();
+//		LocalDateTime newEnd = newSchedule.getAvailabilityEnd();
+//
+//		// Vérifiez les conflits
+//		return (newStart.isAfter(existingStart) && newStart.isBefore(existingEnd)) ||
+//				(newEnd.isAfter(existingStart) && newEnd.isBefore(existingEnd)) ||
+//				(newStart.isBefore(existingStart) && newEnd.isAfter(existingEnd)) ||
+//				(newStart.equals(existingStart) || newEnd.equals(existingEnd));
+//	}
+//conflicting by hour : si on a la meme date et les memes heures (ilimine), si on a une a l'interieur des autre on doit supprimer la partie interieur du global
+private boolean isConflicting(AgendaResponse existingAgenda, MedecinSchedule newSchedule) {
+	LocalTime existingStart = existingAgenda.getWorkingDate().toLocalTime();
+	LocalTime existingEnd = existingAgenda.getWorkingDate().plusDays(1).toLocalTime(); // Fin de la journée de travail
+
+	LocalTime newStart = newSchedule.getAvailabilityStart().toLocalTime();
+	LocalTime newEnd = newSchedule.getAvailabilityEnd().toLocalTime();
+
+	// Vérifiez les conflits en fonction des heures
+	return (newStart.isAfter(existingStart) && newStart.isBefore(existingEnd)) ||
+			(newEnd.isAfter(existingStart) && newEnd.isBefore(existingEnd)) ||
+			(newStart.isBefore(existingStart) && newEnd.isAfter(existingEnd)) ||
+			(newStart.equals(existingStart) || newEnd.equals(existingEnd));
+}
+
 
 	// Finding all the RDV bY med Id from a given date.%OK%
 	@GetMapping("/rdvofMed/{idmed}/{startDate}")
