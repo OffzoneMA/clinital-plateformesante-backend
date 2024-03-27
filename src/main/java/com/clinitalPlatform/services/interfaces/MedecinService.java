@@ -1,5 +1,7 @@
 package com.clinitalPlatform.services.interfaces;
 
+import java.util.List;
+
 import com.clinitalPlatform.models.Medecin;
 
 public interface MedecinService {

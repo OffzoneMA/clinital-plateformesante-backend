@@ -1,6 +1,7 @@
 package com.clinitalPlatform.services;
 
 import java.util.Date;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,12 +45,7 @@ public class MedecinServiceImpl implements MedecinService {
 	public Medecin findById(Long id) throws Exception {
 		
 		Medecin med = medecinRepository.findById(id).orElseThrow(() -> new Exception("Medecin not found"));
-		if(globalVariables.getConnectedUser()!=null){
-			activityServices.createActivity(new Date(),"Read","Consult Medecin By ID : "+id,globalVariables.getConnectedUser());
-			LOGGER.info("Consult Medecin By ID : "+id+" by User : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
-		}else{
-			LOGGER.info("Consult Medecin By ID : "+id);
-		}
+		
 		return clinitalModelMapper.map(med, Medecin.class);
 	}
 	
@@ -60,5 +56,7 @@ public class MedecinServiceImpl implements MedecinService {
 
 		return clinitalModelMapper.map(med, Medecin.class);
 	}
+
+	
 
 }
