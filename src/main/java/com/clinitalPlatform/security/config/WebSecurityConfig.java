@@ -59,7 +59,7 @@ public class WebSecurityConfig {
     // Security filter chain configuration
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        String[] permitAllRoutes = {"/api/auth/**", "/api/users/activity/**"};
+        String[] permitAllRoutes = {"/api/auth/**", "/api/users/activity/**","/api/ville/**"};
         String[] authenticatedRoutes = {"/api/demandes/**", "/api/medecinSchedule/**","/api/med/**"};
         return http.csrf().disable()
                 .cors().and()
