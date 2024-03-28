@@ -57,7 +57,6 @@ public class Rendezvous {
 
 
 	@OneToOne(cascade = CascadeType.ALL)
-
 	@JoinColumn(name = "id_mode", referencedColumnName= "id_mode")
 	private ModeConsultation modeConsultation;
 

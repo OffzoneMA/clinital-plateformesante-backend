@@ -3,6 +3,7 @@ package com.clinitalPlatform.controllers;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
@@ -30,6 +31,8 @@ import com.clinitalPlatform.repository.MedecinRepository;
 import com.clinitalPlatform.services.ActivityServices;
 import com.clinitalPlatform.util.GlobalVariables;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import com.clinitalPlatform.services.CabinetMedecinServiceImpl;
 import com.clinitalPlatform.services.CabinetServiceImpl;
 import com.clinitalPlatform.repository.CabinetMedecinRepository;
@@ -39,6 +42,15 @@ import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.security.services.UserDetailsImpl;
 import com.clinitalPlatform.services.DocumentsCabinetServices;
 import com.clinitalPlatform.repository.DocumentsCabinetRepository;
+import com.clinitalPlatform.services.OrdonnanceServiceImpl;
+import com.clinitalPlatform.models.Ordonnance;
+import com.clinitalPlatform.payload.request.OrdonnanceRequest;
+import com.clinitalPlatform.repository.OrdonnanceRepository;
+import com.clinitalPlatform.util.PDFGenerator;
+import com.clinitalPlatform.util.ClinitalModelMapper;
+import com.clinitalPlatform.dto.SpecialiteDTO;
+import com.clinitalPlatform.services.interfaces.SpecialiteService;
+import com.clinitalPlatform.dto.OrdonnanceDTO;
 import com.clinitalPlatform.exception.BadRequestException;
 import com.clinitalPlatform.models.Cabinet;
 import com.clinitalPlatform.models.CabinetMedecinsSpace;
@@ -81,9 +93,81 @@ public class MedecinController {
 	@Autowired
 	private DocumentsCabinetRepository doccabrepository;
 	
+	@Autowired
+	private OrdonnanceServiceImpl OrdonnanceServices;
+	
+	@Autowired
+	private OrdonnanceRepository ordonnanceRepository;
+	
+	@Autowired
+	private PDFGenerator pdfgenerator;
+	
+	@Autowired
+	ClinitalModelMapper mapper;
+	
+	@Autowired
+	private SpecialiteService specialiteService;
+	
 	
 	private final Logger LOGGER=LoggerFactory.getLogger(getClass());
 	
+	@GetMapping("/medecins")
+	@JsonSerialize(using = LocalDateTimeSerializer.class)
+	public Iterable<Medecin> medecins() throws Exception {
+		
+		return medrepository.findAll().stream().filter(med->med.getIsActive()==true).collect(Collectors.toList());
+
+	}
+	
+	// Get Medecin By Id : %OK%
+	@GetMapping("/medById/{id}")
+	public ResponseEntity<Medecin> getMedecinById(@PathVariable(value="id") Long id) throws Exception {
+			
+			return ResponseEntity.ok(mapper.map(medecinService.findById(id), Medecin.class));
+	}
+
+	// Get Medecin y his name : %OK%
+	@GetMapping("/medByName")
+	@ResponseBody
+	public List<Medecin> findMedByName(@RequestParam String nomMed) throws Exception {
+			
+			return medrepository.getMedecinByName(nomMed).stream().filter(med->med.getIsActive()==true).collect(Collectors.toList());
+	}
+	
+	// end point for getting Doctor by Name or speciality and city : %OK%
+	@GetMapping("/medByNameOrSpecAndVille")
+	@ResponseBody
+	public Iterable<Medecin> medByNameOrSpecAndVille(@RequestParam String ville,
+				@RequestParam String search) throws Exception {
+					
+			return medrepository.getMedecinBySpecialiteOrNameAndVille( search,ville).stream()
+			.filter(med->med.getIsActive()==true).collect(Collectors.toList());
+	}
+
+	// end point for getting Doctor by Name and speciality : %OK%
+	@GetMapping("/medByNameAndSpec")
+	public Iterable<Medecin> findMedSpecNameVille(@RequestParam String name,
+				@RequestParam String search) throws Exception {
+					
+		return medrepository.getMedecinBySpecialiteAndName(search, name).stream()
+		.filter(med->med.getIsActive()==true).collect(Collectors.toList());
+	}
+
+	// end point for getting Doctor by Name or speciality : %OK%
+	@GetMapping("/medByNameOrSpec")
+	public Iterable<Medecin> findMedSpecName(@RequestParam String search) throws Exception {
+			
+			return medrepository.getMedecinBySpecOrName(search).stream().filter(med->med.getIsActive()==true).collect(Collectors.toList());
+
+	}
+
+	// end point for getting Doctor By city : %OK%
+	@GetMapping("/medByVille")
+	public Iterable<Medecin> findMedByVille(@RequestParam Long id_ville) throws Exception {
+			
+			return medrepository.getMedecinByVille(id_ville).stream().filter(med->med.getIsActive()==true).collect(Collectors.toList());
+    }
+
 	@PostMapping("/addMedtoExistcabinet")
 	@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_MEDECIN')")
 	public CabinetMedecinsSpace AddMedtoCabinet(@Valid @RequestBody CabinetRequest cabinetreq) throws Exception {
@@ -182,4 +266,134 @@ public class MedecinController {
 			
 		}
      }
+	
+	//=================================================================================================
+	// ORDONNANCE :
+
+	@PostMapping("/addordonnance")
+		public ResponseEntity<?> AddNewOrdonnance(@Valid @RequestBody OrdonnanceRequest creq){
+
+			try {
+				
+				Medecin med = medecinService.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+
+				Ordonnance consul=OrdonnanceServices.create(creq, med);
+
+				String fileName = consul.getId_ordon()+"-DOSS"+ consul.getDossier().getId_dossier()+"-MedID"+med.getId();
+
+				pdfgenerator.GenartePdfLocaly(consul, fileName, "Patientdoc");
+
+				return ResponseEntity.ok(consul);
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			return ResponseEntity.ok(new ApiResponse(false, e.getMessage()));
+			}
+			
+		}
+
+	//update consulation :
+	@PostMapping("/updateordonnance")
+	public ResponseEntity<?> Updateordonnance(@Valid @RequestBody OrdonnanceRequest creq){
+
+		try {
+			
+			Medecin med = medecinService.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+
+			OrdonnanceDTO consul=OrdonnanceServices.update(creq,med);
+
+			return ResponseEntity.ok(consul);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		return ResponseEntity.ok(new ApiResponse(false, e.getMessage()));
+		}
+		
+	}
+	
+	@GetMapping(path = "/allordonnacebymed")
+	public ResponseEntity<?> findallByIdMedecin(){
+
+	try {	
+		Medecin med = medecinService.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+		List<OrdonnanceDTO> allord=OrdonnanceServices.findAllByMed(med);
+
+		return ResponseEntity.ok(allord);
+	} catch (Exception e) {
+		e.printStackTrace();
+		return ResponseEntity.ok(new ApiResponse(false, e.getMessage()));
+
+	}
+	}
+	
+	@GetMapping(path = "/allordonnace")
+	public ResponseEntity<?> findall(){
+
+	try {	
+		List<OrdonnanceDTO> allord=OrdonnanceServices.findAll();
+
+		return ResponseEntity.ok(allord);
+	} catch (Exception e) {
+		e.printStackTrace();
+		return ResponseEntity.ok(new ApiResponse(false, e.getMessage()));
+
+	}
+	}
+	
+	@GetMapping(path = "/findordi/{id}")
+	public ResponseEntity<?> getByIdMedecin(@Valid @PathVariable(value = "id")Long idordo){
+
+		try {
+			
+			Medecin med = medecinService.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+			OrdonnanceDTO consul=OrdonnanceServices.findById(idordo,med);
+
+			return ResponseEntity.ok(consul);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.ok(new ApiResponse(false, e.getMessage()));
+		}
+	}
+	
+	// Delete Coonsultation : 
+	@DeleteMapping(path = "/deleteordonnance/{id}")
+	public ResponseEntity<?> DeleteOrdonnance(@Valid @PathVariable Long id){
+		
+	try {
+		Ordonnance ordonnance=ordonnanceRepository.findById(id).orElseThrow(()->new Exception("No 	matching found for this ordonnance"));
+
+		Boolean IsDeleted = OrdonnanceServices.deleteById(ordonnance)?true:false;
+
+		return IsDeleted ? ResponseEntity.ok(new ApiResponse(true, "ordonnance has been deleted seccussefully")):ResponseEntity.ok(new ApiResponse(true, "Consultation cannot be deleted"));
+
+	} catch (Exception e) {
+		e.printStackTrace();
+		return ResponseEntity.ok(new ApiResponse(false, e.getMessage()));
+	}
+
+	}
+	
+	// show data by medecin access right
+	@GetMapping(path = "/findordonnance/{iddoss}/{idordo}")
+	public ResponseEntity<?> findOrdoByIdMedecin(@Valid @PathVariable(value = "idordo")Long id,@Valid @PathVariable Long iddoss){
+
+	try {
+		
+		Medecin med = medecinService.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+		return ResponseEntity.ok(OrdonnanceServices.findByIdMedandDossierId(med,iddoss,id));
+		
+	} catch (Exception e) {
+		e.printStackTrace();
+		return ResponseEntity.ok(new ApiResponse(false, e.getMessage()));
+	}
+
+	}
+	
+	@GetMapping("/getAllSpec")
+	public ResponseEntity<List<SpecialiteDTO>> findAll() throws Exception {
+
+		return ResponseEntity.ok(specialiteService.findAll());
+	}
+
+	
 }

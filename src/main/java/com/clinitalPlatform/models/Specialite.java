@@ -7,6 +7,7 @@ import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -19,6 +20,7 @@ import lombok.Data;
 @Entity
 @Table(name = "specialites")
 @Data
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Specialite {
 
 	@Id
@@ -43,5 +45,4 @@ public class Specialite {
 	}
 
 	
-
 }

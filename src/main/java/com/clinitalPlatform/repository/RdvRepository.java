@@ -1,6 +1,5 @@
 package com.clinitalPlatform.repository;
 
-
 import com.clinitalPlatform.models.Rendezvous;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

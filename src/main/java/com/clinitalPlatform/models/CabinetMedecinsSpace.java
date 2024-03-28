@@ -22,7 +22,6 @@ public class CabinetMedecinsSpace {
 
     @ManyToOne(cascade = CascadeType.ALL,fetch = FetchType.LAZY)
     @MapsId("cabinet_id")
-    @JsonIgnore
     @JoinColumn(name = "cabinet_id", referencedColumnName = "id_cabinet")
     private Cabinet cabinet;
 
