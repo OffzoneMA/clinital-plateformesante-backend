@@ -5,6 +5,7 @@ import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -98,8 +99,8 @@ public class UserService {
 						dossierMedical.setDossierType(null);
 						dossierMedical.setNumDossier(null);
 						dossierMedical.setTraitement(true);
-						dossierMedicalRepository.save(dossierMedical);
-						// genrer un patient par defaut
+						dossierMedicalRepository.save(dossierMedical);//sauvergarde du dossier medicale
+						// generer un patient par defaut
 						Patient patient = new Patient();
 						patient.setNom_pat(null);
 						patient.setPrenom_pat(null);
@@ -113,7 +114,7 @@ public class UserService {
 						patient.setDossierMedical(dossierMedical);
 						patient.setPatient_type(PatientTypeEnum.MOI);
 						patient.setUser(user);
-						patientRepository.save(patient);
+						patientRepository.save(patient); // sauvergarde des infos du patiens
 						LOGGER.info("New Patient has been add ");
 						break;
 					case ROLE_MEDECIN:
@@ -135,7 +136,7 @@ public class UserService {
 						medecin.setVille(null);
 						medecin.setSpecialite(specialite);
 						medecin.setStepsValidation(1L);
-						medecinrepo.save(medecin);
+						medecinrepo.save(medecin);//Sauvergarde des infos du Médecins
 						LOGGER.info("New Medecin has been add ");
 						break;
 					case ROLE_SECRETAIRE:
@@ -146,7 +147,7 @@ public class UserService {
 						secrit.setDateNaissance(null);
 						secrit.setUser(user);
 						secrit.setCabinet(null);
-						Secretairepos.save(secrit);
+						Secretairepos.save(secrit); //Sauvegarde des infos sur la sécretaire
 						LOGGER.info("New Secetaire has been add ");
 
 					default:
@@ -154,6 +155,8 @@ public class UserService {
 				}
 
 				ConfirmationToken token = authService.createToken(user);
+
+				//Envoie du mail de confirmation
 				emailSenderService.sendMailConfirmation(user.getEmail(), token.getConfirmationToken());
 				//
 				LOGGER.info("User informations has been Add seccessfully");
@@ -166,23 +169,28 @@ public class UserService {
 
 		}
 
-	   
-		public ResponseEntity<?> RegistreNewUser(SignupRequest signUpRequest) throws Exception {
+	public ResponseEntity<?> registerNewUser(SignupRequest signUpRequest) {
+		try {
 
 			if (userRepository.existsByEmail(signUpRequest.getEmail())) {
 				return ResponseEntity.badRequest().body(new MessageResponse("Error: Email is already in use!"));
 			}
+
 			User user = new User(signUpRequest.getEmail(), signUpRequest.getTelephone(),
 					encoder.encode(signUpRequest.getPassword()), signUpRequest.getRole());
 
 			user.setProvider(ProviderEnum.LOCAL);
-			// save user
+			// Sauvergade d'un nouveau user
 			userRepository.save(user);
-			this.save(user,null);
-			
+			save(user, null); // Appel de la méthode save pour enregistrer l'utilisateur
+
 			activityServices.createActivity(new Date(), "add", "signup seccussefuly done", user);
 			LOGGER.info("Inscription reussi");
 			return ResponseEntity.ok(user);
-
+		} catch (Exception e) {
+			LOGGER.error("Error occurred while registering new user: {}", e.getMessage());
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiError(false, "An error occurred while registering new user."));
 		}
+	}
+
 }

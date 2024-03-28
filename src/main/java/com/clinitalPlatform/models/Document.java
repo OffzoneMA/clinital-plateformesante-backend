@@ -65,7 +65,7 @@ public class Document {
 			List<Medecin> medecins) {
 		super();
 		this.numero_doc = numero_doc;
-		this.titre_doc = titre_doc;
+		this.titre_doc = titre_doc;//
 		this.date_ajout_doc = date_ajout_doc;
 		this.auteur = auteur;
 		this.fichier_doc = fichier_doc;

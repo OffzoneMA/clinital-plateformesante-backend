@@ -23,6 +23,7 @@ import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 @RestController
 @RequestMapping("/api/users/activity")
 public class ActivityController {
+
     @Autowired 
     ActivityRespository  activityRepo;
 
