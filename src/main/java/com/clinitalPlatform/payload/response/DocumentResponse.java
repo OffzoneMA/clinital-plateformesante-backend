@@ -1,5 +1,6 @@
 package com.clinitalPlatform.payload.response;
 
+import com.clinitalPlatform.models.Patient;
 import lombok.Data;
 
 import java.util.Date;
@@ -13,6 +14,7 @@ public class DocumentResponse {
 	private Date date_ajout_doc;
 	private String auteur;
 	private String fichier_doc;
+	private Patient patient;
 	private TypeDocumentResponse typeDoc;
 	private Boolean archived;
 	private DossierMedicalResponse dossier;

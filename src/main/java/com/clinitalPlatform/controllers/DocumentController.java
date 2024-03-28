@@ -108,7 +108,7 @@ public class DocumentController {
 
             savedDoc.setFichier_doc(uploadedFile);
 
-            savedDoc.setNumero_doc(savedDoc.getId_doc());
+            savedDoc.setNumero_doc(savedDoc.getId_doc());//Numero doc is doc id
 
             // --------------- update saved doc
             Document finalSavedDoc = docrepository.save(savedDoc);
@@ -190,7 +190,7 @@ public class DocumentController {
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     Iterable<TypeDocumentResponse> getTypeDocuments() throws Exception {
-        activityServices.createActivity(new Date(),"Read","Consulting All Type  documents",globalVariables.getConnectedUser());
+        activityServices.createActivity(new Date(),"Read","Consulting All Type documents",globalVariables.getConnectedUser());
         LOGGER.info("Consulting All Types  documents By User ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
         return typeDocumentRepo.findAll().stream().map(typeDoc -> mapper.map(typeDoc, TypeDocumentResponse.class))
                 .collect(Collectors.toList());
@@ -199,7 +199,7 @@ public class DocumentController {
     // Returning a list of documents by patient id and medecin id
     @GetMapping("/getDocByPatientIdAndMedecin")
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
-    @ResponseBody
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
     public List<DocumentResponse> getDocByPatientIdAndMedecin() throws Exception {
 
         Optional<Patient> patient = patientRepo.findById(globalVariables.getConnectedUser().getId());
@@ -215,13 +215,31 @@ public class DocumentController {
 
         }
     }
+    /*
+    @GetMapping("/documents")
+    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    Iterable<DocumentResponse> documents() throws Exception {
 
+        Optional<Patient> patient = patientRepo.findById(globalVariables.getConnectedUser().getId());
+
+        // Verify if the list of patient is empty
+        if (!patient.isPresent()) {
+            return Collections.emptyList();
+        }else {
+
+            activityServices.createActivity(new Date(), "Read", "Consulting all Documents", globalVariables.getConnectedUser());
+            LOGGER.info("Conslting All documents By User ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+            return docrepository.findByPatientId(patient.get().getId())
+                    .stream().map(document -> mapper.map(document, DocumentResponse.class)).collect(Collectors.toList());
+        }
+    }
+     */
     //Get documents of patient with type "PROCH"
     @GetMapping("/getdocproch")
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
-    @ResponseBody
-    public List<DocumentResponse> getDocProchPatientId() throws Exception {
-
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    Iterable<DocumentResponse> getDocProchPatientId() throws Exception {
 
         Optional<Patient> patient = patientRepo.findById(globalVariables.getConnectedUser().getId());
 
@@ -236,7 +254,7 @@ public class DocumentController {
             }
 
             activityServices.createActivity(new Date(),"Read","Consulting All Proch patient  documents by patient",globalVariables.getConnectedUser());
-            LOGGER.info("Consulting All PROCH patient documents by patient with ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+            LOGGER.info("Consulting All PROCHE patient documents by patient with ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
 
             return documents.stream().map(doc -> mapper.map(doc, DocumentResponse.class)).collect(Collectors.toList());
         }
