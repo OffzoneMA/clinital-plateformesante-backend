@@ -18,7 +18,10 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     private UserRepository userRepository;
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+
+
         Optional<User> userInfo = userRepository.findUserByEmail(username);
+
         return userInfo.map(UserDetailsImpl::new)
                 .orElseThrow(() -> new UsernameNotFoundException("user not found " + username));
     }
@@ -36,6 +39,17 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public Boolean isAccountVerified(String email) {
         return userRepository.findEmailVerifiedByEmail(email);
     }
+
+    /*@Transactional
+    /*public Boolean isEnabled(String email) {
+        Boolean isEnabled = userRepository.findIsEnabledByEmail(email);
+        return isEnabled;
+    }*/
+
+    public boolean isEnabled(String email) {
+        return userRepository.findIsEnabledByEmail(email).orElse(false);
+    }
+
 
 
 }
