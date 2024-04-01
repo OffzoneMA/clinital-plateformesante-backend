@@ -19,6 +19,7 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 
 	// get Rdv By Day :
 	@Query(value = "SELECT r.* FROM Rendezvous r , patients p where r.patient=p.id   and  DATE(r.start)= ?1 and p.user_id=?2",nativeQuery = true)
+
 	List<Rendezvous> getRdvByDate(LocalDate day,long user_id);
 
 	// @Query("from Rendezvous r where r.motif= ?1")

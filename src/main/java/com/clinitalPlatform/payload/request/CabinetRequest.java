@@ -3,10 +3,12 @@ package com.clinitalPlatform.payload.request;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
 
+
 @Data
 public class CabinetRequest {
     
     private Long id_cabinet;
+
 	@NotNull
 	private String nom;
 	@NotNull
@@ -22,6 +24,7 @@ public class CabinetRequest {
 
 	@NotNull
 	private long id_medecin;
+
 
 
 }
