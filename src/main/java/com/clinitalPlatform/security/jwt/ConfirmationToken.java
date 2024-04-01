@@ -43,7 +43,10 @@ public class ConfirmationToken {
 		confirmationToken = UUID.randomUUID().toString();
 	}
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 99085ea3f9b1233061d1e0ed0b85ffba46361418
 	private Date calculateExpiryDate(int expiryTimeInMinutes) {
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(new Timestamp(calendar.getTime().getTime()));

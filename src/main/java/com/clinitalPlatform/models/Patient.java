@@ -22,14 +22,21 @@ public class Patient {
 	private Long id;
 
 	private String nom_pat;
+
 	private String prenom_pat;
+
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date dateNaissance;
+
 	private String adresse_pat;
+
 	private String codePost_pat;
+
 	private String matricule_pat;
+
 	@Enumerated(value = EnumType.STRING)
 	private CiviliteEnum civilite_pat;
+
 	@Column(name = "patient_email")
 	private String patientEmail;
 

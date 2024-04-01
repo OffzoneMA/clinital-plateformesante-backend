@@ -12,8 +12,13 @@ import com.clinitalPlatform.security.oauth2.UserPrincipal;
 import java.util.Date;
 
 @Slf4j
+<<<<<<< HEAD
 @RequiredArgsConstructor
 @Service
+=======
+@Service
+@RequiredArgsConstructor
+>>>>>>> 99085ea3f9b1233061d1e0ed0b85ffba46361418
 public class TokenProvider {
 
     private final AppConfig appConfig;

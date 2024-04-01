@@ -5,7 +5,10 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+<<<<<<< HEAD
 import org.springframework.beans.factory.annotation.Value;
+=======
+>>>>>>> 99085ea3f9b1233061d1e0ed0b85ffba46361418
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import java.security.Key;
@@ -16,32 +19,53 @@ import java.util.function.Function;
 
 @Component
 public class JwtService {
+<<<<<<< HEAD
 
    // public static final String secret = "5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437";
 
     @Value("${jwt.secret}")
     private String secret;
 
+=======
+    public static final String SECRET = "5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437";
+    
+>>>>>>> 99085ea3f9b1233061d1e0ed0b85ffba46361418
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> 99085ea3f9b1233061d1e0ed0b85ffba46361418
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
+<<<<<<< HEAD
 
     private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder().setSigningKey(getSignKey()).build().parseClaimsJws(token).getBody();
+=======
+    private Claims extractAllClaims(String token) {
+        return Jwts
+                .parserBuilder()
+                .setSigningKey(getSignKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+>>>>>>> 99085ea3f9b1233061d1e0ed0b85ffba46361418
     }
     private Boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 99085ea3f9b1233061d1e0ed0b85ffba46361418
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
@@ -59,7 +83,11 @@ public class JwtService {
                 .signWith(getSignKey(), SignatureAlgorithm.HS256).compact();
     }
     private Key getSignKey() {
+<<<<<<< HEAD
         byte[] keyBytes= Decoders.BASE64.decode(secret);
+=======
+        byte[] keyBytes= Decoders.BASE64.decode(SECRET);
+>>>>>>> 99085ea3f9b1233061d1e0ed0b85ffba46361418
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }

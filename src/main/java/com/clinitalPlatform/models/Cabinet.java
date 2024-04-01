@@ -26,7 +26,6 @@ public class Cabinet {
 	private String phoneNumber;
 
 	@ManyToOne(cascade = CascadeType.ALL)
-	@JsonIgnore
 	private Ville ville;
 
 	@OneToMany(cascade = CascadeType.ALL,mappedBy = "cabinet",fetch = FetchType.LAZY)
@@ -44,7 +43,6 @@ public class Cabinet {
 	private List<Secretaire> secretaire;
 
 	@ManyToOne(cascade = CascadeType.ALL)
-	@JsonIgnore
 	private Medecin creator;
 
 	private Boolean state;

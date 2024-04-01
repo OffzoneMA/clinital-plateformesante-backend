@@ -3,7 +3,10 @@ package com.clinitalPlatform.repository;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+<<<<<<< HEAD
 import org.springframework.data.jpa.repository.Query;
+=======
+>>>>>>> 99085ea3f9b1233061d1e0ed0b85ffba46361418
 import org.springframework.stereotype.Repository;
 
 import com.clinitalPlatform.models.User;
@@ -15,6 +18,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	Optional<User> findUserByEmail(String email);
 	User findByEmail(String email);
 
+<<<<<<< HEAD
 
 	@Query(value = "SELECT u.email_verified FROM users u WHERE u.email = ?1", nativeQuery = true)
 	Boolean findEmailVerifiedByEmail(String email);
@@ -29,4 +33,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	Optional<Boolean> findIsEnabledByEmail(String email);
 
 
+=======
+>>>>>>> 99085ea3f9b1233061d1e0ed0b85ffba46361418
 }

@@ -22,4 +22,6 @@ public class DocumentDTO {
 	private List<MedecinDTO> medecins;
 	private Boolean archived;
 
+
+
 }
