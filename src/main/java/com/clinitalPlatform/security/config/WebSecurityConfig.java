@@ -80,7 +80,7 @@ public class WebSecurityConfig {
     			"/api/ville/**"
         };
       
-        String[] authenticatedRoutes = {"/api/demandes/**", "/api/med/**", "/api/doc/**", "/api/shares/**"};
+        String[] authenticatedRoutes = {"/api/demandes/**", "/api/med/**", "/api/doc/**", "/api/shares/**","/api/patient/**"};
 
         return http.csrf().disable()
                 .cors().and()
