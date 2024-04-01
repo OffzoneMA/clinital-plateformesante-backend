@@ -80,10 +80,28 @@ public class DocumentController {
         }else {
 
             activityServices.createActivity(new Date(), "Read", "Consulting all Documents", globalVariables.getConnectedUser());
-            LOGGER.info("Conslting All documents By User ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+            LOGGER.info("Consulting All documents By User ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
             return docrepository.findByPatientId(patient.get().getId())
                     .stream().map(document -> mapper.map(document, DocumentResponse.class)).collect(Collectors.toList());
         }
+    }
+
+    @GetMapping(path = "/patientsConcerned")
+    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    Iterable<Patient> getPatientsConcerned() throws Exception {
+
+        Optional<Patient> patient = patientRepo.findById(globalVariables.getConnectedUser().getId());
+
+        if (!patient.isPresent()) {
+            return Collections.emptyList();
+        }else {
+
+            activityServices.createActivity(new Date(), "Read", "Consulting all patients concerned", globalVariables.getConnectedUser());
+            LOGGER.info("Consulting All patients concerned By User ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+            return docrepository.getMeAndMesProches(patient.get().getId())
+                    .stream().collect(Collectors.toList());
+        }
+
     }
 
     // Add a document of a patient
@@ -137,7 +155,7 @@ public class DocumentController {
 
         if (tutorialData.isPresent()) {
             activityServices.createActivity(new Date(),"Read","Consulting Document with ID : "+id,globalVariables.getConnectedUser());
-            LOGGER.info("Conslting  document ID "+id+" ,By User ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+            LOGGER.info("Consulting  document ID "+id+" ,By User ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
             return new ResponseEntity<>(mapper.map(tutorialData.get(), DocumentResponse.class), HttpStatus.OK);
         } else {
 
@@ -153,7 +171,7 @@ public class DocumentController {
     public List<DocumentResponse> findDocByIdRdv(@RequestParam Long rdvId) throws Exception {
 
         activityServices.createActivity(new Date(),"Read","Conslting  documents By Rdv  ID :"+rdvId,globalVariables.getConnectedUser());
-        LOGGER.info("Conslting  documents by RDV ID :"+rdvId+" By User ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+        LOGGER.info("Consulting  documents by RDV ID :"+rdvId+" By User ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
         return docrepository.getDocByIdRendezvous(rdvId).stream().map(doc -> mapper.map(doc, DocumentResponse.class))
                 .collect(Collectors.toList());
     }
@@ -191,7 +209,7 @@ public class DocumentController {
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     Iterable<TypeDocumentResponse> getTypeDocuments() throws Exception {
         activityServices.createActivity(new Date(),"Read","Consulting All Type documents",globalVariables.getConnectedUser());
-        LOGGER.info("Consulting All Types  documents By User ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+        LOGGER.info("Consulting All Types documents By User ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
         return typeDocumentRepo.findAll().stream().map(typeDoc -> mapper.map(typeDoc, TypeDocumentResponse.class))
                 .collect(Collectors.toList());
     }
