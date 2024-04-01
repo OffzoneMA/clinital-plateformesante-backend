@@ -31,11 +31,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String username = null;
         
         // Check if Authorization header is present and starts with "Bearer "
-<<<<<<< HEAD
-        if (authHeader != null && authHeader.startsWith("Bearer")) {
-=======
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
->>>>>>> 99085ea3f9b1233061d1e0ed0b85ffba46361418
         	// Extract the token excluding "Bearer "
             token = authHeader.substring(7);
          // Extract username from the token

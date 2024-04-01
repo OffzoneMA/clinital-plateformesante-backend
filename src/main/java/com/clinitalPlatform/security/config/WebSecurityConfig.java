@@ -23,10 +23,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-<<<<<<< HEAD
-=======
 import com.clinitalPlatform.util.PDFGenerator;
->>>>>>> 99085ea3f9b1233061d1e0ed0b85ffba46361418
 import com.clinitalPlatform.exception.CustumaccessdeniedHandler;
 import com.clinitalPlatform.security.jwt.JwtAuthFilter;
 import com.clinitalPlatform.security.oauth2.CustomOAuth2UserService;
@@ -60,24 +57,16 @@ public class WebSecurityConfig {
     public HttpCookieOAuth2AuthrizationRequestRepository cookiesAuthorizationRepository() {
         return new HttpCookieOAuth2AuthrizationRequestRepository();
     }
-<<<<<<< HEAD
-=======
     
 	@Bean
   	public PDFGenerator pdfGenerator() {
     // return a new instance of PDFGenerator
     return new PDFGenerator();
   }
->>>>>>> 99085ea3f9b1233061d1e0ed0b85ffba46361418
 
     // Security filter chain configuration
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-<<<<<<< HEAD
-        String[] permitAllRoutes = {"/api/auth/**", "/api/users/activity/**","/api/demandes/create",
-                "/api/cabinet/**","/api/ville/**"};
-        String[] authenticatedRoutes = {"/api/demandes/**","/api/med/**"};
-=======
 
         String[] permitAllRoutes = {"/api/auth/**", "/api/users/activity/**","/api/demandes/create","/api/cabinet/**",
         		"/api/med/medecins",	
@@ -93,7 +82,6 @@ public class WebSecurityConfig {
       
         String[] authenticatedRoutes = {"/api/demandes/**", "/api/med/**", "/api/doc/**", "/api/shares/**"};
 
->>>>>>> 99085ea3f9b1233061d1e0ed0b85ffba46361418
         return http.csrf().disable()
                 .cors().and()
                 .authorizeHttpRequests()
@@ -129,11 +117,7 @@ public class WebSecurityConfig {
                 .build();
 
     }
-<<<<<<< HEAD
-
-=======
     
->>>>>>> 99085ea3f9b1233061d1e0ed0b85ffba46361418
     // Bean for password encoder
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -160,10 +144,7 @@ public class WebSecurityConfig {
     public AccessDeniedHandler accessDeniedHandler() {
         return new CustumaccessdeniedHandler();
     }
-<<<<<<< HEAD
-=======
     
->>>>>>> 99085ea3f9b1233061d1e0ed0b85ffba46361418
 
     // Bean for CORS configuration source
     @Bean

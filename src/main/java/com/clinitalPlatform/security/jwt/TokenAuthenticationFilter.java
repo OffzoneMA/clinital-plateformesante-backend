@@ -2,10 +2,6 @@ package com.clinitalPlatform.security.jwt;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-<<<<<<< HEAD
-
-=======
->>>>>>> 99085ea3f9b1233061d1e0ed0b85ffba46361418
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,11 +24,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private TokenProvider tokenProvider;
 
-<<<<<<< HEAD
-  @Autowired
-=======
     @Autowired
->>>>>>> 99085ea3f9b1233061d1e0ed0b85ffba46361418
     private CustomUserDetailsService customUserDetailsService;
 
     private static final Logger logger = LoggerFactory.getLogger(TokenAuthenticationFilter.class);
