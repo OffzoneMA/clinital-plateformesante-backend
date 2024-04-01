@@ -1,10 +1,7 @@
 package com.clinitalPlatform.repository;
 
-<<<<<<< HEAD
-=======
 import java.util.List;
 
->>>>>>> 99085ea3f9b1233061d1e0ed0b85ffba46361418
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,11 +11,6 @@ import com.clinitalPlatform.models.Medecin;
 
 @Repository
 public interface MedecinRepository extends JpaRepository<Medecin, Long> {
-<<<<<<< HEAD
-	@Query(value = "SELECT m.* FROM medecins m WHERE m.user_id= :id",nativeQuery = true)
-	public Medecin getMedecinByUserId(@Param("id")long id);
-}
-=======
 	
 	@Query(value = "SELECT m.* FROM medecins m WHERE m.user_id= :id",nativeQuery = true)
 	public Medecin getMedecinByUserId(@Param("id")long id);
@@ -46,4 +38,3 @@ public interface MedecinRepository extends JpaRepository<Medecin, Long> {
 	//
 }
 
->>>>>>> 99085ea3f9b1233061d1e0ed0b85ffba46361418
