@@ -5,7 +5,10 @@ import org.springframework.stereotype.Repository;
 
 import com.clinitalPlatform.models.Patient;
 
+import java.util.Optional;
+
 @Repository
 public interface PatientRepository extends JpaRepository<Patient, Long> {
+
 	
 }

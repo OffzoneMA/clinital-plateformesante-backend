@@ -71,50 +71,6 @@ public class AuthController {
 	private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
 
-	// A method that is called when the user clicks on the link in the email.%OK%
-
-	/*@PostMapping("/signin")
-	public ResponseEntity<?> authenticateAndGetToken(@RequestBody LoginRequest loginRequest) {
-		try {
-			UserDetails userDetail = userDetailsService.loadUserByUsername(loginRequest.getEmail());
-			Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
-			SecurityContextHolder.getContext().setAuthentication(authentication);
-			UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-			String jwt = jwtService.generateToken(loginRequest.getEmail());
-			User user = userServices.findById(userDetails.getId());
-			System.out.println(user.getEmail());
-			globalVariables.setConnectedUser(user);
-
-			// Vérifier si le compte est bloqué
-			if (!userDetailsService.isEnabled(loginRequest.getEmail())) {
-				LOGGER.info("Account is blocked");
-				return ResponseEntity.ok(new ApiResponse(false, "Your Account is Blocked please try to Contact Clinital Admin"));
-			}
-
-			// Vérifier si l'email est vérifié
-			if (!user.getEmailVerified()) {
-				LOGGER.info("Email is not verified");
-				return ResponseEntity.ok(new ApiResponse(false, "Email Not Verified"));
-			}
-
-			// Si toutes les conditions sont remplies, mettre à jour la date de dernière connexion et créer une activité de connexion réussie
-			autService.updateLastLoginDate(userDetails.getId());
-			activityServices.createActivity(new Date(), "Login", "Authentication reussi", user);
-			LOGGER.info("Authentication reussi");
-
-			// Retourner la réponse avec le token JWT et les détails de l'utilisateur
-			return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getId(), userDetails.getEmail(), userDetails.getTelephone(), userDetails.getRole()));
-		} catch (UsernameNotFoundException e) {
-			// Aucun compte associé à cet email
-			return ResponseEntity.ok(new ApiResponse(false, "No account associated with this email"));
-		} catch (DisabledException e) {
-			// Le compte est bloqué
-			return ResponseEntity.ok(new ApiResponse(false, "Your Account is Blocked please try to Contact Clinital Admin"));
-		} catch (BadCredentialsException e) {
-			// Mot de passe incorrect
-			return ResponseEntity.ok(new ApiResponse(false, "Incorrect password"));
-		}
-	}*/
 
 	@PostMapping("/signin")
 	public ResponseEntity<?> authenticateAndGetToken(@RequestBody LoginRequest loginRequest) {
@@ -153,109 +109,14 @@ public class AuthController {
 			return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getId(), userDetails.getEmail(), userDetails.getTelephone(), userDetails.getRole()));
 		} catch (UsernameNotFoundException e) {
 			// Aucun compte associé à cet email
+			System.out.println("no account");
 			return ResponseEntity.ok(new ApiResponse(false, "no_account"));
 		} catch (BadCredentialsException e) {
+			System.out.println("incorrect");
 			// Mot de passe incorrect
 			return ResponseEntity.ok(new ApiResponse(false, "incorrect_password"));
 		}
 	}
-
-
-
-
-
-	/*@PostMapping("/signin")
-    public ResponseEntity<?> authenticateAndGetToken( @RequestBody LoginRequest loginRequest) {
-     try {
-
-		 //Rechercer un user par mail
-		 UserDetails userDetail = userDetailsService.loadUserByUsername(loginRequest.getEmail());
-
-		 Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
-		 SecurityContextHolder.getContext().setAuthentication(authentication);
-
-		 UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-		 String jwt = jwtService.generateToken(loginRequest.getEmail());
-		 User user = userServices.findById(userDetails.getId());
-		 System.out.println(user.getEmail());
-		 globalVariables.setConnectedUser(user);
-
-		 if (!user.isEnabled()) {
-			 // Si le compte de l'utilisateur est bloqué, retourner une réponse appropriée
-			 return ResponseEntity.badRequest().body("Votre compte est bloqué. Veuillez contacter l'administrateur de Clinital.");
-		 }
-
-		 if (user.getEmailVerified()) {
-			 autService.updateLastLoginDate(userDetails.getId());
-			 activityServices.createActivity(new Date(), "Login", "Authentication reussi", user);
-			 LOGGER.info("Authentication reussi");
-			 return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getId(), userDetails.getEmail(),
-					 userDetails.getTelephone(), userDetails.getRole()));
-
-		 } else {
-
-			 return ResponseEntity.ok(new ApiResponse(false, "Email Not Verified"));
-		 }
-
-	 } catch (UsernameNotFoundException e) {
-		 // E-mail non valide
-		 return ResponseEntity.ok(new ApiResponse(false, "Aucun compte est associé à cet mail"));
-	 }
-	 catch (BadCredentialsException e) {
-		 // Mot de passe incorrect
-		 return ResponseEntity.ok(new ApiResponse(false, "Incorrect password"));
-	 }
-
-
-    }*/
-
-	/*@PostMapping("/signin")
-	public ResponseEntity<?> authenticateAndGetToken( @RequestBody LoginRequest loginRequest) {
-		try {
-
-			UserDetails userDetail = userDetailsService.loadUserByUsername(loginRequest.getEmail());
-			//Verification si le compte est actif
-
-			Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
-			SecurityContextHolder.getContext().setAuthentication(authentication);
-			UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-			String jwt = jwtService.generateToken(loginRequest.getEmail());
-			User user = userServices.findById(userDetails.getId());
-			System.out.println(user.getEmail());
-			globalVariables.setConnectedUser(user);
-
-			if (!userDetails.isEnabled()) {
-				return ResponseEntity.ok(new ApiResponse(false,"Your Account is Blocked please try to Contact Clinital Admin"));
-			}
-
-			if (user.getEmailVerified()) {
-				autService.updateLastLoginDate(userDetails.getId());
-				activityServices.createActivity(new Date(), "Login", "Authentication reussi", user);
-				LOGGER.info("Authentication reussi");
-				return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getId(), userDetails.getEmail(),
-						userDetails.getTelephone(), userDetails.getRole()));
-
-			} else {
-				return ResponseEntity.ok(new ApiResponse(false, "Email Not Verified"));
-			}
-
-		} catch (UsernameNotFoundException e) {
-			// E-mail non valide
-			return ResponseEntity.ok(new ApiResponse(false, "Aucun compte est associé à cet mail"));
-		}
-
-		catch (DisabledException e){
-			return ResponseEntity.ok(new ApiResponse(false, "Your Account is Blocked please try to Contact Clinital Admin"));
-		}
-
-		catch (BadCredentialsException e) {
-			// Mot de passe incorrect
-			return ResponseEntity.ok(new ApiResponse(false, "Incorrect password"));
-		}
-
-
-	}*/
-
 
 	/*@PostMapping("/signup")
 	public ResponseEntity<?> registerUser( @RequestBody SignupRequest signUpRequest) throws Exception {
@@ -279,32 +140,6 @@ public class AuthController {
 					.body(new ApiError(false, "An error occurred while registering new user."));
 		}
 	}
-
-/*@GetMapping("confirmaccount")
-	public ResponseEntity<?> getMethodName(@RequestParam String token) {
-
-		ConfirmationToken confirmationToken = autService.findByConfirmationToken(token);
-
-		if (confirmationToken == null) {
-			throw new BadRequestException("Invalid token");
-		}
-
-		User user = confirmationToken.getUser();
-		Calendar calendar = Calendar.getInstance();
-
-		if ((confirmationToken.getExpiryDate().getTime() - calendar.getTime().getTime()) <= 0) {
-			return ResponseEntity.badRequest()
-					.body("Lien expiré, generez un nouveau lien http://localhost:8080/signin");
-		}
-
-		user.setEmailVerified(true);
-		user.setEnabled(true);
-		autService.save(user);
-		LOGGER.info("Account verified successfully :"+user.getEmail());
-		return ResponseEntity.ok("this Account verified successfully!");
-
-	}*/
-
 
 
 	@GetMapping("confirmaccount")
@@ -410,7 +245,6 @@ public class AuthController {
 			throw new BadRequestException("Email non associé ");
 		}
 	}
-
 
 
 
