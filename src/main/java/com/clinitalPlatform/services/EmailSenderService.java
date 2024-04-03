@@ -155,4 +155,31 @@ public class EmailSenderService {
 		}
 
 	}
+
+	//Email de reinistialisation du password
+
+	public void sendResetPasswordMail(String userEmail, String resetToken) {
+		try {
+			SimpleMailMessage mailMessage = new SimpleMailMessage();
+			String resetPasswordUrl = "http://localhost:3000/login/reinitialize-password?reset=" + resetToken;
+
+			mailMessage.setTo(userEmail);
+			mailMessage.setFrom("clinitalcontact@gmail.com");
+			mailMessage.setSubject("Réinitialisation de votre mot de passe");
+			mailMessage.setText("Bonjour,\n\n"
+					+ "Vous avez demandé la réinitialisation de votre mot de passe pour votre compte Clinital.\n\n"
+					+ "Veuillez cliquer sur le lien ci-dessous pour réinitialiser votre mot de passe :\n"
+					+ resetPasswordUrl
+					+ "\n\nCe lien expirera dans 10 minutes.\n\n"
+					+ "Cordialement,\nVotre équipe Clinital");
+			javaMailSender.send(mailMessage);
+			LOGGER.info("E-mail de réinitialisation du mot de passe envoyé à {}", userEmail);
+		} catch (Exception e) {
+			LOGGER.error("Erreur lors de l'envoi de l'e-mail de réinitialisation du mot de passe : {}", e);
+		}
+	}
+
+
+
+
 }
