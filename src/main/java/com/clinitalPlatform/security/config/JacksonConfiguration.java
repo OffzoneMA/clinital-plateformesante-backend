@@ -1,9 +1,11 @@
+
 package com.clinitalPlatform.security.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
 
 //@Configuration
 //public class JacksonConfiguration {
@@ -16,5 +18,6 @@ import org.springframework.context.annotation.Configuration;
 //ObjectMapper mapper = new ObjectMapper();
 //        mapper.registerModule(new JavaTimeModule());
 //        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
 //    }
 //}
