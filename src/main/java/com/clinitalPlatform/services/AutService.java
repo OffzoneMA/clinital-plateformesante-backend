@@ -87,6 +87,9 @@ public class AutService {
 		return patientRepository.findByPatientEmail(patientEmail);
 	}
 
+	public void deleteByResetToken(String resetToken) {
+		passwordResetTokenRepository.deleteByResetToken(resetToken);
+	}
 	public String getDateOfBirthByEmail(String patientEmail) {
 		Optional<Patient> patientOptional = patientRepository.findByPatientEmail(patientEmail);
 		if (patientOptional.isPresent()) {

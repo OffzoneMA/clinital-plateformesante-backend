@@ -5,8 +5,9 @@ import java.util.*;
 
 
 import com.clinitalPlatform.models.Patient;
-import com.clinitalPlatform.payload.request.ForgetpwdRequest;
-import com.clinitalPlatform.payload.request.VerifyEmailRequest;
+import com.clinitalPlatform.payload.request.*;
+import com.clinitalPlatform.payload.response.MessageResponse;
+import com.clinitalPlatform.repository.PasswordResetTokenRepository;
 import com.clinitalPlatform.security.jwt.PasswordResetToken;
 import com.clinitalPlatform.security.services.UserDetailsServiceImpl;
 import com.clinitalPlatform.services.EmailSenderService;
@@ -14,6 +15,7 @@ import com.clinitalPlatform.util.ApiError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -23,6 +25,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import org.slf4j.Logger;
@@ -31,8 +34,6 @@ import org.slf4j.LoggerFactory;
 import com.clinitalPlatform.util.GlobalVariables;
 import com.clinitalPlatform.exception.BadRequestException;
 import com.clinitalPlatform.models.User;
-import com.clinitalPlatform.payload.request.LoginRequest;
-import com.clinitalPlatform.payload.request.SignupRequest;
 import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.payload.response.JwtResponse;
 import com.clinitalPlatform.security.jwt.ConfirmationToken;
@@ -41,6 +42,7 @@ import com.clinitalPlatform.security.services.UserDetailsImpl;
 import com.clinitalPlatform.services.ActivityServices;
 import com.clinitalPlatform.services.AutService;
 import com.clinitalPlatform.services.UserService;
+import org.springframework.web.client.HttpClientErrorException;
 
 import javax.validation.Valid;
 
@@ -71,11 +73,13 @@ public class AuthController {
     private UserDetailsServiceImpl userDetailsService;
     @Autowired
     EmailSenderService emailSenderService;
+    @Autowired
+    PasswordEncoder encoder;
     //Jounalisation
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
 
-	//CONNEXION--------------------------------------------------
+    //CONNEXION--------------------------------------------------
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateAndGetToken(@RequestBody LoginRequest loginRequest) {
         try {
@@ -122,7 +126,7 @@ public class AuthController {
         }
     }
 
-	//INSCRIPTION--------------------------------------------------------------
+    //INSCRIPTION--------------------------------------------------------------
 	/*@PostMapping("/signup")
 	public ResponseEntity<?> registerUser( @RequestBody SignupRequest signUpRequest) throws Exception {
 
@@ -252,41 +256,49 @@ public class AuthController {
 
     //MOT DE PASSE OUBLIÉ-------------------------------------------------------------------
     @PostMapping("/forgotpassword")
-    public ResponseEntity<String> forgotPassword(@RequestBody ForgetpwdRequest forgetpwdRequest) {
-        // Vérifier si l'e-mail et la date de naissance sont fournis
-        if (forgetpwdRequest.getPatientEmail() != null && !forgetpwdRequest.getPatientEmail().isEmpty() && forgetpwdRequest.getDateNaissance() != null) {
-            // Récupérer le patient associé à l'e-mail
-            System.out.println("email du patient " + forgetpwdRequest.getPatientEmail());
-            Optional<Patient> patientOptional = autService.findByPatientEmail(forgetpwdRequest.getPatientEmail());
+    public ResponseEntity<?> forgotPassword(@RequestBody ForgetpwdRequest forgetpwdRequest) {
+        try {
+            // Vérifier si l'e-mail et la date de naissance sont fournis
+            if (forgetpwdRequest.getPatientEmail() != null && !forgetpwdRequest.getPatientEmail().isEmpty() && forgetpwdRequest.getDateNaissance() != null) {
+                // Récupérer le patient associé à l'e-mail
 
-            if (patientOptional.isPresent()) {
-                Patient patient = patientOptional.get();
-                //Formattage de la date de naissance du Patient
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                String formattedPatientDateOfBirth = dateFormat.format(patient.getDateNaissance());//formatter la date de nainssance du patient
-                String formattedUserDateOfBirth = dateFormat.format(forgetpwdRequest.getDateNaissance());//Formatter à nouveau la date de naissance entrer
-                // Vérifier si la date de naissance fournie correspond à celle du patient
-                if (formattedPatientDateOfBirth.equals(formattedUserDateOfBirth)) {
+                Optional<Patient> patientOptional = autService.findByPatientEmail(forgetpwdRequest.getPatientEmail());
 
-                    // Si les informations fournies par l'utilisateur correspondent, générer le token de réinitialisation
-                    PasswordResetToken resetToken = autService.createRestetToken(patient.getUser());
-                    String tokenValue = resetToken.getResetToken();
+                if (patientOptional.isPresent()) {
+                    Patient patient = patientOptional.get();
+                    //Formattage de la date de naissance du Patient
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                    String formattedPatientDateOfBirth = dateFormat.format(patient.getDateNaissance());//formatter la date de nainssance du patient
+                    String formattedUserDateOfBirth = dateFormat.format(forgetpwdRequest.getDateNaissance());//Formatter à nouveau la date de naissance entrer
+                    // Vérifier si la date de naissance fournie correspond à celle du patient
+                    if (formattedPatientDateOfBirth.equals(formattedUserDateOfBirth)) {
 
-                    // Envoyer l'e-mail de réinitialisation à l'utilisateur
-                    emailSenderService.sendResetPasswordMail(forgetpwdRequest.getPatientEmail(), tokenValue);
-                    // Retourner un message de succès
-                    return new ResponseEntity<>("Un e-mail de réinitialisation a été envoyé à l'adresse " + forgetpwdRequest.getPatientEmail(), HttpStatus.OK);
+
+                        // Si les informations fournies par l'utilisateur correspondent, générer le token de réinitialisation
+                        PasswordResetToken resetToken = autService.createRestetToken(patient.getUser());
+                        String tokenValue = resetToken.getResetToken();
+
+                        // Envoyer l'e-mail de réinitialisation à l'utilisateur
+                        emailSenderService.sendResetPasswordMail(forgetpwdRequest.getPatientEmail(), tokenValue);
+                        // Retourner un message de succès
+                        return ResponseEntity.ok(new ApiResponse(true,"Un e-mail de réinitialisation a été envoyé à l'adresse " + forgetpwdRequest.getPatientEmail()));
+
+                    } else {
+                        // Si les informations fournies par l'utilisateur ne correspondent pas, retourner un message d'erreur
+                        return  ResponseEntity.ok(new ApiResponse(false,"Les informations fournies ne correspondent pas. Veuillez vérifier votre e-mail et votre date de naissance." ));
+
+                    }
                 } else {
-                    // Si les informations fournies par l'utilisateur ne correspondent pas, retourner un message d'erreur
-                    return new ResponseEntity<>("Les informations fournies ne correspondent pas. Veuillez vérifier votre e-mail et votre date de naissance.", HttpStatus.BAD_REQUEST);
+                    return ResponseEntity.ok(new ApiResponse(false,"Aucun patient trouvé pour l'e-mail: " + forgetpwdRequest.getPatientEmail()));
                 }
             } else {
-                // Si aucun patient n'est trouvé pour l'e-mail fourni, retourner un message d'erreur
-                return new ResponseEntity<>("Aucun patient trouvé pour l'e-mail: " + forgetpwdRequest.getPatientEmail(), HttpStatus.NOT_FOUND);
+                return ResponseEntity.ok(new ApiResponse(false,"L'e-mail et la date de naissance sont requis."));
+
             }
-        } else {
-            // Si l'e-mail ou la date de naissance ne sont pas fournis, retourner un message d'erreur
-            return new ResponseEntity<>("L'e-mail et la date de naissance sont requis.", HttpStatus.BAD_REQUEST);
+        } catch (HttpClientErrorException.Unauthorized e) {
+            // Erreur 401 Unauthorized
+            return  ResponseEntity.ok(new ApiResponse(false,"Erreur de traitement. Veuillez réessayer plus tard."));
+
         }
     }
 
@@ -306,8 +318,30 @@ public class AuthController {
         return ResponseEntity.ok(passwordResetToken.getResetToken());
     }
 
+    //RESET PASSWORD-------------------------------
+    @PostMapping("/resetpassword")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest resetPasswordRequest, @RequestParam("reset") String resetToken) {
+        PasswordResetToken token = autService.findByResetToken(resetToken);
 
+        if (token != null) {
+            // Vérifiez si le jeton est encore valide
+            if (!token.isExpired()) {
+                // Mettez à jour le mot de passe de l'utilisateur avec le nouveau mot de passe fourni
+                User user = token.getUser();
+                user.setPassword(encoder.encode(resetPasswordRequest.getNewPassword()));
+                autService.save(user);
+                // Supprimez le jeton de réinitialisation car il a été utilisé
+                autService.deleteByResetToken(resetToken);
 
-
+                return ResponseEntity.ok(new ApiResponse(true, "Mot de passe réinitialisé avec succès."));
+            } else {
+                // Le jeton de réinitialisation a expiré
+                return ResponseEntity.badRequest().body(new MessageResponse("Le jeton de réinitialisation a expiré. Veuillez demander un nouveau lien de réinitialisation."));
+            }
+        } else {
+            // Aucun jeton de réinitialisation trouvé pour le token fourni
+            return ResponseEntity.badRequest().body(new MessageResponse("Jeton de réinitialisation invalide."));
+        }
+    }
 
 }

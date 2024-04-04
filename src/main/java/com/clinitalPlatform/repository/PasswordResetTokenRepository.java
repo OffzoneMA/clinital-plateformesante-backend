@@ -11,8 +11,9 @@ public interface PasswordResetTokenRepository extends
 
 
     PasswordResetToken findByResetToken(String resetToken);
+    void deleteByResetToken(String resetToken);
 
-    @Query(value = "", nativeQuery = true)
+    @Query(value = "SELECT * FROM password_reset_token WHERE user_id = ?1", nativeQuery = true)
     PasswordResetToken findByUserId(long userId);
 
 }
