@@ -131,14 +131,14 @@ public class DocumentController {
             // --------------- update saved doc
             Document finalSavedDoc = docrepository.save(savedDoc);
             // ----- add doc info to RDV :
-            Rendezvous rdv= rdvRepository.findById(finalSavedDoc.getRendezvous().getId()).orElseThrow(()->new Exception("NO MATCHING FOUND"));
-            rdv.getDocuments().add(finalSavedDoc);
+            //Rendezvous rdv= rdvRepository.findById(finalSavedDoc.getRendezvous().getId()).orElseThrow(()->new Exception("NO MATCHING FOUND"));
+            //rdv.getDocuments().add(finalSavedDoc);
 
             //update rendez-vous
-            rdvRepository.save(rdv);
+            //rdvRepository.save(rdv);
 
             activityServices.createActivity(new Date(),"Add","Add New document ID:"+finalSavedDoc.getId_doc(),globalVariables.getConnectedUser());
-            LOGGER.info("Add new  documents ID :"+finalSavedDoc.getId_doc()+" By User ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+            LOGGER.info("Add new document with ID "+finalSavedDoc.getId_doc()+" By User with ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
             return ResponseEntity.ok(new ApiResponse(true, "Document created successfully!",finalSavedDoc));
         } catch (Exception e) {
             e.printStackTrace();
