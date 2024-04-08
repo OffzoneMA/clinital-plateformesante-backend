@@ -133,14 +133,6 @@ public class AuthController {
     }
 
     //INSCRIPTION--------------------------------------------------------------
-	/*@PostMapping("/signup")
-	public ResponseEntity<?> registerUser( @RequestBody SignupRequest signUpRequest) throws Exception {
-
-		userServices.registerNewUser(signUpRequest);
-		return ResponseEntity.ok(new ApiResponse(true, "User registered successfully"));
-
-	}*/
-
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@RequestBody SignupRequest signUpRequest) {
         try {
@@ -167,10 +159,6 @@ public class AuthController {
 
         User user = confirmationToken.getUser();
         Calendar calendar = Calendar.getInstance();
-
-		/*if (user.getEmailVerified()) {
-			return ResponseEntity.badRequest().body("Votre compte est déjà activé.");
-		}*/
 
 
         if ((confirmationToken.getExpiryDate().getTime() - calendar.getTime().getTime()) <= 0) {
@@ -258,6 +246,61 @@ public class AuthController {
         String tokenValue = confirmationToken.getConfirmationToken();
         return ResponseEntity.ok(tokenValue);
     }
+
+
+    //RESEND EMAIL
+
+    /*@PostMapping("/resendConfirmation")
+    public ResponseEntity<?> resendConfirmationEmail(@RequestBody ResendEmailRequest resendEmailRequest) {
+        String email = resendEmailRequest.getEmail();
+
+        if (autService.existsByEmail(resendEmailRequest.getEmail())) {
+
+            if (userDetailsService.isAccountVerified(resendEmailRequest.getEmail())) {
+                throw new BadRequestException("Email est déjà vérifié ");
+            } else {
+                User user = autService.findByEmail(resendEmailRequest.getEmail());
+                ConfirmationToken token = autService.createToken(user);
+
+                emailSenderService.sendMail(user.getEmail(), token.getConfirmationToken());
+                return ResponseEntity.ok(new ApiResponse(true, "Un lien de vérification a été envoyé par mail"));
+            }
+        } else {
+            throw new BadRequestException("Email non associé ");
+        }
+    }*/
+    @PostMapping("/resendConfirmation")
+    public ResponseEntity<?> resendConfirmationEmail(@RequestBody ResendEmailRequest resendEmailRequest) {
+        try {
+            String email = resendEmailRequest.getEmail();
+            if (resendEmailRequest.getEmail() == null || resendEmailRequest.getEmail().isEmpty()) {
+                throw new BadRequestException("L'adresse e-mail n'est pas fournie");
+            }
+
+
+            if (autService.existsByEmail(resendEmailRequest.getEmail())) {
+
+                if (userDetailsService.isAccountVerified(resendEmailRequest.getEmail())) {
+                    throw new BadRequestException("Email est déjà vérifié ");
+                } else {
+                    User user = autService.findByEmail(resendEmailRequest.getEmail());
+                    ConfirmationToken token = autService.createToken(user);
+
+                    emailSenderService.sendMail(user.getEmail(), token.getConfirmationToken());
+                    return ResponseEntity.ok(new ApiResponse(true, "Un lien de vérification a été envoyé par mail"));
+                }
+            } else {
+                throw new BadRequestException("Email non associé ");
+            }
+        } catch (BadRequestException e) {
+            // Gestion de l'exception BadRequestException
+            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
+        } catch (Exception e) {
+            // Gestion des autres exceptions
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(false, "Une erreur s'est produite lors de l'envoi du mail de confirmation."));
+        }
+    }
+
 
 
     //MOT DE PASSE OUBLIÉ-------------------------------------------------------------------
