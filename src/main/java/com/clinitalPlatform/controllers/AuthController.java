@@ -248,27 +248,8 @@ public class AuthController {
     }
 
 
-    //RESEND EMAIL
+    //RESEND EMAIL---------------------------------
 
-    /*@PostMapping("/resendConfirmation")
-    public ResponseEntity<?> resendConfirmationEmail(@RequestBody ResendEmailRequest resendEmailRequest) {
-        String email = resendEmailRequest.getEmail();
-
-        if (autService.existsByEmail(resendEmailRequest.getEmail())) {
-
-            if (userDetailsService.isAccountVerified(resendEmailRequest.getEmail())) {
-                throw new BadRequestException("Email est déjà vérifié ");
-            } else {
-                User user = autService.findByEmail(resendEmailRequest.getEmail());
-                ConfirmationToken token = autService.createToken(user);
-
-                emailSenderService.sendMail(user.getEmail(), token.getConfirmationToken());
-                return ResponseEntity.ok(new ApiResponse(true, "Un lien de vérification a été envoyé par mail"));
-            }
-        } else {
-            throw new BadRequestException("Email non associé ");
-        }
-    }*/
     @PostMapping("/resendConfirmation")
     public ResponseEntity<?> resendConfirmationEmail(@RequestBody ResendEmailRequest resendEmailRequest) {
         try {
