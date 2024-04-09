@@ -107,9 +107,9 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
 
         @Query(value ="SELECT * FROM patients WHERE id = :id",nativeQuery = true)
         Patient getById(Long id);
-    }
+   
 
     Optional<Patient> findByPatientEmail(String patientEmail);
 
+ }
 
-}
