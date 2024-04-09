@@ -523,7 +523,7 @@ public class MedecinController {
 
 								//agenda = medecinService.CreateCreno(medsch, agenda, idmed, j, startDate.atStartOfDay());
 
-								// diffrance hours :
+			 					// diffrance hours :
 								long Hours = ChronoUnit.HOURS.between(medsch.getAvailabilityStart(),
 										medsch.getAvailabilityEnd());
 								agenda.getMedecinTimeTable().add(new GeneralResponse("startTime",

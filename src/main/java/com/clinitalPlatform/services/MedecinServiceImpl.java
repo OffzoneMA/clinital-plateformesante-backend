@@ -4,6 +4,7 @@ package com.clinitalPlatform.services;
 import java.util.Date;
 import java.util.List;
 
+import com.clinitalPlatform.enums.RdvStatutEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -111,20 +112,32 @@ public Medecin getMedecinByUserId(long id) throws Exception {
                     //rdv.getStart().isEqual(slotTime)
                     LocalDateTime rdvStart = rdv.getStart();
                     LocalDateTime rdvEnd = rdv.getEnd();
-
                     // Vérifier si le créneau actuel se situe entre l'heure de début et de fin du rendez-vous
-                    if (slotTime.isEqual(rdvStart) || (slotTime.isAfter(rdvStart) && slotTime.isBefore(rdvEnd))
-                            && rdvStart.toLocalDate().isEqual(date.toLocalDate()))
-                    {
+//                    if ((slotTime.isEqual(rdvStart) || (slotTime.isAfter(rdvStart) && slotTime.isBefore(rdvEnd)))
+//                            && rdvStart.toLocalDate().isEqual(date.toLocalDate()))
+//                    {
+//                        LOGGER.info("isReserved ");
+
+//                        isReserved = true;
+//                        break;
+//                    }
+                    if(rdv.getStatut().equals(RdvStatutEnum.ANNULE)){
+                        isReserved=false;
+                        continue;
+                    }
+                    //cas conge longue duree
+//                    if (rdvStart.toLocalDate().isBefore(date.toLocalDate()) && rdvEnd.toLocalDate().isAfter(date.toLocalDate())) {
+//                        isReserved = true;
+//                        break;
+//                    }
+                    if ((slotTime.getHour() == rdvStart.getHour() && slotTime.getMinute() == rdvStart.getMinute())
+                            || (slotTime.toLocalTime().isAfter(rdvStart.toLocalTime()) && slotTime.toLocalTime().isBefore(rdvEnd.toLocalTime()))
+                            && date.toLocalDate().isEqual(rdvStart.toLocalDate()) ) {
                         isReserved = true;
                         break;
                     }
-//                if (rdv.getStart().getHour() == timer.getHour()
-//                            && rdv.getStart().getMinute() == timer.getMinute()
-//                            && rdv.getStart().toLocalDate().isEqual(date.toLocalDate())) {
-//                    isReserved = true;
-//                    break;
-//                }
+
+//
             }
 
             if (!isReserved) {
