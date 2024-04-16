@@ -7,7 +7,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+@JsonIgnoreProperties({"hibernateLazyInitializer","handler"})
 @Entity
 @Table(name = "mode_consultation")
 @Data
@@ -34,6 +35,9 @@ public class ModeConsultation {
 		this.mode = mode;
 	}
 
+    public ModeConsultation(Long modeconsultation) {
+		this.id_mode=modeconsultation;
+    }
 }
 
     

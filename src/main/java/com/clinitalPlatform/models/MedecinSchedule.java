@@ -10,7 +10,8 @@ import com.clinitalPlatform.enums.ConsultationPeriodEnum;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+@JsonIgnoreProperties({"hibernateLazyInitializer","handler"})
 @Data
 @Table(name = "medecin_schedule")
 @Entity

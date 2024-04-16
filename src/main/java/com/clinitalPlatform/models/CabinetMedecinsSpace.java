@@ -5,7 +5,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+@JsonIgnoreProperties({"hibernateLazyInitializer","handler"})
 @Entity
 @Table(name = "Cabinet_Medecins")
 @Data
@@ -17,6 +18,7 @@ public class CabinetMedecinsSpace {
     @ManyToOne(cascade = CascadeType.ALL,fetch = FetchType.LAZY)
     @MapsId("medecin_id")
     @JoinColumn(name = "medecin_id", referencedColumnName = "id")
+    // @OnDelete(action = OnDeleteAction.CASCADE)
     @JsonIgnore
     private Medecin medecin;
 

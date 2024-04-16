@@ -3,15 +3,14 @@ package com.clinitalPlatform.models;
 import java.util.Date;
 import java.util.List;
 
-import javax.validation.constraints.NotNull;
-
 import com.clinitalPlatform.enums.CiviliteEnum;
 import com.clinitalPlatform.enums.PatientTypeEnum;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+@JsonIgnoreProperties({"hibernateLazyInitializer","handler"})
 @Entity
 @Table(name = "patients")
 @Data
@@ -73,8 +72,8 @@ public class Patient {
 		super();
 	}
 
-	public Patient(@NotNull String nom_pat, @NotNull String prenom_pat, @NotNull Date dateNaissance,
-			@NotNull String adresse_pat, @NotNull String codePost_pat, @NotNull String matricule_pat,
+	public Patient( String nom_pat,  String prenom_pat,  Date dateNaissance,
+			 String adresse_pat,  String codePost_pat,  String matricule_pat,
 			CiviliteEnum civilite_pat, Ville ville, DossierMedical dossierMedical, List<Rendezvous> lesrdvs,
 			PatientTypeEnum patient_type,User user ) {
 		super();
@@ -92,4 +91,7 @@ public class Patient {
 	
 	}
 
+    public Patient(long patientid) {
+		this.id=patientid;
+    }
 }

@@ -2,11 +2,10 @@ package com.clinitalPlatform.models;
 
 import java.util.Date;
 
-import javax.validation.constraints.NotBlank;
-
 import jakarta.persistence.*;
 import lombok.Data;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+@JsonIgnoreProperties({"hibernateLazyInitializer","handler"})
 @Entity
 @Table(name = "LogActivityUser")
 @Data
@@ -23,7 +22,7 @@ public class LogActivityUser {
 
     
     
-    public LogActivityUser(@NotBlank Date TimeActivity, String typeActivity, String description, User user) {
+    public LogActivityUser( Date TimeActivity, String typeActivity, String description, User user) {
         super();
         this.TimeActivity = TimeActivity;
         this.typeActivity = typeActivity;

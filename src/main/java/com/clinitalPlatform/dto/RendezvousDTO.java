@@ -25,4 +25,8 @@ public class RendezvousDTO {
 	private String LinkVideoCall;
 	private Long cabinet;
 
+
+	public String getLinkVideocall() {
+		return LinkVideoCall;
+	}
 }

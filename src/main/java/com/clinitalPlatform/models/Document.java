@@ -3,13 +3,12 @@ package com.clinitalPlatform.models;
 import java.util.Date;
 import java.util.List;
 
-import javax.validation.constraints.NotBlank;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
-
+@JsonIgnoreProperties({"hibernateLazyInitializer","handler"})
 @Entity
 @Table(name = "documents")
 @Data
@@ -60,8 +59,8 @@ public class Document {
 		super();
 	}
 
-	public Document(@NotBlank Long numero_doc, @NotBlank String titre_doc, @NotBlank Date date_ajout_doc,
-			@NotBlank String auteur, @NotBlank String fichier_doc, Patient patient, DossierMedical dossier,
+	public Document( Long numero_doc, String titre_doc,  Date date_ajout_doc,
+			 String auteur,  String fichier_doc, Patient patient, DossierMedical dossier,
 			List<Medecin> medecins) {
 		super();
 		this.numero_doc = numero_doc;

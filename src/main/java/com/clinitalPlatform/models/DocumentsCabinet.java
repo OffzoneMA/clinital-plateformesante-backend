@@ -7,7 +7,8 @@ import com.clinitalPlatform.enums.CabinetDocuemtsEnum;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+@JsonIgnoreProperties({"hibernateLazyInitializer","handler"})
 @Entity
 @Table(name="DocumentsCabinet")
 @Data

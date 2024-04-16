@@ -8,7 +8,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import jakarta.persistence.*;
 
 import java.util.Date;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+@JsonIgnoreProperties({"hibernateLazyInitializer","handler"})
 @Entity
 @Table(name = "diplome_medecin")
 @Data

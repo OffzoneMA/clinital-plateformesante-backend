@@ -2,8 +2,6 @@ package com.clinitalPlatform.models;
 
 import java.util.List;
 
-import javax.validation.constraints.NotNull;
-
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
@@ -11,7 +9,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+@JsonIgnoreProperties({"hibernateLazyInitializer","handler"})
 @Entity
 @Table(name = "cabinet")
 @Data
@@ -50,7 +49,7 @@ public class Cabinet {
 		super();
 	}
 
-	public Cabinet(@NotNull String nom, @NotNull String adresse, @NotNull String code_post,String phoneNumber, @NotNull Ville ville,Medecin creator,Boolean state
+	public Cabinet( String nom,  String adresse,  String code_post,String phoneNumber,  Ville ville,Medecin creator,Boolean state
 			) {
 		super();
 		this.nom = nom;
@@ -63,4 +62,7 @@ public class Cabinet {
 	
 	}
 
+    public Cabinet(Long cabinet) {
+		this.id_cabinet=cabinet;
+    }
 }

@@ -7,7 +7,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+@JsonIgnoreProperties({"hibernateLazyInitializer","handler"})
 @Entity
 @Table(name = "motifs_consultation")
 @Data
@@ -30,6 +31,10 @@ public class MotifConsultation {
 	public MotifConsultation(MotifConsultationEnum motif) {
 		super();
 		this.motif = motif;
+	}
+
+	public MotifConsultation(Long motif) {
+		this.id_motif=motif;
 	}
 }
 

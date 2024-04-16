@@ -5,12 +5,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
 import com.clinitalPlatform.enums.CiviliteEnum;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -31,14 +31,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-
+@JsonIgnoreProperties({"hibernateLazyInitializer","handler"})
 @Entity
 @Table(name = "medecins")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Medecin {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -86,8 +85,8 @@ public class Medecin {
 	@JoinTable(name = "DocumentMedecin",
 	 	joinColumns = @JoinColumn(name = "medecin_id"),
 		inverseJoinColumns = @JoinColumn(name = "document_id"))
-	@JsonIgnore
-	private List<Document> Meddoc;
+		@JsonIgnore
+	  private List<Document> Meddoc;
 
 	
 	// in this we create a Bridge table between Medecin and DossierMedical to link them together
@@ -95,8 +94,8 @@ public class Medecin {
 	@JoinTable(name = "DossierMedecin",
 	 	joinColumns = @JoinColumn(name = "medecin_id"),
 		inverseJoinColumns = @JoinColumn(name = "dossier_id"))
-	@JsonIgnore
-	private List<DossierMedical> Meddossiers;
+		@JsonIgnore
+	  private List<DossierMedical> Meddossiers;
 
 
 	// in this we create a Bridge table between Medecin and Cabinet to link them together
@@ -107,24 +106,28 @@ public class Medecin {
 	private Boolean isActive;
 
 
-	@OneToMany(cascade = CascadeType.ALL, mappedBy = "follower")
-	@Fetch(FetchMode.JOIN)
-	private Set<MedecinNetwork> followers = new HashSet<>();
+			@OneToMany(cascade = CascadeType.ALL, mappedBy = "follower")
+			@Fetch(FetchMode.JOIN)
+			private Set<MedecinNetwork> followers = new HashSet<>();
 
-	@OneToMany(cascade = CascadeType.ALL, mappedBy = "medecin")
-	@Fetch(FetchMode.SELECT)
-	private Set<MedecinNetwork> following = new HashSet<>();
+			@OneToMany(cascade = CascadeType.ALL, mappedBy = "medecin")
+			@Fetch(FetchMode.SELECT)
+			private Set<MedecinNetwork> following = new HashSet<>();
 
-	@OneToMany(mappedBy = "medecin")
-	@JsonIgnore
-	private List<Consultation> Consultations;
+			@OneToMany(mappedBy = "medecin")
+			@JsonIgnore
+			private List<Consultation> Consultations;
 
-	@OneToMany(mappedBy = "medecin")
-	@JsonIgnore
-	private List<Ordonnance> Ordonnance;
+			@OneToMany(mappedBy = "medecin")
+			@JsonIgnore
+			private List<Ordonnance> Ordonnance;
+
+    public Medecin(Long medecinid) {
+		this.id=medecinid;
+    }
 
 
-	public void removeCabinet(Cabinet cabinet) {
+    public void removeCabinet(Cabinet cabinet) {
         for (Iterator<CabinetMedecinsSpace> iterator = cabinets.iterator(); 
 			iterator.hasNext();) {
             CabinetMedecinsSpace cabinetMed = iterator.next();
@@ -138,7 +141,7 @@ public class Medecin {
         }
     }
 
-	public Medecin(Long id, String matricule_med, String inpe, String nom_med, String prenom_med,
+		public Medecin(Long id, String matricule_med, String inpe, String nom_med, String prenom_med,
 				   String photo_med, String photo_couverture_med, List<ExpertisesMedecin> expertises_med, List<DiplomeMedecin> diplome_med,
 				   String description_med, String contact_urgence_med,CiviliteEnum civilite_med,
 				   List<ExperienceMedecin> experience_med, Ville ville, Specialite specialite,

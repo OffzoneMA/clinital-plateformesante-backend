@@ -1,11 +1,14 @@
 package com.clinitalPlatform.repository;
 
+
 import com.clinitalPlatform.models.Rendezvous;
+import com.clinitalPlatform.models.Specialite;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -16,6 +19,14 @@ import java.util.Optional;
 
 @Repository
 public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
+	@Query("SELECT r FROM Rendezvous r WHERE r.day = :day AND r.medecin.specialite.id_spec = :specialty")
+	List<Rendezvous> findByDayAndMedecinSpecialty(@Param("day") LocalDate day, @Param("spec") Long specialty);
+	@Query(value = "SELECT p.* from rendezvous p , medecins m where p.medecin=m.id AND p.patient = :idpat and m.specialite_id_spec=:spec and DATE(p.start)=:date", nativeQuery = true)
+	List<Rendezvous> findRdvByPatientandSpecInDate(@Param(value = "idpat")Long idpat,@Param(value = "spec")Long spec,@Param(value = "date")LocalDate date) throws Exception;
+
+	@Query(value = "SELECT p.* from rendezvous p , medecins m where p.medecin=m.id and m.specialite_id_spec=:spec and DATE(p.start)=:date", nativeQuery = true)
+	List<Rendezvous> findRdvBySpecInDate(@Param(value = "spec")Long spec,@Param(value = "date")LocalDate date) throws Exception;
+
 
 	// get Rdv By Day :
 	@Query(value = "SELECT r.* FROM Rendezvous r , patients p where r.patient=p.id   and  DATE(r.start)= ?1 and p.user_id=?2",nativeQuery = true)
@@ -49,6 +60,8 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 	// Get Rdv By day :
 	@Query(value = "SELECT * FROM rendezvous WHERE day(start)=:day and patient= :id", nativeQuery = true)
 	List<Rendezvous> getRendezvousPatientByDay(@Param(value = "day")long day, @Param(value = "id")long id);
+	@Query(value = "SELECT * FROM rendezvous WHERE day(start)=:day ", nativeQuery = true)
+	List<Rendezvous> getRendezvousByDay(@Param(value = "day") long day);
 
 	@Query(value = "SELECT * FROM rendezvous WHERE week(start)=:week and patient= :id", nativeQuery = true)
 	List<Rendezvous> getRendezvousPatientByWeek(@Param(value = "week")long week, @Param(value = "id")long id);
@@ -63,7 +76,7 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 
 	// get RDV by ID :
 	@Query(value = "select * from Rendezvous  where id= :id", nativeQuery = true)
-	Optional<Rendezvous> getRendezvousById(Long id);
+	List<Rendezvous> getRendezvousById(Long id);
 
 	// get RDV by Iduser and id Patient :
 	@Query(value = "SELECT r.* FROM rendezvous r , patients p WHERE r.patient= p.id and r.patient=?2 and p.user_id=?1", nativeQuery = true)
@@ -127,11 +140,10 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 	@Modifying
 	@Query(value = "UPDATE rendezvous SET day = :#{#day_of_week.getValue()-1}, start = :start , statut = :statut, medecin = :medecinId, patient = :patientId, motif = :motif , end=:end,mode_consultation=:idmode WHERE id = :id", nativeQuery = true)
 	void UpdateRdvByIdProfile(@Param("day_of_week")DayOfWeek day_of_week,@Param("start") LocalDateTime start,@Param("statut") String statut,@Param("medecinId") Long medecinId,
+	
 	@Param("patientId")Long patientId,@Param("motif") String motif,@Param("end") LocalDateTime end,@Param("id") long Id,@Param("idmode")long idmode) throws Exception;
-
 	// get RDV by Id and id speciate in a date :
-	@Query(value = "select p.* from rendezvous p , medecins m where p.medecin=m.id AND p.patient = :idpat and m.specialite_id_spec=:spec and DATE(p.start)=:date", nativeQuery = true)
-	List<Rendezvous> findRdvByPatientandSpecInDate(@Param(value = "idpat")Long idpat,@Param(value = "spec")Long spec,@Param(value = "date")LocalDate date) throws Exception;
+
 
 	// get RDV by Id and id Medecin :
 	@Query(value = "select p.* from rendezvous p , medecins m where p.medecin=m.id AND  m.specialite_id_spec=:spec and DATE(start)=:date AND p.medecin=:idmed", nativeQuery = true)
@@ -147,4 +159,8 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 	// Get rdv of the given med and pat from today and next comming
 	@Query(value = "select * from rendezvous  where medecin=?1 and patient =?2 and DATE(start)>=curdate()", nativeQuery = true)
 	List<Rendezvous> getRdvByIdMedecinandIdPatientandDate(Long idmed,Long patient);
+
+
+
+//	List<Rendezvous> findByPatientIdAndMedecinSpecialiteIdAndDay(Long patientId, Long specialtyId, DayOfWeek dayOfWeek);
 }

@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -29,10 +30,10 @@ public class EmailSenderService {
 		mailMessage.setTo(userEmail);
 		mailMessage.setFrom("clinitalcontact@gmail.com");
 		mailMessage.setSubject("Activation du compte clinital!");
-		mailMessage.setText("Bonjour nous vous souhaitons la bienvenue sur la plateforme Clinital pour confirmer votre compte"
+		mailMessage.setText("Bonjour nous vous souhaiton la bienvenue sur la plateforme Clinital pour confirmer votre compte"
 				+ ", merci de cliquer sur le lien: "
 				+ BaseUrl+"/api/auth/confirmaccount?token=" + confirmationToken
-				+ "   Note: Ce lien va expirer après 10 minutes.");
+				+ "   Note: le lien va expirer après 10 minutes.");
 		javaMailSender.send(mailMessage);
 		LOGGER.info("A New Account has been Created, token activationis sent");
 
@@ -42,26 +43,6 @@ public class EmailSenderService {
 		}
 		
 	}
-//newlink email
-	public void sendMailConfirmationNewlink(String userEmail, String newLink) {
-		final String BaseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-		System.out.println("this is the URL Root :"+BaseUrl);
-		try {
-			SimpleMailMessage mailMessage = new SimpleMailMessage();
-			mailMessage.setTo(userEmail);
-			mailMessage.setFrom("clinitalcontact@gmail.com");
-			mailMessage.setSubject("Activation du compte Clinital!");
-			mailMessage.setText("Bonjour, nous vous souhaitons la bienvenue sur la plateforme Clinital pour confirmer votre compte."
-					+ " Merci de cliquer sur le lien suivant pour activer votre compte : "
-
-					+ BaseUrl+"/api/auth/confirmaccount?token="+ newLink + ". Notez que ce lien expirera après 10 minutes.");
-			javaMailSender.send(mailMessage);
-			LOGGER.info("Un nouveau lien d'activation de compte a été envoyé à l'utilisateur: {}", userEmail);
-		} catch (Exception e) {
-			LOGGER.error("Erreur lors de l'envoi de l'e-mail de confirmation : {}", e);
-		}
-	}
-	//end new link email
 
 	public void sendMailDemande(Demande demande) {
 		SimpleMailMessage mailMessage = new SimpleMailMessage();

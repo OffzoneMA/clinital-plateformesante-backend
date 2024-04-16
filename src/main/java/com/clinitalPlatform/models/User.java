@@ -2,11 +2,6 @@ package com.clinitalPlatform.models;
 
 import java.util.Date;
 
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-
 import org.hibernate.annotations.CreationTimestamp;
 
 import com.clinitalPlatform.enums.ProviderEnum;
@@ -25,7 +20,8 @@ import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 
 import lombok.Data;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+@JsonIgnoreProperties({"hibernateLazyInitializer","handler"})
 @Table(name = "users")
 @Data
 @Entity
@@ -60,16 +56,16 @@ public class User {
 	public User() {
 		super();
 	}
-	public User(@NotBlank @Size(max = 50) @Email String email, @NotNull String telephone,
-			@NotBlank @Size(max = 120) String password) {
+	public User( String email, String telephone,
+			 String password) {
 		super();
 		this.email = email;
 		this.telephone = telephone;
 		this.password = password;
 	}
 
-	public User(@NotBlank @Size(max = 50) @Email String email, @NotNull String telephone,
-			@NotBlank @Size(max = 120) String password, ERole role) {
+	public User( String email,  String telephone,
+			 String password, ERole role) {
 		super();
 		this.email = email;
 		this.telephone = telephone;
