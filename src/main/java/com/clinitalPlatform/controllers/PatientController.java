@@ -215,5 +215,18 @@ public class PatientController {
 
 	}
 
+	// share folder with a doctor :
+
+	@PostMapping("/sharedoc/{idmed}/{iddoss}")
+	@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_PATIENT')")
+	public ResponseEntity<?> ShareAccesstoFolder(@Valid @PathVariable Long idmed,@Valid @PathVariable("iddoss") Long iddossier) throws Exception{
+	
+			Patient patient=patientRepo.findPatientByUserIdandDossMedicale(globalVariables.getConnectedUser().getId(),iddossier).orElseThrow(()->new Exception("NO MATCHING FOUND FOR THAT USER !"));
+
+			activityServices.createActivity(new Date(),"Update","Sharing Medical Folder ID : "+iddossier+" with Medecin : "+idmed,globalVariables.getConnectedUser());
+			LOGGER.info("Sharing Medical Folder ID : "+iddossier+" with Medecin : "+idmed+", UserID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+			return ResponseEntity.ok(patientService.ShareMedecialFolder(patient.getDossierMedical().getId_dossier(),idmed));
+
+		}
 
 }

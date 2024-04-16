@@ -7,6 +7,9 @@ import java.util.stream.Collectors;
 
 import org.springframework.transaction.annotation.Transactional;
 
+import com.clinitalPlatform.models.Medecin;
+import com.clinitalPlatform.payload.response.ApiResponse;
+import com.clinitalPlatform.repository.MedecinRepository;
 import com.clinitalPlatform.dao.IDao;
 import com.clinitalPlatform.models.DossierMedical;
 import com.clinitalPlatform.models.Patient;
@@ -20,12 +23,16 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Transactional
 @Service
 @Primary
 public class PatientService implements IDao<Patient> {
+	
+	@Autowired
+	private MedecinRepository medRepository;
 
 	@Autowired
 	private PatientRepository patientRepository;
@@ -99,6 +106,30 @@ public class PatientService implements IDao<Patient> {
 		.map(pat -> modelMapper.map(pat, Patient.class)).collect(Collectors.toList());
 
 	}
+
+	// share a folder by patient to a specifique doctor : 
+	public ResponseEntity<?> ShareMedecialFolder(Long iddossier,Long idmed) throws Exception{
+
+			Medecin med = medRepository.findById(idmed).orElseThrow(()->new Exception("NO such Medecin exist"));
+			DossierMedical dossier = dossierMedicalRepository.findById(iddossier).orElseThrow(()->new Exception("NO such Folder exist"));
+
+
+
+			// check if the folder is already shared.
+			Boolean isDossshared=med.getMeddossiers().stream().filter(doss->doss.getId_dossier()==dossier.getId_dossier()).findFirst().isPresent();
+
+			//boolean isDossshared = med.getMeddossiers().stream().anyMatch(o -> doss.getId_dossier()==dossier.getId_dossier());
+			if(!isDossshared){
+				med.getMeddossiers().add(dossier);
+				medRepository.save(med);
+				ResponseEntity.status(200).build();
+			} else{
+				return ResponseEntity.ok(new ApiResponse(false, "You already shared this folder with that doctor"));
+			}
+			
+
+			return ResponseEntity.ok("Folder shared seccessefully !");
+		}
 
 
 }

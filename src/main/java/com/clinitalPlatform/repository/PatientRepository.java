@@ -35,4 +35,7 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
 	
 	@Query(value = "SELECT p.* FROM patients p WHERE p.user_id=?1 AND patient_type='PROCHE'",nativeQuery = true)
 	List<Patient> findALLProchByUserId(long id);
+	
+	@Query(value = "SELECT * FROM patients p WHERE p.user_id=?1 AND p.id_dossier=?2",nativeQuery = true)
+	Optional<Patient> findPatientByUserIdandDossMedicale(Long iduser,Long iddoss);
 }

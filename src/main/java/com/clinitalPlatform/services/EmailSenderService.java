@@ -127,5 +127,27 @@ public class EmailSenderService {
 		LOGGER.info("A New Demande has been created ");
 		System.out.println("Email sent");
 	}
+	public void sendMailConfirmationCode(String userEmail, String confirmationcode) {
+		
+	    try {
+	        String message = "Bonjour,\n\n"
+	                + "Vous avez demandé la suppression de votre compte sur la plateforme Clinital.\n\n"
+	                + "Si vous souhaitez toujours supprimer votre compte, voila  le code de confirmation "
+	                + "\n\n"
+	                + confirmationcode + "\n\n"
+	                + "vous pouvez ignorer cet email.";
+
+	        SimpleMailMessage mailMessage = new SimpleMailMessage();
+	        mailMessage.setTo(userEmail);
+	        mailMessage.setFrom("clinitalcontact@gmail.com");
+	        mailMessage.setSubject("Code de confirmation du suppression   de   votre compte clinital!");
+	        mailMessage.setText(message);
+
+	        javaMailSender.send(mailMessage);
+	        LOGGER.info("Un email de  code de confirmation a été envoyé à l'adresse : {}", userEmail);
+	    } catch (Exception e) {
+	        LOGGER.error("Erreur lors de l'envoi de l'e-mail de confirmation : {}", e);
+	    }
+	}
 
 }

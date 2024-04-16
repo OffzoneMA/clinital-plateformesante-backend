@@ -8,11 +8,13 @@ import com.clinitalPlatform.util.ApiError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import org.slf4j.Logger;
@@ -25,6 +27,7 @@ import com.clinitalPlatform.payload.request.LoginRequest;
 import com.clinitalPlatform.payload.request.SignupRequest;
 import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.payload.response.JwtResponse;
+import com.clinitalPlatform.repository.UserRepository;
 import com.clinitalPlatform.security.jwt.ConfirmationToken;
 import com.clinitalPlatform.security.jwt.JwtService;
 import com.clinitalPlatform.security.services.UserDetailsImpl;
@@ -61,6 +64,12 @@ public class AuthController {
 	private UserDetailsServiceImpl userDetailsService;
 	@Autowired
 	EmailSenderService emailSenderService;
+	
+	@Autowired
+	UserRepository userRepository;
+	@Autowired
+	PasswordEncoder encoder;
+	
 	//Jounalisation
 	private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
@@ -202,4 +211,18 @@ public class AuthController {
 		return jwtService.validateToken(token, userDetails);
 	}
 
+	@PostMapping("/checkPassword")
+	@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_PATIENT')")
+	public ResponseEntity<?> checkPassword(@Valid @RequestBody String password)throws Exception {
+		User user = userRepository.getById(globalVariables.getConnectedUser().getId());
+	    
+	    // Vérifier si le mot de passe fourni correspond au mot de passe de l'utilisateur connecté
+	    boolean passwordMatch = encoder.matches(password, user.getPassword());
+	    
+	    if (passwordMatch) {
+	        return ResponseEntity.ok(new ApiResponse(true, "Password matches"));
+	    } else {
+	        return ResponseEntity.ok(new ApiResponse(false, "Password does not match"));
+	    }
+	}
 }

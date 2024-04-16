@@ -147,4 +147,4 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 	// Get rdv of the given med and pat from today and next comming
 	@Query(value = "select * from rendezvous  where medecin=?1 and patient =?2 and DATE(start)>=curdate()", nativeQuery = true)
 	List<Rendezvous> getRdvByIdMedecinandIdPatientandDate(Long idmed,Long patient);
-}
+	}
