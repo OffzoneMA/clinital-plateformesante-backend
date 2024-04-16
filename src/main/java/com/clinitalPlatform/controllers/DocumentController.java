@@ -2,6 +2,7 @@ package com.clinitalPlatform.controllers;
 
 import com.clinitalPlatform.dto.DocumentDTO;
 import com.clinitalPlatform.models.*;
+import com.clinitalPlatform.payload.request.UpdateDocumentRequest;
 import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.payload.response.DocumentResponse;
 import com.clinitalPlatform.payload.response.TypeDocumentResponse;
@@ -140,6 +141,7 @@ public class DocumentController {
             activityServices.createActivity(new Date(),"Add","Add New document ID:"+finalSavedDoc.getId_doc(),globalVariables.getConnectedUser());
             LOGGER.info("Add new document with ID "+finalSavedDoc.getId_doc()+" By User with ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
             return ResponseEntity.ok(new ApiResponse(true, "Document created successfully!",finalSavedDoc));
+
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.ok(new ApiResponse(false, "Document not created!"+e.getMessage()));
@@ -147,22 +149,62 @@ public class DocumentController {
         }
     }
 
+    //
+    @PutMapping("/update")
+    @PreAuthorize("hasAnyAuthority('ROLE_PATIENT')")
+    public ResponseEntity<?> updateNameAndTypeDocument(@RequestBody UpdateDocumentRequest data){
+
+        try{
+
+            System.out.println("updatedDoc: "+ data);
+            // Fetch the existing document from the database
+            Optional<Document> existingDocumentOptional = docrepository.findById(data.getId_doc());
+
+            if (existingDocumentOptional.isPresent()) {
+                Document existingDocument = existingDocumentOptional.get();
+                // Update the titre_doc attribute
+                existingDocument.setTitre_doc(data.getTitre_doc());
+
+                // TO DO: Update the fichier_doc attribute based on the new titre_doc
+
+                // Update the typeDoc attribute
+                existingDocument.setTypeDoc(data.getTypeDoc());
+                // Save the updated document
+                Document savedDocument = docrepository.save(existingDocument);
+                activityServices.createActivity(new Date(), "Update", "Update document ID: " + savedDocument.getId_doc(), globalVariables.getConnectedUser());
+                LOGGER.info("Update a document with ID " + savedDocument.getId_doc() + " By User with ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+                return ResponseEntity.ok(new ApiResponse(true, "Document updated successfully", savedDocument));
+
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+
+
+        } catch(Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.ok(new ApiResponse(false, "Document not updated: " + e.getMessage()));
+        }
+    }
+
+
     // Returning a document by id.
     @GetMapping("/docById/{id}")
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
     public ResponseEntity<DocumentResponse> getDocById(@PathVariable long id) throws Exception {
-        Optional<Document> tutorialData = docrepository.findById(id);
+        Optional<Document> doc = docrepository.findById(id);
 
-        if (tutorialData.isPresent()) {
+        if (doc.isPresent()) {
             activityServices.createActivity(new Date(),"Read","Consulting Document with ID : "+id,globalVariables.getConnectedUser());
             LOGGER.info("Consulting  document ID "+id+" ,By User ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
-            return new ResponseEntity<>(mapper.map(tutorialData.get(), DocumentResponse.class), HttpStatus.OK);
+            return new ResponseEntity<>(mapper.map(doc.get(), DocumentResponse.class), HttpStatus.OK);
         } else {
 
             LOGGER.warn("Can't Found Doc ID : "+id+",Consulting By User ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+
+
 
     // Returning a list of documents by Rendez-vous id.
     @GetMapping("/docByIdRdv")
@@ -253,7 +295,7 @@ public class DocumentController {
         }
     }
      */
-    //Get documents of patient with type "PROCH"
+    //Get documents of patient with type "PROCHE"
     @GetMapping("/getdocproch")
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
     @JsonSerialize(using = LocalDateTimeSerializer.class)
@@ -406,5 +448,7 @@ public class DocumentController {
 
         return ResponseEntity.ok(new ApiResponse(true, "Document downloaded successfully!"));
     }
+
+
 
 }
