@@ -275,26 +275,7 @@ public class DocumentController {
 
         }
     }
-    /*
-    @GetMapping("/documents")
-    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
-    @JsonSerialize(using = LocalDateTimeSerializer.class)
-    Iterable<DocumentResponse> documents() throws Exception {
 
-        Optional<Patient> patient = patientRepo.findById(globalVariables.getConnectedUser().getId());
-
-        // Verify if the list of patient is empty
-        if (!patient.isPresent()) {
-            return Collections.emptyList();
-        }else {
-
-            activityServices.createActivity(new Date(), "Read", "Consulting all Documents", globalVariables.getConnectedUser());
-            LOGGER.info("Conslting All documents By User ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
-            return docrepository.findByPatientId(patient.get().getId())
-                    .stream().map(document -> mapper.map(document, DocumentResponse.class)).collect(Collectors.toList());
-        }
-    }
-     */
     //Get documents of patient with type "PROCHE"
     @GetMapping("/getdocproch")
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")

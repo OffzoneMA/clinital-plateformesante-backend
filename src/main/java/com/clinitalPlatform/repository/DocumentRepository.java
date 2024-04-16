@@ -35,8 +35,11 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 	@Query(value = "SELECT documents.* FROM documents, document_medecin dm WHERE documents.id_doc=dm.document_id AND documents.patient_id= ?1", nativeQuery = true)
 	List<Document> getDocByPatientIdAndMedecin(Long patientId);
 
-	@Query(value = "SELECT d.* FROM documents d, patients p WHERE d.patient_id=p.id AND p.patient_type='PROCHE' AND p.user_id= ?1", nativeQuery = true)
-	List<Document> getDocPatientPROCH(Long patientId);
+	/*@Query(value = "SELECT d.* FROM documents d, patients p WHERE d.patient_id=p.id AND p.patient_type='PROCHE' AND p.user_id= ?1", nativeQuery = true)
+	List<Document> getDocPatientPROCH(Long patientId);*/
+	@Query(value = "SELECT d FROM Document d JOIN FETCH d.patient p WHERE p.patient_type = 'PROCHE' AND p.user.id = ?1")
+	List<Document> getDocPatientPROCH(Long userId);
+
 	@Query(value = "SELECT d.* FROM documents d, patients p WHERE d.patient_id=p.id AND p.patient_type='MOI' AND d.patient_id= ?1", nativeQuery = true)
 	List<Document> getDocPatientMOI(Long patientId);
 
