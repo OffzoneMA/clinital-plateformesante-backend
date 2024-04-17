@@ -1,8 +1,13 @@
 package com.clinitalPlatform.services;
 
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import com.clinitalPlatform.enums.RdvStatutEnum;
 import org.slf4j.Logger;
@@ -59,6 +64,9 @@ public class MedecinServiceImpl implements MedecinService {
 
     @Autowired
     RendezvousService rendezvousService;
+
+    @Autowired
+    MedecinScheduleRepository medecinScheduleRepository;
 
 
 

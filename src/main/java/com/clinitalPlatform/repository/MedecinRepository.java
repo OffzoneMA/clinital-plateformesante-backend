@@ -40,6 +40,23 @@ public interface MedecinRepository extends JpaRepository<Medecin, Long> {
 			+ " AND m.is_active = 1 AND (s.libelle like CONCAT(?1, '%') OR m.nom_med like CONCAT(?1, '%'))", nativeQuery = true)
 	List<Medecin> getMedecinBySpecOrName(String search);
 
+	//FILTRE
+		@Query(value = "SELECT DISTINCT m.* FROM medecins m " +
+				"INNER JOIN medecin_schedule ms ON m.id = ms.medecin_id " +
+				"WHERE ms.day_of_week IN (1, 2, 3, 4, 5) AND m.is_active = 1", nativeQuery = true)
+		List<Medecin> findMedecinsAvailableWeekdays();
 
+		@Query(value = "SELECT DISTINCT m.* FROM medecins m " +
+				"INNER JOIN medecin_schedule ms ON m.id = ms.medecin_id " +
+				"WHERE ms.day_of_week IN (6, 7) AND m.is_active = 1", nativeQuery = true)
+		List<Medecin> findMedecinsAvailableWeekend();
+
+		@Query(value = "SELECT DISTINCT m.* FROM medecins m " +
+				"INNER JOIN medecin_schedule ms ON m.id = ms.medecin_id " +
+				"WHERE ms.day_of_week IN (:day1, :day2) AND m.is_active = 1", nativeQuery = true)
+		List<Medecin> findMedecinsAvailableNextTwoDays(
+				@Param("day1") int day1,
+				@Param("day2") int day2
+		);
 }
 

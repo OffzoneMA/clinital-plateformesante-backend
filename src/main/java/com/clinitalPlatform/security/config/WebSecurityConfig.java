@@ -72,16 +72,19 @@ public class WebSecurityConfig {
         		"/api/med/medecins",	
         		"/api/med/medById/**",
     			"/api/med/medByName",
-    			"/api/med/medByNameOrSpecAndVille",
+    			"/api/med/medByNameOrSpecAndVille/**",
     			"/api/med/medByNameAndSpec",
     			"/api/med/medByNameOrSpec",
     			"/api/med/medByVille",
     			"/api/med/getAllSpec",
+                //"/api/med/agenda/**",
     			"/api/ville/**",
                 "/api/rdv/rdvs/patient","/api/rdv/patient/rdvbyday"
         };
       
-        String[] authenticatedRoutes = {"/api/demandes/**", "/api/med/**", "/api/doc/**", "/api/shares/**","/api/medecinSchedule/**","/api/patient/**",
+        String[] authenticatedRoutes = {"/api/demandes/**", "/api/med/**",
+                "/api/doc/**", "/api/shares/**",
+                "/api/medecinSchedule/**","/api/patient/**",
                 "/api/rdv/patient/**",
 //                "/api/rdv/patient/rdvById/**","/api/rdv/MoveRdv/**",
 //                "/api/rdv/patient/updateRdv/**","/api/rdv/patient/updateeRdv/{id}",

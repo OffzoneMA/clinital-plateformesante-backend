@@ -11,14 +11,13 @@ import com.clinitalPlatform.dto.RendezvousDTO;
 import com.clinitalPlatform.exception.BadRequestException;
 import com.clinitalPlatform.models.MedecinSchedule;
 import com.clinitalPlatform.models.User;
+import com.clinitalPlatform.payload.request.FilterRequest;
 import com.clinitalPlatform.payload.response.AgendaResponse;
 import com.clinitalPlatform.payload.response.GeneralResponse;
 import com.clinitalPlatform.payload.response.HorairesResponse;
 import com.clinitalPlatform.repository.MedecinRepository;
 import com.clinitalPlatform.repository.MedecinScheduleRepository;
-import com.clinitalPlatform.services.ActivityServices;
-import com.clinitalPlatform.services.MedecinServiceImpl;
-import com.clinitalPlatform.services.RendezvousService;
+import com.clinitalPlatform.services.*;
 import com.clinitalPlatform.util.ClinitalModelMapper;
 import com.clinitalPlatform.util.GlobalVariables;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -29,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -52,16 +52,12 @@ import com.clinitalPlatform.util.GlobalVariables;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
-import com.clinitalPlatform.services.CabinetMedecinServiceImpl;
-import com.clinitalPlatform.services.CabinetServiceImpl;
 import com.clinitalPlatform.repository.CabinetMedecinRepository;
 import com.clinitalPlatform.models.DocumentsCabinet;
 import com.clinitalPlatform.payload.request.DocumentsCabinetRequest;
 import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.security.services.UserDetailsImpl;
-import com.clinitalPlatform.services.DocumentsCabinetServices;
 import com.clinitalPlatform.repository.DocumentsCabinetRepository;
-import com.clinitalPlatform.services.OrdonnanceServiceImpl;
 import com.clinitalPlatform.models.Ordonnance;
 import com.clinitalPlatform.payload.request.OrdonnanceRequest;
 import com.clinitalPlatform.repository.OrdonnanceRepository;
@@ -135,7 +131,8 @@ public class MedecinController {
 	
 	@Autowired
 	private SpecialiteService specialiteService;
-	
+	@Autowired
+	private MedecinScheduleServiceImpl medecinScheduleService;
 	private final Logger LOGGER=LoggerFactory.getLogger(getClass());
 
 //start zakia
@@ -174,9 +171,12 @@ public class MedecinController {
 	@ResponseBody
 	public Iterable<Medecin> medByNameOrSpecAndVille(@RequestParam String ville,
 				@RequestParam String search) throws Exception {
-					
+
+		System.out.println("la ville: "+ ville);
+		System.out.println("specialité: "+search);
 			return medrepository.getMedecinBySpecialiteOrNameAndVille( search,ville).stream()
 			.filter(med->med.getIsActive()==true).collect(Collectors.toList());
+
 	}
 
 	// end point for getting Doctor by Name and speciality : %OK%
@@ -615,6 +615,56 @@ public class MedecinController {
 				.findRendezvousByMedAndDate(idmed, startDateTime)
 				.stream().map(rdv -> mapper.map(rdv, RendezvousDTO.class))
 				.collect(Collectors.toList()));
+
+	}
+
+
+	//FILTRE DE MEDECIN SELON LA DISPONIBILITÉ-------------------------------------------
+	/*@PostMapping("/medecins/schedules/filter")
+	public ResponseEntity<List<Medecin>> filterMedecinSchedulesByAvailability(
+			@RequestBody FilterRequest filterRequest
+	) {
+		List<Long> medecinIds = filterRequest.getMedecinIds();
+		String filter = filterRequest.getFilter();
+		System.out.println("ici:" + filter);
+		System.out.println("d" + medecinIds);
+
+		// Utilisation de medecinIds et filter pour filtrer les médecins
+		List<Medecin> filteredMedecins = medecinScheduleService.filterMedecinsByAvailability(medecinIds, filter);
+
+		// Vérifiez si des médecins ont été trouvés
+		if (filteredMedecins.isEmpty()) {
+
+			System.out.println( "Aucun médecin trouvé.");
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
+
+		}
+
+		//return ResponseEntity.ok(filteredMedecins);
+		return new ResponseEntity<>(filteredMedecins, HttpStatus.OK);
+	}*/
+
+	@PostMapping("/medecins/schedules/filter")
+	public ResponseEntity<?> filterMedecinSchedulesByAvailability(
+			@RequestBody FilterRequest filterRequest
+	) {
+		List<Long> medecinIds = filterRequest.getMedecinIds();
+		String filter = filterRequest.getFilter();
+		System.out.println("ici:" + filter);
+		System.out.println("Les ids de medecins: " + medecinIds);
+
+		// Utilisation de medecinIds et filter pour filtrer les médecins
+		List<Medecin> filteredMedecins = medecinScheduleService.filterMedecinsByAvailability(medecinIds, filter);
+
+		// Vérifiez si des médecins ont été trouvés
+		if (filteredMedecins.isEmpty()) {
+
+			System.out.println( "Aucun médecin trouvé avec ce creneau.");
+			return ResponseEntity.ok(new ApiResponse(false, "Aucun medecin trouvé avec ce creneau."));
+
+		}
+
+		return ResponseEntity.ok(filteredMedecins);
 
 	}
 

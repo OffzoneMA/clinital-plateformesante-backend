@@ -234,7 +234,7 @@ public class RdvController {
 	}
 
 
-	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	//@PreAuthorize("hasAuthority('ROLE_PATIENT')")
 
 	// ADD an RDV by Patient : %OK%
 	@PostMapping("patient/addRdv")
