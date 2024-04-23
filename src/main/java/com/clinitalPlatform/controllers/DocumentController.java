@@ -270,7 +270,7 @@ public class DocumentController {
 
             List<Document> documents = docrepository.getDocByPatientIdAndMedecin(patient.get().getId());
             activityServices.createActivity(new Date(), "Read", "Consulting All documents", globalVariables.getConnectedUser());
-            LOGGER.info("Consulting All Archived  documents by patient ID, User ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+            LOGGER.info("Consulting All shared documents by patient ID, User ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
             return documents.stream().map(doc -> mapper.map(doc, DocumentResponse.class)).collect(Collectors.toList());
 
         }
@@ -327,7 +327,7 @@ public class DocumentController {
     }
 
     // Archive or unarchive a document specified by its ID
-    @PostMapping(path = "/archiveDoc")
+    @PutMapping(path = "/archiveDoc")
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
     public ResponseEntity<?> archiveDoc(@RequestParam Long docId, @RequestParam boolean archive)
             throws Exception {
