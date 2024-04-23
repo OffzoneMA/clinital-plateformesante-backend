@@ -263,15 +263,15 @@ public class RdvController {
 	@PutMapping("/patient/updateRdv/{id}")
 	public ResponseEntity<Rendezvous> updateeRDV(@PathVariable("id") Long rdvId, @RequestBody RendezvousDTO rdvDTO) throws Exception {
 		try{
-		System.err.println(rdvDTO);
-		Medecin medecin = medRepo.findById(rdvDTO.getMedecinid())
-				.orElseThrow(() -> new BadRequestException("Medecin not found for this id ::" + rdvDTO.getMedecinid()));
-		Patient patient = patientRepo.findById(rdvDTO.getPatientid()).orElseThrow(
-				() -> new BadRequestException("Patient not found for this id :: " +
-						rdvDTO.getPatientid()));
-		Rendezvous updatedRDV = rdvservice.updateerdv(rdvId, rdvDTO,medecin,patient);
-		return ResponseEntity.ok(updatedRDV);
-	} catch (Exception e) {
+			System.err.println(rdvDTO);
+			Medecin medecin = medRepo.findById(rdvDTO.getMedecinid())
+					.orElseThrow(() -> new BadRequestException("Medecin not found for this id ::" + rdvDTO.getMedecinid()));
+			Patient patient = patientRepo.findById(rdvDTO.getPatientid()).orElseThrow(
+					() -> new BadRequestException("Patient not found for this id :: " +
+							rdvDTO.getPatientid()));
+			Rendezvous updatedRDV = rdvservice.updateerdv(rdvId, rdvDTO,medecin,patient);
+			return ResponseEntity.ok(updatedRDV);
+		} catch (Exception e) {
 			throw new Exception(e.getMessage());
 		}}
 
@@ -473,7 +473,6 @@ public class RdvController {
 	// RDV FOR Patient BY MONTH :
 	@GetMapping("/patient/rdvbymonth/{month}")
 	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
-
 	List<Rendezvous> rendezvousPatientBymonth(@Valid @PathVariable long month) throws Exception {
 		// UserDetailsImpl userDetails = (UserDetailsImpl)
 		// SecurityContextHolder.getContext().getAuthentication()
@@ -483,7 +482,7 @@ public class RdvController {
 		List<Rendezvous> rdvpatient = null;
 		for (Patient pat : patients) {
 
-			rdvpatient = rdvservice.getRdvMedByMonth(month, pat.getId()).stream()
+			rdvpatient = rdvservice.getRdvPatientByMonth(month, pat.getId()).stream()
 					.map(rdv -> mapper.map(rdv, Rendezvous.class))
 					.collect(Collectors.toList());
 		}
