@@ -1,5 +1,6 @@
 package com.clinitalPlatform.repository;
 
+
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,5 +26,6 @@ public interface CabinetRepository extends JpaRepository<Cabinet, Long>{
 	    
 	    @Query(value="SELECT c.* FROM cabinet c, cabinet_medecins m WHERE c.id_cabinet=m.cabinet_id AND m.medecin_id=?1",nativeQuery=true)
 	    public List<Cabinet> getAllCabinetByIdMed(long idmed);
+
 }
 

@@ -2,6 +2,8 @@ package com.clinitalPlatform.models;
 
 import javax.validation.constraints.NotBlank;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -14,6 +16,7 @@ import lombok.Data;
 @Entity
 @Table(name = "villes")
 @Data
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Ville {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

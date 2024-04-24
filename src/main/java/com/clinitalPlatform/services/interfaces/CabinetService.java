@@ -1,5 +1,6 @@
 package com.clinitalPlatform.services.interfaces;
 
+
 import java.util.List;
 import java.util.Optional;
 
@@ -13,4 +14,5 @@ public interface CabinetService {
 	 List<Cabinet> findAll() throws Exception;
 	 Cabinet create(CabinetRequest cabinetreq,Medecin med) throws Exception;
 	 List<Cabinet> allCabinetsByMedID(Long id) throws Exception;
+
 }

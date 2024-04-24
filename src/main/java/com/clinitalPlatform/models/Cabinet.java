@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
@@ -11,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
+@JsonIgnoreProperties({"hibernateLazyInitializer","handler"})
 @Entity
 @Table(name = "cabinet")
 @Data
@@ -26,7 +27,6 @@ public class Cabinet {
 	private String phoneNumber;
 
 	@ManyToOne(cascade = CascadeType.ALL)
-	@JsonIgnore
 	private Ville ville;
 
 	@OneToMany(cascade = CascadeType.ALL,mappedBy = "cabinet",fetch = FetchType.LAZY)
@@ -44,7 +44,6 @@ public class Cabinet {
 	private List<Secretaire> secretaire;
 
 	@ManyToOne(cascade = CascadeType.ALL)
-	@JsonIgnore
 	private Medecin creator;
 
 	private Boolean state;

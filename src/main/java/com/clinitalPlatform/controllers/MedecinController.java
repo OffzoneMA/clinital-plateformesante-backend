@@ -1,10 +1,30 @@
 package com.clinitalPlatform.controllers;
 
+
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.validation.Valid;
+import com.clinitalPlatform.dto.RendezvousDTO;
+import com.clinitalPlatform.exception.BadRequestException;
+import com.clinitalPlatform.models.MedecinSchedule;
+import com.clinitalPlatform.models.User;
+import com.clinitalPlatform.payload.response.AgendaResponse;
+import com.clinitalPlatform.payload.response.GeneralResponse;
+import com.clinitalPlatform.payload.response.HorairesResponse;
+import com.clinitalPlatform.repository.MedecinRepository;
+import com.clinitalPlatform.repository.MedecinScheduleRepository;
+import com.clinitalPlatform.services.ActivityServices;
+import com.clinitalPlatform.services.MedecinServiceImpl;
+import com.clinitalPlatform.services.RendezvousService;
+import com.clinitalPlatform.util.ClinitalModelMapper;
+import com.clinitalPlatform.util.GlobalVariables;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
+
+import lombok.extern.slf4j.Slf4j;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +50,8 @@ import com.clinitalPlatform.repository.MedecinRepository;
 import com.clinitalPlatform.services.ActivityServices;
 import com.clinitalPlatform.util.GlobalVariables;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import com.clinitalPlatform.services.CabinetMedecinServiceImpl;
 import com.clinitalPlatform.services.CabinetServiceImpl;
 import com.clinitalPlatform.repository.CabinetMedecinRepository;
@@ -39,6 +61,15 @@ import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.security.services.UserDetailsImpl;
 import com.clinitalPlatform.services.DocumentsCabinetServices;
 import com.clinitalPlatform.repository.DocumentsCabinetRepository;
+import com.clinitalPlatform.services.OrdonnanceServiceImpl;
+import com.clinitalPlatform.models.Ordonnance;
+import com.clinitalPlatform.payload.request.OrdonnanceRequest;
+import com.clinitalPlatform.repository.OrdonnanceRepository;
+import com.clinitalPlatform.util.PDFGenerator;
+import com.clinitalPlatform.util.ClinitalModelMapper;
+import com.clinitalPlatform.dto.SpecialiteDTO;
+import com.clinitalPlatform.services.interfaces.SpecialiteService;
+import com.clinitalPlatform.dto.OrdonnanceDTO;
 import com.clinitalPlatform.exception.BadRequestException;
 import com.clinitalPlatform.models.Cabinet;
 import com.clinitalPlatform.models.CabinetMedecinsSpace;
@@ -46,6 +77,15 @@ import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.models.User;
 import com.clinitalPlatform.payload.request.CabinetRequest;
 
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.validation.annotation.Validated;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+@Slf4j
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/med/")
@@ -81,9 +121,88 @@ public class MedecinController {
 	@Autowired
 	private DocumentsCabinetRepository doccabrepository;
 	
+	@Autowired
+	private OrdonnanceServiceImpl OrdonnanceServices;
+	
+	@Autowired
+	private OrdonnanceRepository ordonnanceRepository;
+	
+	@Autowired
+	private PDFGenerator pdfgenerator;
+	
+	@Autowired
+	ClinitalModelMapper mapper;
+	
+	@Autowired
+	private SpecialiteService specialiteService;
 	
 	private final Logger LOGGER=LoggerFactory.getLogger(getClass());
+
+//start zakia
+	@Autowired
+	RendezvousService rendezvousService;
+
+	@Autowired
+	MedecinScheduleRepository medScheduleRepo;
+	public static boolean checkday = false;
+	//end zakia
+	@GetMapping("/medecins")
+	@JsonSerialize(using = LocalDateTimeSerializer.class)
+	public Iterable<Medecin> medecins() throws Exception {
+		
+		return medrepository.findAll().stream().filter(med->med.getIsActive()==true).collect(Collectors.toList());
+
+	}
 	
+	// Get Medecin By Id : %OK%
+	@GetMapping("/medById/{id}")
+	public ResponseEntity<Medecin> getMedecinById(@PathVariable(value="id") Long id) throws Exception {
+			
+			return ResponseEntity.ok(mapper.map(medecinService.findById(id), Medecin.class));
+	}
+
+	// Get Medecin y his name : %OK%
+	@GetMapping("/medByName")
+	@ResponseBody
+	public List<Medecin> findMedByName(@RequestParam String nomMed) throws Exception {
+			
+			return medrepository.getMedecinByName(nomMed).stream().filter(med->med.getIsActive()==true).collect(Collectors.toList());
+	}
+	
+	// end point for getting Doctor by Name or speciality and city : %OK%
+	@GetMapping("/medByNameOrSpecAndVille")
+	@ResponseBody
+	public Iterable<Medecin> medByNameOrSpecAndVille(@RequestParam String ville,
+				@RequestParam String search) throws Exception {
+					
+			return medrepository.getMedecinBySpecialiteOrNameAndVille( search,ville).stream()
+			.filter(med->med.getIsActive()==true).collect(Collectors.toList());
+	}
+
+	// end point for getting Doctor by Name and speciality : %OK%
+	@GetMapping("/medByNameAndSpec")
+	public Iterable<Medecin> findMedSpecNameVille(@RequestParam String name,
+				@RequestParam String search) throws Exception {
+					
+		return medrepository.getMedecinBySpecialiteAndName(search, name).stream()
+		.filter(med->med.getIsActive()==true).collect(Collectors.toList());
+	}
+
+	// end point for getting Doctor by Name or speciality : %OK%
+	@GetMapping("/medByNameOrSpec")
+	public Iterable<Medecin> findMedSpecName(@RequestParam String search) throws Exception {
+			
+			return medrepository.getMedecinBySpecOrName(search).stream().filter(med->med.getIsActive()==true).collect(Collectors.toList());
+
+	}
+
+	// end point for getting Doctor By city : %OK%
+	@GetMapping("/medByVille")
+	public Iterable<Medecin> findMedByVille(@RequestParam Long id_ville) throws Exception {
+			
+			return medrepository.getMedecinByVille(id_ville).stream().filter(med->med.getIsActive()==true).collect(Collectors.toList());
+    }
+
 	@PostMapping("/addMedtoExistcabinet")
 	@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_MEDECIN')")
 	public CabinetMedecinsSpace AddMedtoCabinet(@Valid @RequestBody CabinetRequest cabinetreq) throws Exception {
@@ -182,4 +301,321 @@ public class MedecinController {
 			
 		}
      }
+	
+	//=================================================================================================
+	// ORDONNANCE :
+
+	@PostMapping("/addordonnance")
+		public ResponseEntity<?> AddNewOrdonnance(@Valid @RequestBody OrdonnanceRequest creq){
+
+			try {
+				
+				Medecin med = medecinService.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+
+				Ordonnance consul=OrdonnanceServices.create(creq, med);
+
+				String fileName = consul.getId_ordon()+"-DOSS"+ consul.getDossier().getId_dossier()+"-MedID"+med.getId();
+
+				pdfgenerator.GenartePdfLocaly(consul, fileName, "Patientdoc");
+
+				return ResponseEntity.ok(consul);
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			return ResponseEntity.ok(new ApiResponse(false, e.getMessage()));
+			}
+			
+		}
+
+	//update consulation :
+	@PostMapping("/updateordonnance")
+	public ResponseEntity<?> Updateordonnance(@Valid @RequestBody OrdonnanceRequest creq){
+
+		try {
+			
+			Medecin med = medecinService.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+
+			OrdonnanceDTO consul=OrdonnanceServices.update(creq,med);
+
+			return ResponseEntity.ok(consul);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		return ResponseEntity.ok(new ApiResponse(false, e.getMessage()));
+		}
+		
+	}
+	
+	@GetMapping(path = "/allordonnacebymed")
+	public ResponseEntity<?> findallByIdMedecin(){
+
+	try {	
+		Medecin med = medecinService.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+		List<OrdonnanceDTO> allord=OrdonnanceServices.findAllByMed(med);
+
+		return ResponseEntity.ok(allord);
+	} catch (Exception e) {
+		e.printStackTrace();
+		return ResponseEntity.ok(new ApiResponse(false, e.getMessage()));
+
+	}
+	}
+	
+	@GetMapping(path = "/allordonnace")
+	public ResponseEntity<?> findall(){
+
+	try {	
+		List<OrdonnanceDTO> allord=OrdonnanceServices.findAll();
+
+		return ResponseEntity.ok(allord);
+	} catch (Exception e) {
+		e.printStackTrace();
+		return ResponseEntity.ok(new ApiResponse(false, e.getMessage()));
+
+	}
+	}
+	
+	@GetMapping(path = "/findordi/{id}")
+	public ResponseEntity<?> getByIdMedecin(@Valid @PathVariable(value = "id")Long idordo){
+
+		try {
+			
+			Medecin med = medecinService.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+			OrdonnanceDTO consul=OrdonnanceServices.findById(idordo,med);
+
+			return ResponseEntity.ok(consul);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.ok(new ApiResponse(false, e.getMessage()));
+		}
+	}
+	
+	// Delete Coonsultation : 
+	@DeleteMapping(path = "/deleteordonnance/{id}")
+	public ResponseEntity<?> DeleteOrdonnance(@Valid @PathVariable Long id){
+		
+	try {
+		Ordonnance ordonnance=ordonnanceRepository.findById(id).orElseThrow(()->new Exception("No 	matching found for this ordonnance"));
+
+		Boolean IsDeleted = OrdonnanceServices.deleteById(ordonnance)?true:false;
+
+		return IsDeleted ? ResponseEntity.ok(new ApiResponse(true, "ordonnance has been deleted seccussefully")):ResponseEntity.ok(new ApiResponse(true, "Consultation cannot be deleted"));
+
+	} catch (Exception e) {
+		e.printStackTrace();
+		return ResponseEntity.ok(new ApiResponse(false, e.getMessage()));
+	}
+
+	}
+	
+	// show data by medecin access right
+	@GetMapping(path = "/findordonnance/{iddoss}/{idordo}")
+	public ResponseEntity<?> findOrdoByIdMedecin(@Valid @PathVariable(value = "idordo")Long id,@Valid @PathVariable Long iddoss){
+
+	try {
+		
+		Medecin med = medecinService.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+		return ResponseEntity.ok(OrdonnanceServices.findByIdMedandDossierId(med,iddoss,id));
+		
+	} catch (Exception e) {
+		e.printStackTrace();
+		return ResponseEntity.ok(new ApiResponse(false, e.getMessage()));
+	}
+
+	}
+	
+	@GetMapping("/getAllSpec")
+	public ResponseEntity<List<SpecialiteDTO>> findAll() throws Exception {
+
+		return ResponseEntity.ok(specialiteService.findAll());
+	}
+
+	// Get all medecins ... : %OK%
+
+
+
+
+	// Finding all the schedules bY med Id from a given date.%OK%
+	@GetMapping("/schedulesofMed/{idmed}")
+	@JsonSerialize(using = LocalDateSerializer.class)  //@ApiParam(value = "startDate", example = "yyyy-MM-dd")
+	public List<MedecinSchedule> findallSchudelesfromDate(@PathVariable Long idmed,
+														  @PathVariable(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)  LocalDate startDate) throws Exception {
+				if(globalVariables.getConnectedUser()!=null){
+					activityServices.createActivity(new Date(),"Read","Consult Schedules of Medecin by is ID: "+idmed,globalVariables.getConnectedUser());
+				LOGGER.info("Consult schedules of Medecin By his ID : "+idmed+" name by User : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+				}
+		return medScheduleRepo
+				.findByMedId(idmed)
+				.stream()
+				.map(item -> mapper.map(item, MedecinSchedule.class))
+				.collect(Collectors.toList());
+
+	}
+
+	// get agenda bY med Id from a given date.%OK%
+	@GetMapping("/agenda/{idmed}/{weeks}/{startDate}")
+	@JsonSerialize(using = LocalDateSerializer.class)
+	public List<AgendaResponse> GetCreno(@Validated @PathVariable long idmed, @PathVariable long weeks,
+
+										 @PathVariable(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)  LocalDate startDate)
+			throws Exception {
+
+		try {
+
+			List<AgendaResponse> agendaResponseList = new ArrayList<AgendaResponse>();
+			//afficher les schedules by week (availability start>= +week*7 and availability_end <=week*7)
+			List<MedecinSchedule> schedules = medScheduleRepo
+					//.findByMedIdAndStartDateAndWeeksOrderByAvailability(idmed,startDate,weeks)
+					.findByMedIdOrderByAvailability(idmed)
+					//.findByMedId(idmed)
+					.stream()
+					.map(item -> mapper.map(item, MedecinSchedule.class))
+					.collect(Collectors.toList());
+
+			int days = medecinService.getDaysInMonth(startDate.atStartOfDay());
+			//parcours le nbre de semaine en parametre
+			for (int j = 1; j <= weeks; j++) {
+				//parcours des jours
+				for (int i = 1; i <= 7; i++) {
+					checkday = false;  // si un jour contient des schedules
+					if (!schedules.isEmpty()) { // si la liste des creno de ce medecin pas vide
+						for (MedecinSchedule medsch : schedules) { //parcour les creno
+							//normalement on doit comparer la date avec la date pas le jour
+							if (medsch.getDay().getValue() == startDate.getDayOfWeek().getValue())
+									//medsch.getAvailabilityStart().toLocalDate().isAfter(startDate)) // a retirer
+							{
+
+							checkday = true;
+								AgendaResponse agenda = null;
+								// Rechercher une AgendaResponse correspondante dans agendaResponseList
+								for (AgendaResponse ag : agendaResponseList) {
+									if (ag.getDay().getValue() == medsch.getDay().getValue() && ag.getWeek() == j) {
+										agenda = ag;
+										break;
+									}
+								}
+
+								// Si une AgendaResponse correspondante est trouvée, la mettre à jour
+								if (agenda != null) {
+									agenda = medecinService.CreateCreno(medsch, agenda, idmed, j, startDate.atStartOfDay());
+									agendaResponseList.set(agendaResponseList.indexOf(agenda), agenda);
+								} else {
+									// Sinon, créer une nouvelle AgendaResponse
+									agenda = new AgendaResponse();
+									agenda.setDay(startDate.getDayOfWeek());
+									agenda.setWorkingDate(startDate.atStartOfDay());
+									agenda = medecinService.CreateCreno(medsch, agenda, idmed, j, startDate.atStartOfDay());
+									agendaResponseList.add(agenda);
+								}
+								//here
+
+
+//								for (AgendaResponse ag : agendaResponseList) {
+//									if (ag.getDay().getValue() == medsch.getDay().getValue() && ag.getWeek() == j) {
+//										int index = agendaResponseList.indexOf(ag);
+//										agenda = agendaResponseList.get(index);
+//										agenda = medecinService.CreateCreno(medsch, agenda, idmed, j,
+//												startDate.atStartOfDay());
+//										agendaResponseList.set(index, agenda);
+//
+//									}
+//								}
+
+								//agenda = medecinService.CreateCreno(medsch, agenda, idmed, j, startDate.atStartOfDay());
+
+			 					// diffrance hours :
+								long Hours = ChronoUnit.HOURS.between(medsch.getAvailabilityStart(),
+										medsch.getAvailabilityEnd());
+								agenda.getMedecinTimeTable().add(new GeneralResponse("startTime",
+										medsch.getAvailabilityStart()));
+								agenda.getMedecinTimeTable().add(new GeneralResponse("endTime",
+										medsch.getAvailabilityStart().plusHours(Hours)));
+								String startTime = medsch.getAvailabilityStart().getHour() + ":"
+										+ medsch.getAvailabilityStart().getMinute();
+
+								String endTime = medsch.getAvailabilityEnd().getHour() + ":"
+										+ medsch.getAvailabilityEnd().getMinute();
+
+								agenda.getWorkingHours().add(new HorairesResponse(startTime,
+										endTime));
+
+								agendaResponseList.add(agenda);
+
+								continue;
+
+							}
+
+						}
+					}
+					if (!checkday) {
+
+						AgendaResponse agenda = new AgendaResponse();
+						agenda.setDay(startDate.getDayOfWeek());
+						agenda.setWorkingDate(startDate.atStartOfDay());
+						agendaResponseList.add(agenda);
+					}
+					startDate = startDate.plusDays(1);//
+
+				}
+
+			}
+			// Create a new LinkedHashSet
+			Set<AgendaResponse> set = new LinkedHashSet<>();
+
+			// Add the elements to set
+			set.addAll(agendaResponseList);
+
+			// Clear the list
+			agendaResponseList.clear();
+
+			// add the elements of set
+			// with no duplicates to the list
+			agendaResponseList.addAll(set);
+
+			if(globalVariables.getConnectedUser()!=null){
+				activityServices.createActivity(new Date(),"Read","Consult Medecin Agenda by his ID : "+idmed,globalVariables.getConnectedUser());
+				LOGGER.info("Consult Medecin Agenda By his ID : "+idmed+" by User : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+			}
+
+			return agendaResponseList;
+
+		} catch (Exception e) {
+			throw new BadRequestException("error :" + e);
+		}
+
+	}
+	private boolean isConflicting(AgendaResponse existingAgenda, MedecinSchedule newSchedule) {
+	LocalTime existingStart = existingAgenda.getWorkingDate().toLocalTime();
+	LocalTime existingEnd = existingAgenda.getWorkingDate().plusDays(1).toLocalTime(); // Fin de la journée de travail
+
+	LocalTime newStart = newSchedule.getAvailabilityStart().toLocalTime();
+	LocalTime newEnd = newSchedule.getAvailabilityEnd().toLocalTime();
+
+	// Vérifiez les conflits en fonction des heures
+	return (newStart.isAfter(existingStart) && newStart.isBefore(existingEnd)) ||
+			(newEnd.isAfter(existingStart) && newEnd.isBefore(existingEnd)) ||
+			(newStart.isBefore(existingStart) && newEnd.isAfter(existingEnd)) ||
+			(newStart.equals(existingStart) || newEnd.equals(existingEnd));
+}
+
+
+	// Finding all the RDV bY med Id from a given date.%OK%
+	@GetMapping("/rdvofMed/{idmed}/{startDate}")
+	@JsonSerialize(using = LocalDateSerializer.class)
+	public ResponseEntity<?> findallRDVforMedBystartDate(@PathVariable Long idmed,
+																	 @PathVariable(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)  LocalDate startDate) throws Exception {
+
+		LocalDateTime startDateTime = startDate.atStartOfDay();
+		if(globalVariables.getConnectedUser()!=null){
+			activityServices.createActivity(new Date(),"Read","Consult Medecin RDV By his ID : "+idmed,globalVariables.getConnectedUser());
+			LOGGER.info("Consult Medecin RDV By his ID : "+idmed+" by User : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+		}
+
+		return ResponseEntity.ok(rendezvousService
+				.findRendezvousByMedAndDate(idmed, startDateTime)
+				.stream().map(rdv -> mapper.map(rdv, RendezvousDTO.class))
+				.collect(Collectors.toList()));
+
+	}
+
 }

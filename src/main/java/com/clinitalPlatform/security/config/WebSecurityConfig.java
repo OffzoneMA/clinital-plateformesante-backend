@@ -23,6 +23,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.clinitalPlatform.util.PDFGenerator;
 import com.clinitalPlatform.exception.CustumaccessdeniedHandler;
 import com.clinitalPlatform.security.jwt.JwtAuthFilter;
 import com.clinitalPlatform.security.oauth2.CustomOAuth2UserService;
@@ -56,13 +57,39 @@ public class WebSecurityConfig {
     public HttpCookieOAuth2AuthrizationRequestRepository cookiesAuthorizationRepository() {
         return new HttpCookieOAuth2AuthrizationRequestRepository();
     }
+    
+	@Bean
+  	public PDFGenerator pdfGenerator() {
+    // return a new instance of PDFGenerator
+    return new PDFGenerator();
+  }
 
     // Security filter chain configuration
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        String[] permitAllRoutes = {"/api/auth/**", "/api/users/activity/**","/api/demandes/create", "/api/cabinet/**"};
-        String[] authenticatedRoutes = {"/api/demandes/**", "/api/med/**", "/api/doc/**", "/api/shares/**"};
+        String[] permitAllRoutes = {"/api/auth/**", "/api/users/activity/**","/api/demandes/create","/api/cabinet/**",
+        		"/api/med/medecins",	
+        		"/api/med/medById/**",
+    			"/api/med/medByName",
+    			"/api/med/medByNameOrSpecAndVille",
+    			"/api/med/medByNameAndSpec",
+    			"/api/med/medByNameOrSpec",
+    			"/api/med/medByVille",
+    			"/api/med/getAllSpec",
+    			"/api/ville/**",
+                "/api/rdv/rdvs/patient","/api/rdv/patient/rdvbyday"
+        };
+      
+        String[] authenticatedRoutes = {"/api/demandes/**", "/api/med/**", "/api/doc/**", "/api/shares/**","/api/medecinSchedule/**","/api/patient/**",
+                "/api/rdv/patient/**",
+//                "/api/rdv/patient/rdvById/**","/api/rdv/MoveRdv/**",
+//                "/api/rdv/patient/updateRdv/**","/api/rdv/patient/updateeRdv/{id}",
+//                "/api/rdv/patient/cancelRdv/**","/api/rdv/patient/rdvbyday","/api/rdv/patient/rdvbyday/**",
+//                "/api/rdv/patient/changestatu/**"
+        };
+
+
         return http.csrf().disable()
                 .cors().and()
                 .authorizeHttpRequests()
@@ -125,6 +152,7 @@ public class WebSecurityConfig {
     public AccessDeniedHandler accessDeniedHandler() {
         return new CustumaccessdeniedHandler();
     }
+    
 
     // Bean for CORS configuration source
     @Bean
