@@ -7,16 +7,15 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
-import com.clinitalPlatform.dto.RendezvousDTO;
+
+import com.clinitalPlatform.dto.*;
 import com.clinitalPlatform.exception.BadRequestException;
-import com.clinitalPlatform.models.MedecinSchedule;
-import com.clinitalPlatform.models.User;
+import com.clinitalPlatform.models.*;
 import com.clinitalPlatform.payload.request.FilterRequest;
 import com.clinitalPlatform.payload.response.AgendaResponse;
 import com.clinitalPlatform.payload.response.GeneralResponse;
 import com.clinitalPlatform.payload.response.HorairesResponse;
-import com.clinitalPlatform.repository.MedecinRepository;
-import com.clinitalPlatform.repository.MedecinScheduleRepository;
+import com.clinitalPlatform.repository.*;
 import com.clinitalPlatform.services.*;
 import com.clinitalPlatform.util.ClinitalModelMapper;
 import com.clinitalPlatform.util.GlobalVariables;
@@ -45,31 +44,20 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.clinitalPlatform.services.MedecinServiceImpl;
-import com.clinitalPlatform.repository.CabinetRepository;
 import com.clinitalPlatform.repository.MedecinRepository;
 import com.clinitalPlatform.services.ActivityServices;
 import com.clinitalPlatform.util.GlobalVariables;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
-import com.clinitalPlatform.repository.CabinetMedecinRepository;
-import com.clinitalPlatform.models.DocumentsCabinet;
 import com.clinitalPlatform.payload.request.DocumentsCabinetRequest;
 import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.security.services.UserDetailsImpl;
-import com.clinitalPlatform.repository.DocumentsCabinetRepository;
-import com.clinitalPlatform.models.Ordonnance;
 import com.clinitalPlatform.payload.request.OrdonnanceRequest;
-import com.clinitalPlatform.repository.OrdonnanceRepository;
 import com.clinitalPlatform.util.PDFGenerator;
 import com.clinitalPlatform.util.ClinitalModelMapper;
-import com.clinitalPlatform.dto.SpecialiteDTO;
 import com.clinitalPlatform.services.interfaces.SpecialiteService;
-import com.clinitalPlatform.dto.OrdonnanceDTO;
 import com.clinitalPlatform.exception.BadRequestException;
-import com.clinitalPlatform.models.Cabinet;
-import com.clinitalPlatform.models.CabinetMedecinsSpace;
-import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.models.User;
 import com.clinitalPlatform.payload.request.CabinetRequest;
 
@@ -104,6 +92,7 @@ public class MedecinController {
 	
 	@Autowired
 	private CabinetMedecinServiceImpl medcabinetservice;
+
 	
 	@Autowired
 	private CabinetServiceImpl cabservice;
@@ -133,6 +122,13 @@ public class MedecinController {
 	private SpecialiteService specialiteService;
 	@Autowired
 	private MedecinScheduleServiceImpl medecinScheduleService;
+
+	@Autowired
+	private LangueserviceImpl langueservice;
+
+	@Autowired
+	private TarifRepository tarifRepository;
+
 	private final Logger LOGGER=LoggerFactory.getLogger(getClass());
 
 //start zakia
@@ -152,20 +148,64 @@ public class MedecinController {
 	}
 	
 	// Get Medecin By Id : %OK%
-	@GetMapping("/medById/{id}")
+	/*@GetMapping("/medById/{id}")
 	public ResponseEntity<Medecin> getMedecinById(@PathVariable(value="id") Long id) throws Exception {
 			
 			return ResponseEntity.ok(mapper.map(medecinService.findById(id), Medecin.class));
+	}*/
+
+	@GetMapping("/medById/{id}")
+	public ResponseEntity<MedecinDTO> getMedecinById(@PathVariable(value="id") Long id) throws Exception {
+		Medecin medecin = medecinService.findById(id);
+		List<Langue> langues = medecinService.getLanguesByMedecinId(id); // Récupérer les langues du médecin
+
+		medecin.setLangues(langues); // Ajouter les langues au médecin
+		List<Tarif>tarifs=medecinService.getTarifByMedecinId(id);
+		medecin.setTarifs(tarifs);
+
+		MedecinDTO medecinDTO = mapper.map(medecin, MedecinDTO.class);
+
+
+		return ResponseEntity.ok(medecinDTO);
 	}
 
+
 	// Get Medecin y his name : %OK%
-	@GetMapping("/medByName")
+	/*@GetMapping("/medByName")
 	@ResponseBody
 	public List<Medecin> findMedByName(@RequestParam String nomMed) throws Exception {
-			
+
+
 			return medrepository.getMedecinByName(nomMed).stream().filter(med->med.getIsActive()==true).collect(Collectors.toList());
+	}*/
+
+
+	@GetMapping("/medByName")
+	@ResponseBody
+	public ResponseEntity<List<Medecin>> findMedByName(@RequestParam String nomMed) throws Exception {
+		// Récupérer les médecins par leur nom
+		List<Medecin> medecins = medrepository.getMedecinByName(nomMed)
+				.stream()
+				.filter(Medecin::getIsActive) // Filtrer uniquement les médecins actifs
+				.collect(Collectors.toList());
+
+		// Pour chaque médecin trouvé, récupérer les langues associées
+		for (Medecin medecin : medecins) {
+			List<Langue> langues = medecinService.getLanguesByMedecinName(medecin.getNom_med());
+			medecin.setLangues(langues);
+			List<Tarif>tarifs=medecinService.getTarifByMedecinName(medecin.getNom_med());
+			medecin.setTarifs(tarifs);
+
+		}
+
+		return ResponseEntity.ok(medecins);
 	}
-	
+
+
+
+
+
+
 	// end point for getting Doctor by Name or speciality and city : %OK%
 	@GetMapping("/medByNameOrSpecAndVille")
 	@ResponseBody
@@ -650,7 +690,7 @@ public class MedecinController {
 	) {
 		List<Long> medecinIds = filterRequest.getMedecinIds();
 		String filter = filterRequest.getFilter();
-		System.out.println("ici:" + filter);
+		System.out.println("filtre:" + filter);
 		System.out.println("Les ids de medecins: " + medecinIds);
 
 		// Utilisation de medecinIds et filter pour filtrer les médecins
@@ -667,5 +707,13 @@ public class MedecinController {
 		return ResponseEntity.ok(filteredMedecins);
 
 	}
+
+
+	@GetMapping("/cabinets/medecin/{id}")
+	public ResponseEntity<List<Cabinet>> getAllCabinetsByMedecinId(@PathVariable Long id) {
+		List<Cabinet> cabinets = cabservice.getAllCabinetsByMedecinId(id);
+		return ResponseEntity.ok(cabinets);
+	}
+
 
 }

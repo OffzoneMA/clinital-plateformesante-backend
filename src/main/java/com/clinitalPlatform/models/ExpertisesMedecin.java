@@ -1,5 +1,6 @@
 package com.clinitalPlatform.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,8 +15,7 @@ import jakarta.persistence.ManyToMany;
 
 @Entity(name = "expertises")
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
+
 public class ExpertisesMedecin {
 
     @Id
@@ -25,6 +25,15 @@ public class ExpertisesMedecin {
     private String nom_exp;
 
     @ManyToMany
+    @JsonIgnore
     private List<Medecin> medecins;
 
+    public ExpertisesMedecin() {
+    }
+
+    public ExpertisesMedecin(Long id, String nom_exp, List<Medecin> medecins) {
+        this.id = id;
+        this.nom_exp = nom_exp;
+        this.medecins = medecins;
+    }
 }

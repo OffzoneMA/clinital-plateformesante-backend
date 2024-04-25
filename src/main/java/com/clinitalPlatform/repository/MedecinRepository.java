@@ -2,6 +2,7 @@ package com.clinitalPlatform.repository;
 
 import java.util.List;
 
+import com.clinitalPlatform.models.Langue;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import org.springframework.data.jpa.repository.Query;
@@ -58,5 +59,9 @@ public interface MedecinRepository extends JpaRepository<Medecin, Long> {
 				@Param("day1") int day1,
 				@Param("day2") int day2
 		);
+
+	@Query(value = "SELECT m.* FROM medecins m where m.nom_med = ?1 AND is_active = 1", nativeQuery = true)
+	Optional<Medecin> findMedecinByName(String nom_med);
+
 }
 

@@ -79,6 +79,8 @@ public class WebSecurityConfig {
     			"/api/med/getAllSpec",
                 //"/api/med/agenda/**",
     			"/api/ville/**",
+                "/api/langues/**",
+                "/api/tarifmed/**",
                 "/api/rdv/rdvs/patient","/api/rdv/patient/rdvbyday"
         };
       
@@ -90,6 +92,8 @@ public class WebSecurityConfig {
 //                "/api/rdv/patient/updateRdv/**","/api/rdv/patient/updateeRdv/{id}",
 //                "/api/rdv/patient/cancelRdv/**","/api/rdv/patient/rdvbyday","/api/rdv/patient/rdvbyday/**",
 //                "/api/rdv/patient/changestatu/**"
+//                "/api/tarifmed/**",
+//                "/api/langues/**"
         };
 
 

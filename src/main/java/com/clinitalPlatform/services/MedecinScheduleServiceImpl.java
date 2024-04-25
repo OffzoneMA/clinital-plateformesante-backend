@@ -252,7 +252,9 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
 
     }
 
-    //FILTRE SUR LES HORAIRES----------------------------------------
+    //FILTRE SUR LES HORAIRES-----------------------------------------------
+
+    //Filtre de crenneau selon la disponobilité
     public Map<Long, List<MedecinSchedule>> filterSchedulesByAvailability(List<Long> medecinIds, String filter) {
         return medecinIds.stream()
                 .collect(Collectors.toMap(
@@ -298,7 +300,7 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
     }
 
 
-    //FILTRE DE CRENEAU PAR MEDECIN------------------------
+    //FILTRE DE CRENEAU PAR  DISPONIBILITÉ DES MEDECINS------------------------
 
     public List<Medecin> filterMedecinsByAvailability(List<Long> medecinIds, String filter) {
         // Récupérez les plannings filtrés
@@ -322,6 +324,17 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
         // Retournez la liste des médecins filtrés
         return filteredMedecins;
     }
+//FILTRE SELON LE MOTIF DE CONSULTATION
+
+    //Filtrer les crennaux selon la disponibilité
+   /* private List<MedecinSchedule> filterSchedulesByMotif(List<MedecinSchedule> schedules, String motif) {
+        return schedules.stream()
+                .filter(schedule -> schedule.getMotifConsultation().equals(motif))
+                .collect(Collectors.toList());
+    }*/
+
+
+
 
 
 }
