@@ -3,6 +3,7 @@ package com.clinitalPlatform.dto;
 import java.util.List;
 
 import com.clinitalPlatform.enums.CiviliteEnum;
+import com.clinitalPlatform.models.CabinetMedecinsSpace;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 
@@ -46,12 +47,13 @@ public class MedecinDTO {
 	private List<RendezvousDTO> lesrdvs;
 	
 	//@JsonProperty(access = Access.WRITE_ONLY)
-	private CabinetDTO cabinet;
-	
+	//private CabinetDTO cabinet;
+	private List<CabinetDTO> cabinet;
 	//@JsonProperty(access = Access.WRITE_ONLY)
 	private List<MoyenPaiementDTO> moyenPaiement;
 
 	private UserDTO user;
+
 
 	 
 }

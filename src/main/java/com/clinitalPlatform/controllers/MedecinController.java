@@ -163,8 +163,19 @@ public class MedecinController {
 		List<Tarif>tarifs=medecinService.getTarifByMedecinId(id);
 		medecin.setTarifs(tarifs);
 
+		List<Cabinet>cabinetMedecinsSpaces=cabservice.getAllCabinetsByMedecinId(id);
+
+
+		// Mapping de la la liste de cabinets à une liste de CabinetDTO
+		List<CabinetDTO> cabinetDTOList = cabinetMedecinsSpaces.stream()
+				.map(cabinet -> mapper.map(cabinet, CabinetDTO.class))
+				.collect(Collectors.toList());
+
 		MedecinDTO medecinDTO = mapper.map(medecin, MedecinDTO.class);
 
+		medecinDTO.setCabinet(cabinetDTOList.isEmpty() ? null : cabinetDTOList);
+
+		//medecinDTO.setCabinet(cabinetMedecinsSpaces.isEmpty() ? null : mapper.map(cabinetMedecinsSpaces.get(0), CabinetDTO.class));
 
 		return ResponseEntity.ok(medecinDTO);
 	}
@@ -708,12 +719,6 @@ public class MedecinController {
 
 	}
 
-
-	@GetMapping("/cabinets/medecin/{id}")
-	public ResponseEntity<List<Cabinet>> getAllCabinetsByMedecinId(@PathVariable Long id) {
-		List<Cabinet> cabinets = cabservice.getAllCabinetsByMedecinId(id);
-		return ResponseEntity.ok(cabinets);
-	}
 
 
 }
