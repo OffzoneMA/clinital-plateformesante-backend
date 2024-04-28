@@ -149,5 +149,23 @@ public class EmailSenderService {
 	        LOGGER.error("Erreur lors de l'envoi de l'e-mail de confirmation : {}", e);
 	    }
 	}
+public void sendMailChangePassword(String userEmail) {
+		
+	    try {
+	    	 String message = "Bonjour,\n\n"
+	                    + "Votre mot de passe a été modifié avec succès sur la plateforme Clinital.\n\n"
+	                    + "Si vous n'avez pas effectué cette modification, veuillez contacter notre équipe de support.";
 
+	        SimpleMailMessage mailMessage = new SimpleMailMessage();
+	        mailMessage.setTo(userEmail);
+	        mailMessage.setFrom("clinitalcontact@gmail.com");
+	        mailMessage.setSubject("Code de confirmation du suppression   de   votre compte clinital!");
+	        mailMessage.setText(message);
+
+	        javaMailSender.send(mailMessage);
+            LOGGER.info("Un email de notification de changement de mot de passe a été envoyé à l'adresse : {}", userEmail);
+        } catch (Exception e) {
+            LOGGER.error("Erreur lors de l'envoi de l'e-mail de notification de changement de mot de passe : {}", e);
+        }
+    }
 }

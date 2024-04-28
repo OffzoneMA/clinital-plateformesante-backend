@@ -196,7 +196,9 @@ public class UserService {
 	    	
 			user.setPassword(encoder.encode(password));
 			if (userRepository.save(user) != null) {
+				emailSenderService.sendMailChangePassword(user.getEmail());
 				return true;
+				
 			}
 			return false;
 		}

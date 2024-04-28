@@ -10,6 +10,7 @@ import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -228,5 +229,13 @@ public class PatientController {
 			return ResponseEntity.ok(patientService.ShareMedecialFolder(patient.getDossierMedical().getId_dossier(),idmed));
 
 		}
-
+	@GetMapping("/getDossierIdByPatientId/{patientId}")
+	@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_PATIENT')")
+	@ResponseBody
+	public ResponseEntity<Long> getDossierIdByPatientId(@PathVariable("patientId") Long patientId) {
+	    Patient patient = patientRepo.findById(patientId)
+	            .orElseThrow(() -> new BadRequestException("Patient not found with id: " + patientId));
+	    Long dossierId = patient.getDossierMedical().getId_dossier();
+	    return new ResponseEntity<>(dossierId, HttpStatus.OK);
+	}
 }
