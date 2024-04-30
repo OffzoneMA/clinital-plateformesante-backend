@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -135,11 +136,43 @@ public class RdvController {
 			return ResponseEntity.ok(new ApiResponse(false, "RDV Not Found " + id));
 
 			} catch (Exception e) {
-			e.printStackTrace();
-			return ResponseEntity.ok(null);
+				e.printStackTrace();
+				return ResponseEntity.ok(null);
 
         }
     }
+
+	@GetMapping("patient/rdvByIdPatient/{id}")
+	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	@JsonSerialize(using = LocalDateTimeSerializer.class)
+	public Iterable<RendezvousResponse> getConfirmedRdvByIdPatient(@PathVariable Long id) throws Exception {
+
+		try {
+			List<Rendezvous> rdvs = rdvrepository.getConfirmedRdvByIdPatient(id);
+			if (!rdvs.isEmpty()) {
+
+				activityServices.createActivity(new Date(), "Read", "Show rdv  ID : " + id,
+						globalVariables.getConnectedUser());
+				LOGGER.info("Show rdv ID : " + id + ", UserID : " + globalVariables.getConnectedUser().getId());
+				return rdvs.stream().map(rdv -> {
+					RendezvousResponse response = mapper.map(rdv, RendezvousResponse.class);
+					response.setMedecinid(rdv.getMedecin().getId()); // Ensure medecinid is set
+					return response;
+				})
+						.collect(Collectors.toList());
+			} else {
+				activityServices.createActivity(new Date(), "Warning", "Cannot found Rdv with ID : " + id,
+						globalVariables.getConnectedUser());
+				LOGGER.warn("Cannot found Rdv By ID : " + id + ", UserID : " + globalVariables.getConnectedUser().getId());
+				return Collections.emptyList();
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+
+		}
+	}
 
 	@GetMapping("/patient/rdvByIdMedecin")
 	@PreAuthorize("hasAuthority('ROLE_PATIENT')")

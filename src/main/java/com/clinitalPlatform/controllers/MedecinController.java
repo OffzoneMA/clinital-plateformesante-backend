@@ -249,7 +249,7 @@ public class MedecinController {
 				medcabinetservice.deleteCabinetMedecins(id);
 				cabrepos.DeleteCabinetbyID(id);
 				
-				activityServices.createActivity(new Date(),"Delete","Add a  Cabinet ID:"+cabinet.getId_cabinet()+" By Connected Medecin Admin",globalVariables.getConnectedUser());
+				activityServices.createActivity(new Date(),"Delete","Delete a  Cabinet ID:"+cabinet.getId_cabinet()+" By Connected Medecin Admin",globalVariables.getConnectedUser());
 	            LOGGER.info("Delete a Cabinet ID: "+cabinet.getId_cabinet()+" , by Connected, User ID  : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
 				return ResponseEntity.ok("Cabinet has been deleted successefully");
 			} else

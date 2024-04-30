@@ -91,8 +91,15 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 	@Query(value = "select * from rendezvous  where id = :id and patient= :idpat", nativeQuery = true)
 	Optional<Rendezvous> findRdvByIdandPatient(Long id, long idpat);
 	// get RDV By id patient :
-	@Query(value = "select * from rendezvous  where patient = ?1", nativeQuery = true)
+	@Query(value = "select * from rendezvous  where patient = ?1 ", nativeQuery = true)
 	List<Rendezvous> getRdvByIdPatient(Long id);
+
+	@Query(value = "SELECT r.*, m.id AS medecinid " +
+			"FROM rendezvous r " +
+			"JOIN medecins m ON r.medecin = m.id " +
+			"WHERE r.patient = ?1 AND r.statut = 'CONFIRME'", nativeQuery = true)
+	List<Rendezvous> getConfirmedRdvByIdPatient(Long id);
+
 	// get RDV By id Medecin :
 	@Query(value = "select r.* from `rendezvous` r, `patients` p  where r.patient=p.id AND p.user_id=?2 AND r.medecin =?1", nativeQuery = true)
 	List<Rendezvous> getRdvByIdMedecin(Long idmed,Long iduser);
