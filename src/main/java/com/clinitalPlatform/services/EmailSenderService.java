@@ -75,18 +75,7 @@ public class EmailSenderService {
 				+ "\r\n"
 				+ "Prenom: "+demande.getPrenom_med()+"\n"
 				+ "\r\n"
-				+ "Matricule: "+demande.getMatricule()+"\n"
-				+ "\r\n"
-				+ "Spécialité: "+demande.getSpecialite()+"\n"
-				+ "\r\n"
-				+ "INPE: "+demande.getInpe()+"\n"
-				+ "\r\n"
-				+ "Cabinet : \r\n"+demande.getNom_cab() + "\r\n"
-				+ "Nom : "+demande.getNom_cab()+"\n"
-				+ "\r\n"
-				+ "Adresse: "+demande.getAdresse()+"\n"
-				+ "\r\n"
-				+ "Code postale: "+demande.getCode_postal());
+			);
 				
 		javaMailSender.send(mailMessage);
 		LOGGER.info("A New Pro Account has been created ");
@@ -106,20 +95,7 @@ public class EmailSenderService {
 				+ "Prenom:"+demande.getPrenom_med()+"\n"
 				+ "\r\n"
 				+ "\r\n"
-				//+ "passwaord provesoire:"+user.getPassword()+"\n"
-				+ "Matricule:"+demande.getMatricule()+"\n"
-				+ "\r\n"
-				+ "Spécialité"+demande.getSpecialite()+"\n"
-				+ "\r\n"
-				+ "INPE:"+demande.getInpe()+"\n"
-				+ "\r\n"
-				+ "Cabinet : \r\n"
-				+ "\r\n"
-				+ "Nom: "+demande.getNom_cab()+"\n"
-				+ "\r\n"
-				+ "Adresse: "+demande.getAdresse()+"\n"
-				+ "\r\n"
-				+ "Code postale: "+demande.getCode_postal()
+				
 				+ "\r\n"
 				+ "Password provisoire: "+pw);
 				
