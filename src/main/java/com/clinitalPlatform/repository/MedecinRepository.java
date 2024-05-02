@@ -28,12 +28,25 @@ public interface MedecinRepository extends JpaRepository<Medecin, Long> {
 			+ " m.ville_id_ville = ?1 AND m.is_active = 1", nativeQuery = true)
 	List<Medecin> getMedecinByVille(Long id_ville);
 	
-	 @Query(value = "SELECT m.* FROM medecins m, specialites s , villes v WHERE s.id_spec = m.specialite_id_spec AND "
+	 /*@Query(value = "SELECT m.* FROM medecins m, specialites s , villes v WHERE s.id_spec = m.specialite_id_spec AND "
 	            + "m.ville_id_ville = v.id_ville AND m.is_active = 1 AND v.nom_ville = ?2 AND"
 	            + " (s.libelle LIKE CONCAT(?1, '%') OR m.nom_med LIKE CONCAT(?1, '%'))", nativeQuery = true)
-	    List<Medecin> getMedecinBySpecialiteOrNameAndVille(String search, String ville);
-	
-	 @Query(value = "SELECT m.* FROM medecins m, Specialites s WHERE s.id_spec = m.specialite_id_spec"
+	    List<Medecin> getMedecinBySpecialiteOrNameAndVille(String search, String ville);*/
+
+	@Query(value = "SELECT m.* FROM medecins m " +
+			"JOIN specialites s ON s.id_spec = m.specialite_id_spec " +
+			"JOIN villes v ON m.ville_id_ville = v.id_ville " +
+			"LEFT JOIN cabinet_medecins cm ON m.id = cm.medecin_id " +
+			"LEFT JOIN cabinet c ON cm.cabinet_id = c.id_cabinet " +
+			"WHERE m.is_active = 1 " +
+			"AND v.nom_ville = ?2 " +
+			"AND (s.libelle LIKE CONCAT(?1, '%') " +
+			"OR m.nom_med LIKE CONCAT(?1, '%') " +
+			"OR c.nom LIKE CONCAT(?1, '%'))", nativeQuery = true)
+	List<Medecin> getMedecinBySpecialiteOrNameOrCabinetAndVille(String search, String ville);
+
+
+	@Query(value = "SELECT m.* FROM medecins m, Specialites s WHERE s.id_spec = m.specialite_id_spec"
 				+ " AND m.is_active = 1 AND s.libelle like CONCAT(?1, '%') and m.nom_med like CONCAT(?2, '%')", nativeQuery = true)
 	List<Medecin> getMedecinBySpecialiteAndName(String specialite, String name);
 	
@@ -62,6 +75,10 @@ public interface MedecinRepository extends JpaRepository<Medecin, Long> {
 
 	@Query(value = "SELECT m.* FROM medecins m where m.nom_med = ?1 AND is_active = 1", nativeQuery = true)
 	Optional<Medecin> findMedecinByName(String nom_med);
+
+	@Query(value = "SELECT m.* FROM medecins m INNER JOIN cabinet_medecins cm ON m.id = cm.medecin_id INNER JOIN cabinet c ON cm.cabinet_id = c.id_cabinet WHERE c.nom = ?1", nativeQuery = true)
+	public List<Medecin> getAllMedecinsByCabinetName(String nomCabinet);
+
 
 }
 

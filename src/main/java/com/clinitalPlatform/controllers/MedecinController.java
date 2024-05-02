@@ -137,6 +137,10 @@ public class MedecinController {
 
 	@Autowired
 	MedecinScheduleRepository medScheduleRepo;
+	@Autowired
+	private CabinetRepository cabinetRepository;
+	@Autowired
+	private SpecialiteRepository specialiteRepository;
 	public static boolean checkday = false;
 	//end zakia
 	@GetMapping("/medecins")
@@ -190,7 +194,6 @@ public class MedecinController {
 			return medrepository.getMedecinByName(nomMed).stream().filter(med->med.getIsActive()==true).collect(Collectors.toList());
 	}*/
 
-
 	@GetMapping("/medByName")
 	@ResponseBody
 	public ResponseEntity<List<Medecin>> findMedByName(@RequestParam String nomMed) throws Exception {
@@ -212,13 +215,27 @@ public class MedecinController {
 		return ResponseEntity.ok(medecins);
 	}
 
+	// end point for getting Doctorlist by CabinetName: %OK%_
+	@GetMapping("/medByCabinetName")
+	public ResponseEntity<List<Medecin>> getAllMedecinsByCabinetName(@RequestParam String nomCabinet) {
+		try {
+			// Appeler la méthode du service pour récupérer les médecins par nom du cabinet
+			List<Medecin> medecins = medcabinetservice.getAllMedecinsByCabinetName(nomCabinet);
+
+			// Retourner la liste des médecins dans une réponse HTTP OK
+			return ResponseEntity.ok(medecins);
+		} catch (RuntimeException e) {
+			// En cas d'erreur, retourner une réponse HTTP avec un statut d'erreur et un message d'erreur
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+		}
+	}
 
 
 
 
 
-	// end point for getting Doctor by Name or speciality and city : %OK%
-	@GetMapping("/medByNameOrSpecAndVille")
+	// end point for getting Doctor by Name or speciality and city : %OK%____________________________
+	/*@GetMapping("/medByNameOrSpecAndVille")
 	@ResponseBody
 	public Iterable<Medecin> medByNameOrSpecAndVille(@RequestParam String ville,
 				@RequestParam String search) throws Exception {
@@ -228,7 +245,23 @@ public class MedecinController {
 			return medrepository.getMedecinBySpecialiteOrNameAndVille( search,ville).stream()
 			.filter(med->med.getIsActive()==true).collect(Collectors.toList());
 
+	}*/
+
+	@GetMapping("/medByNameOrSpecAndVille")
+	@ResponseBody
+	public Iterable<Medecin> medByNameOrSpecAndVille(@RequestParam String ville,
+													 @RequestParam String search) throws Exception {
+
+		System.out.println("la ville: " + ville);
+		System.out.println("recherche: " + search);
+
+		List<Medecin> medecins = medrepository.getMedecinBySpecialiteOrNameOrCabinetAndVille(search, ville).stream()
+				.filter(med -> med.getIsActive() == true)
+				.collect(Collectors.toList());
+
+		return medecins;
 	}
+//----------------------------------------------------------------------
 
 	// end point for getting Doctor by Name and speciality : %OK%
 	@GetMapping("/medByNameAndSpec")
@@ -239,13 +272,42 @@ public class MedecinController {
 		.filter(med->med.getIsActive()==true).collect(Collectors.toList());
 	}
 
-	// end point for getting Doctor by Name or speciality : %OK%
-	@GetMapping("/medByNameOrSpec")
+	//Endpoint for getting Doctor by Name or speciality : %OK%---------------------------------
+
+	/*@GetMapping("/medByNameOrSpec")
 	public Iterable<Medecin> findMedSpecName(@RequestParam String search) throws Exception {
 			
 			return medrepository.getMedecinBySpecOrName(search).stream().filter(med->med.getIsActive()==true).collect(Collectors.toList());
 
+	}*/
+	@GetMapping("/medByNameOrSpec")
+	public Iterable<Medecin> findMedSpecName(@RequestParam String search) throws Exception {
+
+		// Rechercher la spécialité par le nom
+		Specialite specialite = specialiteRepository.getSpecialiteByName(search);
+
+		// Vérifier si la recherche correspond à un nom de cabinet
+		List<Cabinet> cabinets = cabinetRepository.findByNomContainingIgnoreCase(search);
+
+		if (specialite != null) {
+
+			return medrepository.getMedecinBySpecOrName(search).stream()
+					.filter(med -> med.getIsActive())
+					.collect(Collectors.toList());
+		} else if (!cabinets.isEmpty()) {
+
+			return medcabinetservice.getAllMedecinsByCabinetName(search);
+		} else {
+			// Sinon, considérer la recherche comme nom d'un médecin
+			return medrepository.getMedecinBySpecOrName(search).stream()
+					.filter(med -> med.getIsActive())
+					.collect(Collectors.toList());
+		}
 	}
+//---------------------------------------------------------------------------
+
+
+
 
 	// end point for getting Doctor By city : %OK%
 	@GetMapping("/medByVille")

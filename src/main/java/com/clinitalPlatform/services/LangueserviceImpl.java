@@ -35,7 +35,7 @@ public class LangueserviceImpl implements LangueService {
         Langue langue = langueRepository.findById(langueId)
                 .orElseThrow(() -> new Exception("Langue not found for ID: " + langueId));
 
-        // Retourner la liste des médecins associés à cette langue
+
         return langue.getMedecins();
     }
 
@@ -50,7 +50,7 @@ public class LangueserviceImpl implements LangueService {
     }
 
     public void delete(Langue langue) {
-        // Supprimer les associations de la table langue_medecin avant de supprimer la langue
+
         langue.getMedecins().forEach(medecin -> medecin.getLangues().remove(langue));
         langueRepository.delete(langue);
     }

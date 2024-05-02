@@ -20,4 +20,7 @@ public interface MedecinService {
 
 	List<Tarif>getTarifByMedecinName(String nomMed)throws Exception;
 
+
+
+
 }

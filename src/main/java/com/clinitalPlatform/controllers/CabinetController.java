@@ -52,11 +52,14 @@ public class CabinetController {
 		return ResponseEntity.ok(cabservice.findByName(name));
 	}
 
+	//Recherche du cabinet par Medecin ID
 	@GetMapping("/medecin/{id}")
 	public ResponseEntity<List<Cabinet>> getAllCabinetsByMedecinId(@PathVariable Long id) {
 		List<Cabinet> cabinets = cabservice.getAllCabinetsByMedecinId(id);
 		return ResponseEntity.ok(cabinets);
 	}
+
+
 
 
 }

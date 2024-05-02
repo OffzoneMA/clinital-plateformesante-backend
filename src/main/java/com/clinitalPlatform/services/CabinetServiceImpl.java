@@ -100,19 +100,6 @@ public class CabinetServiceImpl implements CabinetService{
 				.collect(Collectors.toList());
 	}
 
-	/*public List<CabinetDTO> getCabinetDTOsByMedecinId(Long medecinId) {
-		// Récupérer tous les médecins associés à l'ID fourni
-		MedecinDTO medecinDTO = medecinService.getMedecinDTOById(medecinId);
-
-		// Récupérer les informations du cabinet à partir du médecin
-		CabinetDTO cabinetDTO = medecinDTO.getCabinet();
-
-		// Créer une liste contenant seulement le cabinet associé au médecin
-		List<CabinetDTO> cabinetDTOs = new ArrayList<>();
-		cabinetDTOs.add(cabinetDTO);
-
-		return cabinetDTOs;
-	}*/
 
 
 }
