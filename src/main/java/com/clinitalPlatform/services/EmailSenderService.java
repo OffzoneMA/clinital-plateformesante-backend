@@ -63,24 +63,7 @@ public class EmailSenderService {
 	}
 	//end new link email
 
-	public void sendMailDemande(Demande demande) {
-		SimpleMailMessage mailMessage = new SimpleMailMessage();
-		mailMessage.setTo(demande.getMail());
-		mailMessage.setFrom("clinitalcontact@gmail.com");
-		mailMessage.setSubject("Activation de la partie pro pour le médecin : "+demande.getNom_med());
-		mailMessage.setText("Le Médecin :"+demande.getNom_med()+" veut accéder à la partie pro"
-				+ "\n leurs cordonnées :  \n\n"
-				+ "Medecin: \r\n"
-				+ "Nom: "+demande.getNom_med()+"\n"
-				+ "\r\n"
-				+ "Prenom: "+demande.getPrenom_med()+"\n"
-				+ "\r\n"
-			);
-				
-		javaMailSender.send(mailMessage);
-		LOGGER.info("A New Pro Account has been created ");
-		System.out.println("Email sent");
-	}
+
 	
 	public void sendMailDemandeValidation(Demande demande,String pw ) {
 		SimpleMailMessage mailMessage = new SimpleMailMessage();

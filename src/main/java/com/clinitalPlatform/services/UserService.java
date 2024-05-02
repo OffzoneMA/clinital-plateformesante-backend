@@ -123,7 +123,6 @@ public class UserService {
 						Medecin medecin = new Medecin();
 						medecin.setNom_med(demande.getNom_med());
 						medecin.setPrenom_med(demande.getPrenom_med());
-						medecin.setMatricule_med(demande.getMatricule());
 						medecin.setInpe(demande.getInpe());
 						medecin.setPhoto_med(null);
 						medecin.setPhoto_couverture_med(null);

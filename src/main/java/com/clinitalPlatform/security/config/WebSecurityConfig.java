@@ -77,7 +77,8 @@ public class WebSecurityConfig {
     			"/api/med/medByNameOrSpec",
     			"/api/med/medByVille",
     			"/api/med/getAllSpec",
-    			"/api/ville/**"
+    			"/api/ville/**",
+    			"/api/specialites/**"
         };
       
         String[] authenticatedRoutes = {"/api/demandes/**", "/api/med/**", "/api/doc/**", "/api/shares/**","/api/patient/**","/api/users/**","/api/rdv/**"};
