@@ -2,6 +2,7 @@ package com.clinitalPlatform.services;
 
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,8 +32,12 @@ public class EmailConfirmationService {
         codeRepository.save(confirmationCode);
     }
 
-    public void deleteConfirmationCode(EmailConfirmationCode code) {
-        codeRepository.delete(code);
+    public void deleteConfirmationCode(Long userId) {
+        // Récupérer tous les codes de confirmation d'e-mail associés à l'utilisateur ayant user_id=id
+        List<EmailConfirmationCode> codesToDelete = codeRepository.findByUserId(userId);
+        
+        // Supprimer tous les codes récupérés
+        codeRepository.deleteAll(codesToDelete);
     }
 
     public EmailConfirmationCode findByCode(String code) {

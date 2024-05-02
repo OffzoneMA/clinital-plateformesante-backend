@@ -1,6 +1,7 @@
 package com.clinitalPlatform.controllers;
 
 import java.util.Date;
+import java.util.List;
 
 import javax.validation.Valid;
 
@@ -24,11 +25,14 @@ import com.clinitalPlatform.models.User;
 import com.clinitalPlatform.payload.request.LoginRequest;
 import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.payload.response.MessageResponse;
+import com.clinitalPlatform.repository.ConfirmationTokenRepository;
 import com.clinitalPlatform.repository.UserRepository;
 import com.clinitalPlatform.security.services.UserDetailsServiceImpl;
 import com.clinitalPlatform.services.ActivityServices;
 import com.clinitalPlatform.services.EmailConfirmationService;
 import com.clinitalPlatform.services.EmailSenderService;
+import com.clinitalPlatform.services.PatientService;
+import com.clinitalPlatform.security.jwt.ConfirmationToken;
 import com.clinitalPlatform.services.UserService;
 import org.springframework.http.HttpStatus;
 
@@ -50,10 +54,15 @@ public class UserController {
 	GlobalVariables globalVariables;
 	
 	@Autowired
+	PatientService patientService;
+	
+	@Autowired
 	private EmailConfirmationService confirmationService;
 	
 	@Autowired
 	EmailSenderService emailSenderService;
+	@Autowired
+	ConfirmationTokenRepository confirmationTokenRepository;
 
 	private final Logger LOGGER = LoggerFactory.getLogger(getClass());
 
@@ -98,14 +107,18 @@ public class UserController {
 	    if (confirmationCode == null) {
 	        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Invalid confirmation code"));
 	    }
-
+	   
 	    User user = confirmationCode.getUser();
-	    user.setEnabled(false);
-	    userRepository.save(user);
-
-	    confirmationService.deleteConfirmationCode(confirmationCode);
-
-	    return ResponseEntity.ok(new ApiResponse(true, "User enabled successfully"));
+	    confirmationService.deleteConfirmationCode(user.getId());
+	    activityServices.deleteActivitiesByUserId(user.getId());
+	    patientService.setUserNullByUserId(user.getId()); 
+	    List<ConfirmationToken> tokensToDelete = confirmationTokenRepository.findByUserId(user.getId());
+	    
+	    // Supprimer toutes les instances récupérées
+	    confirmationTokenRepository.deleteAll(tokensToDelete);
+	    userRepository.delete(user);
+	    
+	    return ResponseEntity.ok(new ApiResponse(true, "User deleted successfully"));
 	}
 
 	

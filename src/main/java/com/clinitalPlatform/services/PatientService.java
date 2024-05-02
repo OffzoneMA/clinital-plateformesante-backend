@@ -131,5 +131,16 @@ public class PatientService implements IDao<Patient> {
 			return ResponseEntity.ok("Folder shared seccessefully !");
 		}
 
-
+	public void setUserNullByUserId(Long userId) {
+	    // Récupérer tous les patients associés à l'utilisateur ayant user_id=id
+	    List<Patient> patientsToUpdate = patientRepository.findByUserId(userId);
+	    
+	    // Définir la propriété user sur null pour chaque patient récupéré
+	    for (Patient patient : patientsToUpdate) {
+	        patient.setUser(null);
+	    }
+	    
+	    // Enregistrer les changements
+	    patientRepository.saveAll(patientsToUpdate);
+	}
 }
