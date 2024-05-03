@@ -242,6 +242,27 @@ public Medecin getMedecinByUserId(long id) throws Exception {
         return medecin.getTarifs();
     }
 
+    @Override
+    public List<Medecin> findMedecinsByLangues_Name(String langueName) {
+        return medecinRepository.findMedecinsByLangues_Name(langueName);
+
+    }
+
+    public List<Medecin> filterMedecinsByLangue(List<Long> medecinIds, String langueName) {
+        // Récupérez les médecins correspondant aux IDs fournis
+        List<Medecin> medecins = medecinRepository.findAllById(medecinIds);
+
+        // Filtrer les médecins par langue
+        List<Medecin> filteredMedecins = medecins.stream()
+                .filter(medecin -> medecin.getLangues().stream()
+                        .anyMatch(langue -> langue.getName().equals(langueName)))
+                .collect(Collectors.toList());
+
+        return filteredMedecins;
+    }
+
+
+
 
 }
 

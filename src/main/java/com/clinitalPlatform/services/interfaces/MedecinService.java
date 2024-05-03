@@ -20,6 +20,8 @@ public interface MedecinService {
 
 	List<Tarif>getTarifByMedecinName(String nomMed)throws Exception;
 
+	List<Medecin> findMedecinsByLangues_Name(String langueName);
+
 
 
 

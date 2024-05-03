@@ -234,7 +234,7 @@ public class MedecinController {
 
 
 
-	// end point for getting Doctor by Name or speciality and city : %OK%____________________________
+	// end point for getting Doctor by Name or cabinet or speciality and city : %OK%____________________________
 	/*@GetMapping("/medByNameOrSpecAndVille")
 	@ResponseBody
 	public Iterable<Medecin> medByNameOrSpecAndVille(@RequestParam String ville,
@@ -733,29 +733,6 @@ public class MedecinController {
 
 
 	//FILTRE DE MEDECIN SELON LA DISPONIBILITÉ-------------------------------------------
-	/*@PostMapping("/medecins/schedules/filter")
-	public ResponseEntity<List<Medecin>> filterMedecinSchedulesByAvailability(
-			@RequestBody FilterRequest filterRequest
-	) {
-		List<Long> medecinIds = filterRequest.getMedecinIds();
-		String filter = filterRequest.getFilter();
-		System.out.println("ici:" + filter);
-		System.out.println("d" + medecinIds);
-
-		// Utilisation de medecinIds et filter pour filtrer les médecins
-		List<Medecin> filteredMedecins = medecinScheduleService.filterMedecinsByAvailability(medecinIds, filter);
-
-		// Vérifiez si des médecins ont été trouvés
-		if (filteredMedecins.isEmpty()) {
-
-			System.out.println( "Aucun médecin trouvé.");
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
-
-		}
-
-		//return ResponseEntity.ok(filteredMedecins);
-		return new ResponseEntity<>(filteredMedecins, HttpStatus.OK);
-	}*/
 
 	@PostMapping("/medecins/schedules/filter")
 	public ResponseEntity<?> filterMedecinSchedulesByAvailability(
@@ -776,10 +753,45 @@ public class MedecinController {
 			return ResponseEntity.ok(new ApiResponse(false, "Aucun medecin trouvé avec ce creneau."));
 
 		}
-
+		System.out.println("Medecins trouvés"+filteredMedecins.size());
 		return ResponseEntity.ok(filteredMedecins);
 
 	}
+
+	//FILTRE LE MEDECIN PAR LANGUE test
+	/*@GetMapping("/byLangue/{langueName}")
+	public ResponseEntity<List<Medecin>> getMedecinsByLangueName(@PathVariable String langueName) {
+		try {
+			List<Medecin> medecins = medecinService.findMedecinsByLangues_Name(langueName);
+			return ResponseEntity.ok(medecins);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+		}
+	}*/
+
+	// FILTRE LE MEDECIN PAR LANGUE OK
+	@PostMapping("/byLangue")
+	public ResponseEntity<?> getMedecinsByLangue(@RequestBody FilterRequest filterRequest) {
+		try {
+			List<Long> medecinIds = filterRequest.getMedecinIds();
+			String filter = filterRequest.getFilter();
+			System.out.println("filtre:" + filter);
+			System.out.println("Les ids de medecins: " + medecinIds);
+			// Utilisez le service pour filtrer les médecins par langue
+			List<Medecin> medecins = medecinService.filterMedecinsByLangue(filterRequest.getMedecinIds(), filterRequest.getFilter());
+
+			// Vérifiez si des médecins ont été trouvés
+			if (medecins.isEmpty()) {
+				System.out.println("Aucun médecin trouvé parlant cette langue.");
+				return ResponseEntity.ok(new ApiResponse(false, "Aucun médecin trouvé parlant cette langue."));
+			}
+			System.out.println("Medecins trouvés :"+medecins.size());
+			return ResponseEntity.ok(medecins);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+		}
+	}
+
 
 
 

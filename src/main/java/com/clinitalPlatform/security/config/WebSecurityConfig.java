@@ -82,6 +82,7 @@ public class WebSecurityConfig {
                 "/api/med/cabinets/**",
                 "/api/med/agenda/**",
                 "/api/med/medByCabinetName",
+                "api/med/byLangue/**",
     			"/api/ville/**",
                 "/api/langues/**",
                 "/api/tarifmed/**",

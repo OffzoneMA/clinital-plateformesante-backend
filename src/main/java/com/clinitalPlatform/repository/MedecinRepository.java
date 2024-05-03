@@ -79,6 +79,6 @@ public interface MedecinRepository extends JpaRepository<Medecin, Long> {
 	@Query(value = "SELECT m.* FROM medecins m INNER JOIN cabinet_medecins cm ON m.id = cm.medecin_id INNER JOIN cabinet c ON cm.cabinet_id = c.id_cabinet WHERE c.nom = ?1", nativeQuery = true)
 	public List<Medecin> getAllMedecinsByCabinetName(String nomCabinet);
 
-
+	List<Medecin> findMedecinsByLangues_Name(String langueName);
 }
 

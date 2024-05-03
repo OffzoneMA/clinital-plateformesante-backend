@@ -10,6 +10,7 @@ import com.clinitalPlatform.services.MedecinServiceImpl;
 import com.clinitalPlatform.services.interfaces.LangueService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -82,6 +83,10 @@ public class LangueController {
             return ResponseEntity.notFound().build();
         }
     }
+
+
+
+
 
     @PutMapping("/update/{id}")
     public ResponseEntity<?> updateLangue(@PathVariable Long id, @RequestBody LangueRequest langueRequest) {

@@ -40,6 +40,7 @@ public class LangueserviceImpl implements LangueService {
     }
 
 
+
     public List<Langue> findAll(){
         return langueRepository.findAll();
     }
