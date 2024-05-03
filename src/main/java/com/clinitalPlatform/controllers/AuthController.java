@@ -17,7 +17,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -38,6 +38,7 @@ import com.clinitalPlatform.exception.BadRequestException;
 import com.clinitalPlatform.models.User;
 import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.payload.response.JwtResponse;
+import com.clinitalPlatform.repository.UserRepository;
 import com.clinitalPlatform.security.jwt.ConfirmationToken;
 import com.clinitalPlatform.security.jwt.JwtService;
 import com.clinitalPlatform.security.services.UserDetailsImpl;
@@ -75,15 +76,18 @@ public class AuthController {
     @Autowired
     private GlobalVariables globalVariables;
 
-    @Autowired
-    private UserDetailsServiceImpl userDetailsService;
-    @Autowired
-    EmailSenderService emailSenderService;
-    @Autowired
-    PasswordEncoder encoder;
-    //Jounalisation
-    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
+	@Autowired
+	private UserDetailsServiceImpl userDetailsService;
+	@Autowired
+	EmailSenderService emailSenderService;
+	@Autowired
+	UserRepository userRepository;
+	@Autowired
+	PasswordEncoder encoder;
+	
+	//Jounalisation
+	private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
     //CONNEXION--------------------------------------------------
     @PostMapping("/signin")
@@ -391,4 +395,18 @@ public class AuthController {
 
 
 
+	@PostMapping("/checkPassword")
+	@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_PATIENT')")
+	public ResponseEntity<?> checkPassword(@Valid @RequestBody String password)throws Exception {
+		User user = userRepository.getById(globalVariables.getConnectedUser().getId());
+	    
+	    // Vérifier si le mot de passe fourni correspond au mot de passe de l'utilisateur connecté
+	    boolean passwordMatch = encoder.matches(password, user.getPassword());
+	    
+	    if (passwordMatch) {
+	        return ResponseEntity.ok(new ApiResponse(true, "Password matches"));
+	    } else {
+	        return ResponseEntity.ok(new ApiResponse(false, "Password does not match"));
+	    }
+	}
 }
