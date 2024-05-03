@@ -1,21 +1,18 @@
 package com.clinitalPlatform.models;
 
-import java.time.DayOfWeek;
-import java.time.LocalDateTime;
-import java.util.List;
-
-import javax.validation.constraints.NotBlank;
-
+import com.clinitalPlatform.enums.RdvStatutEnum;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.*;
+import lombok.Data;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.springframework.format.annotation.DateTimeFormat;
 
-import com.clinitalPlatform.enums.RdvStatutEnum;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.time.DayOfWeek;
+import java.time.LocalDateTime;
+import java.util.List;
 
-import jakarta.persistence.*;
-import lombok.Data;
-
+@JsonIgnoreProperties({"hibernateLazyInitializer","handler"})
 @Entity
 @Table(name = "rendezvous")
 @Data
@@ -57,6 +54,7 @@ public class Rendezvous {
 
 
 	@OneToOne(cascade = CascadeType.ALL)
+
 	@JoinColumn(name = "id_mode", referencedColumnName= "id_mode")
 	private ModeConsultation modeConsultation;
 
@@ -71,8 +69,8 @@ public class Rendezvous {
 		super();
 	}
 
-	public Rendezvous(DayOfWeek day, @NotBlank String motif, LocalDateTime start, LocalDateTime end,
-			LocalDateTime canceledAt, RdvStatutEnum statut,MotifConsultation motifconsul, Medecin medecin,Boolean iSnewPatient, Patient patient,ModeConsultation modeConsultation,String Commantaire,String LinkVideoCall,Cabinet cabinet) {
+	public Rendezvous(DayOfWeek day, String motif, LocalDateTime start, LocalDateTime end,
+                      LocalDateTime canceledAt, RdvStatutEnum statut, MotifConsultation motifconsul, Medecin medecin, Boolean iSnewPatient, Patient patient, ModeConsultation modeConsultation, String Commantaire, String LinkVideoCall, Cabinet cabinet) {
 		super();
 		this.day = day;
 		this.start = start;
@@ -89,4 +87,23 @@ public class Rendezvous {
 		this.cabinet=cabinet;
 	}
 
+
+    public void setMotif(MotifConsultation motifConsultation) {
+		this.motifConsultation= motifConsultation;
+    }
+
+
+
+	public void setISnewPatient(Boolean isnewpatient) {
+		this.iSnewPatient=isnewpatient;
+	}
+
+	public void setIsnewPatient(Boolean isnewPatient) {
+		this.iSnewPatient = isnewPatient;
+	}
+
+	public Boolean getIsnewPatient() {
+		return iSnewPatient;
+	}
 }
+

@@ -1,5 +1,6 @@
 package com.clinitalPlatform.controllers;
 
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,15 +32,21 @@ import com.clinitalPlatform.models.Ville;
 import com.clinitalPlatform.payload.request.PatientRequest;
 import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.payload.response.PatientResponse;
-import com.clinitalPlatform.repository.PatientRepository;
-import com.clinitalPlatform.repository.UserRepository;
-import com.clinitalPlatform.repository.VilleRepository;
+import com.clinitalPlatform.repository.*;
 import com.clinitalPlatform.services.ActivityServices;
 import com.clinitalPlatform.services.PatientService;
+import com.clinitalPlatform.services.RendezvousService;
 import com.clinitalPlatform.util.ClinitalModelMapper;
 import com.clinitalPlatform.util.GlobalVariables;
 
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+
+import org.springframework.web.bind.annotation.*;
+import java.util.*;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -63,12 +70,13 @@ public class PatientController {
 	VilleRepository villeRepository;
 
 	@Autowired
-    GlobalVariables globalVariables;
+   GlobalVariables globalVariables;
 
 	@Autowired
 	private ActivityServices  activityServices;
 
 	private final Logger LOGGER=LoggerFactory.getLogger(getClass());
+  
 
 	// Get patient by ID :
 	@GetMapping("/getPatientById/{account}")
@@ -80,7 +88,6 @@ public class PatientController {
 		LOGGER.info("Consulting Info of Patient ID : "+userID+", UserID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
 		return mapper.map(patientRepo.findPatientByAccount(userID), PatientResponse.class);
 	}
-
 	
 	// A method that is used to add a patient to the database. %OK%
 	@PostMapping("/addpatient")
@@ -201,8 +208,6 @@ public class PatientController {
 			LOGGER.info("Consulting Personal Patient Account ID : "+patient.getId()+", UserID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
   		return ResponseEntity.ok(patientResponse);
 	
-
-
 	}
 
 	@GetMapping("/getallproch")
@@ -215,10 +220,8 @@ public class PatientController {
 		return ResponseEntity.ok(patientService.findALLProchByUserId(globalVariables.getConnectedUser().getId()));
 
 	}
-
-	// share folder with a doctor :
-
-	@PostMapping("/sharedoc/{idmed}/{iddoss}")
+  	// share folder with a doctor :
+  @PostMapping("/sharedoc/{idmed}/{iddoss}")
 	@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_PATIENT')")
 	public ResponseEntity<?> ShareAccesstoFolder(@Valid @PathVariable Long idmed,@Valid @PathVariable("iddoss") Long iddossier) throws Exception{
 	
@@ -228,8 +231,9 @@ public class PatientController {
 			LOGGER.info("Sharing Medical Folder ID : "+iddossier+" with Medecin : "+idmed+", UserID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
 			return ResponseEntity.ok(patientService.ShareMedecialFolder(patient.getDossierMedical().getId_dossier(),idmed));
 
-		}
-	@GetMapping("/getDossierIdByPatientId/{patientId}")
+	}
+  
+  	@GetMapping("/getDossierIdByPatientId/{patientId}")
 	@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_PATIENT')")
 	@ResponseBody
 	public ResponseEntity<Long> getDossierIdByPatientId(@PathVariable("patientId") Long patientId) {
@@ -238,4 +242,13 @@ public class PatientController {
 	    Long dossierId = patient.getDossierMedical().getId_dossier();
 	    return new ResponseEntity<>(dossierId, HttpStatus.OK);
 	}
+  
+	@GetMapping("/getall")
+	public List<Patient> findALLPatientByUserId() throws Exception {
+    
+		activityServices.createActivity(new Date(),"Read","Consulting All Patient Account",globalVariables.getConnectedUser());
+		LOGGER.info("Consulting All Patient Account, UserID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+		return patientService.findALLPatientByUserId(globalVariables.getConnectedUser().getId());
+	}
+
 }

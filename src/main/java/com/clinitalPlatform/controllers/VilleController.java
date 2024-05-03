@@ -20,6 +20,7 @@ import com.clinitalPlatform.util.GlobalVariables;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 
+
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/ville")
@@ -38,10 +39,10 @@ public class VilleController {
 	GlobalVariables globalVariables;
 
 
+
 	@GetMapping("/allvilles")
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
 	Iterable<VilleDTO> villes() throws Exception {
-
 		return villerepo.findAll().stream().map(ville -> mapper.map(ville, VilleDTO.class))
 				.collect(Collectors.toList());
 	}

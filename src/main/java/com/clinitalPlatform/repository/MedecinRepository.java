@@ -3,14 +3,19 @@ package com.clinitalPlatform.repository;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.clinitalPlatform.models.Medecin;
 
+import java.util.List;
+import java.util.Optional;
+
 @Repository
 public interface MedecinRepository extends JpaRepository<Medecin, Long> {
+
 	
 	@Query(value = "SELECT m.* FROM medecins m WHERE m.user_id= :id",nativeQuery = true)
 	public Medecin getMedecinByUserId(@Param("id")long id);
@@ -34,7 +39,7 @@ public interface MedecinRepository extends JpaRepository<Medecin, Long> {
 	@Query(value = "SELECT m.* FROM medecins m, Specialites s WHERE s.id_spec = m.specialite_id_spec"
 			+ " AND m.is_active = 1 AND (s.libelle like CONCAT(?1, '%') OR m.nom_med like CONCAT(?1, '%'))", nativeQuery = true)
 	List<Medecin> getMedecinBySpecOrName(String search);
-	
-	//
+
+
 }
 

@@ -78,10 +78,14 @@ public class WebSecurityConfig {
     			"/api/med/medByVille",
     			"/api/med/getAllSpec",
     			"/api/ville/**",
-    			"/api/specialites/**"
+    			"/api/specialites/**",
+          "/api/rdv/rdvs/patient","/api/rdv/patient/rdvbyday"
         };
-      
-        String[] authenticatedRoutes = {"/api/demandes/**", "/api/med/**", "/api/doc/**", "/api/shares/**","/api/patient/**","/api/users/**","/api/rdv/**"};
+
+        String[] authenticatedRoutes = {"/api/demandes/**", "/api/med/**", "/api/doc/**", "/api/shares/**","/api/patient/**","/api/medecinSchedule/**","/api/users/**",
+                "/api/rdv/patient/**"
+        };
+
 
         return http.csrf().disable()
                 .cors().and()
