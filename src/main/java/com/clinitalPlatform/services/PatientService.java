@@ -165,27 +165,6 @@ public class PatientService implements IDao<Patient> {
 
 	}
 
-// share a folder by patient to a specifique doctor : 
-	public ResponseEntity<?> ShareMedecialFolder(Long iddossier,Long idmed) throws Exception{
-
-		Medecin med = medRepository.findById(idmed).orElseThrow(()->new Exception("NO such Medecin exist"));
-		DossierMedical dossier = dossierMedicalRepository.findById(iddossier).orElseThrow(()->new Exception("NO such Folder exist"));
-
-		// check if the folder is already shared.
-		Boolean isDossshared=med.getMeddossiers().stream().filter(doss->doss.getId_dossier()==dossier.getId_dossier()).findFirst().isPresent();
-
-		//boolean isDossshared = med.getMeddossiers().stream().anyMatch(o -> doss.getId_dossier()==dossier.getId_dossier());
-		if(!isDossshared){
-			med.getMeddossiers().add(dossier);
-			medRepository.save(med);
-			ResponseEntity.status(200).build();
-		} else{
-			return ResponseEntity.ok(new ApiResponse(false, "You already shared this folder with that doctor"));
-		}
-		
-
-		return ResponseEntity.ok("Folder shared seccessefully !");
-	}
 
 
 //GENERATE FICHE PATIENT BY DOCTOR :

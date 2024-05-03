@@ -46,6 +46,7 @@ public class VilleController {
 		return villerepo.findAll().stream().map(ville -> mapper.map(ville, VilleDTO.class))
 				.collect(Collectors.toList());
 	}
+	
 	@GetMapping("/{id}")
 	public ResponseEntity<String> getVilleNameById(@PathVariable("id") Long id) {
 	    Optional<Ville> villeOptional = villerepo.findById(id);
