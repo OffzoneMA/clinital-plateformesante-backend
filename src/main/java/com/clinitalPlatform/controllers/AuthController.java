@@ -278,7 +278,7 @@ public class AuthController {
             return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
         } catch (Exception e) {
             // Gestion des autres exceptions
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(false, "Une erreur s'est produite lors de l'envoi du mail de confirmation."));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(false, "Une erreur s'est iduite lors de l'envoi du mail de confirmation."));
         }
     }
 
