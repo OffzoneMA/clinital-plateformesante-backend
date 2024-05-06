@@ -54,7 +54,6 @@ public class Patient {
 
 	@ManyToOne(cascade=CascadeType.MERGE)
 	@JoinColumn(name = "id_ville", nullable = true, referencedColumnName = "id_ville", insertable = true, updatable = true)
-	@JsonIgnore
 	private Ville ville;
 
 	@OneToOne(cascade=CascadeType.ALL)
