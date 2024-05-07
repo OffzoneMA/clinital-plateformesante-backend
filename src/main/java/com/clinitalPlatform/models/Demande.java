@@ -27,8 +27,6 @@ public class Demande {
 	@Column(name="prenom_medecin")
 	private String prenom_med;
 	
-	@Column(name="matricule_medecin")
-	private String matricule;
 	
 	@Column(name="mail_medecin")
 	private String mail;
@@ -39,14 +37,12 @@ public class Demande {
 	@Column(name="inpe")
 	private String inpe;
 	
-	@Column(name="nom_cabinet")
-	private String nom_cab;
 
-	@Column(name="adresse_cabinet")
-	private String adresse;
+	@Column(name="ville")
+	private String ville;
 	
-	@Column(name="code_postal_cabinet")
-	private String code_postal;
+	@Column(name="phonenumber")
+	private String phonenumber;
 
 	@Column(name="validation")//l'etat du demande si valider ou pas :
 	@Enumerated(EnumType.STRING)

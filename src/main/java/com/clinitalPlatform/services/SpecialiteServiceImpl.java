@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.clinitalPlatform.dto.SpecialiteDTO;
+import com.clinitalPlatform.models.Specialite;
 import com.clinitalPlatform.repository.SpecialiteRepository;
 import com.clinitalPlatform.services.interfaces.SpecialiteService;
 import com.clinitalPlatform.util.ClinitalModelMapper;
@@ -29,5 +30,11 @@ public class SpecialiteServiceImpl implements SpecialiteService{
 				.map(sp->modelMapper.map(sp, SpecialiteDTO.class))
 				.collect(Collectors.toList());
 	}
-
+	public boolean existsByLibelle(String libelle) {
+        return specialiteRepository.existsByLibelle(libelle);
+    }
+	 public Specialite ajouterSpecialite(Specialite specialite) {
+	        // Vous pouvez ajouter ici d'autres validations avant d'ajouter la spécialité
+	        return specialiteRepository.save(specialite);
+	    }
 }

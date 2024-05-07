@@ -81,4 +81,11 @@ public class ActivityServices implements historyservices {
         // TODO Auto-generated method stub
         
     }
+    public void deleteActivitiesByUserId(Long userId) {
+        // Récupérer toutes les activités associées à l'utilisateur ayant l'ID spécifié
+        List<LogActivityUser> activitiesToDelete = activityRespository.findActivityByUserId(userId);
+        
+        // Supprimer toutes les activités récupérées
+        activityRespository.deleteAll(activitiesToDelete);
+    }
 }

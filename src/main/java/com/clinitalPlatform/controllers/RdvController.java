@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,9 +37,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
+import java.util.HashSet;
+import java.util.Set;
 
 @org.springframework.transaction.annotation.Transactional
+@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/rdv")
 public class RdvController {
@@ -72,6 +75,7 @@ public class RdvController {
 
 	@Autowired
 	DocumentRepository docrepository;
+  
 	@Autowired
 	SpecialiteRepository speciarepspo;
 
@@ -89,12 +93,43 @@ public class RdvController {
 
 	private final Logger LOGGER = LoggerFactory.getLogger(getClass());
 
+	@GetMapping("medcin/patientId/{id}")
+	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	public ResponseEntity<Set<Medecin>> findMedecinsWithRendezvousForPatient(@PathVariable Long id) {
+	    try {
+	        Long userId = globalVariables.getConnectedUser().getId();
+	        List<Rendezvous> rendezvousList = rdvrepository.findRdvByIduserandPatient(userId, id);
+
+	        activityServices.createActivity(new Date(), "Read", "Consulting medcins by Patient by ID : " + id,
+	                userId);
+	        LOGGER.info("Consulting medcins by Patient by ID: " + id + ", UserID : "
+	                + globalVariables.getConnectedUser().getId());
+
+	        if (rendezvousList.isEmpty()) {
+	            return ResponseEntity.ok(null); // Aucun rendez-vous pour ce patient
+	        }
+
+	        // Utiliser un ensemble pour stocker les médecins (pas de doublons)
+	        Set<Medecin> medecins = new HashSet<>();
+	        for (Rendezvous rdv : rendezvousList) {
+	            Medecin medecin = rdv.getMedecin(); // Obtenir le médecin associé au rendez-vous
+	            medecins.add(medecin);
+	        }
+
+	        return ResponseEntity.ok(medecins);
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+	    }
+	}
+
+
+
 //	@Value(value = "${azure.storage.account-key}")
 //	String azureStorageToken;
 
 	// Get all RDVs : a revoire ....
 	@GetMapping("rdvs")
-
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
 	Iterable<RendezvousResponse> rendezvous() {
 		// UserDetailsImpl userDetails = (UserDetailsImpl)
@@ -115,7 +150,6 @@ public class RdvController {
 	// Get Rdv By Id and Id patient : %OK%
 	@GetMapping("patient/rdvById/{id}")
 	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
-
 	public ResponseEntity<?> getRdvByIdBypatient(@PathVariable Long id) throws Exception {
 		Patient pat = patientService.getPatientMoiByUserId(globalVariables.getConnectedUser().getId());
 		try {
@@ -143,7 +177,6 @@ public class RdvController {
 
 	@GetMapping("/patient/rdvByIdMedecin")
 	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
-
 	@ResponseBody
 	public List<RendezvousResponse> findRdvByIdMedecin(@RequestParam Long id) throws Exception {
 		// UserDetailsImpl userDetails = (UserDetailsImpl)
@@ -159,8 +192,6 @@ public class RdvController {
 				.map(rdv -> mapper.map(rdv, RendezvousResponse.class))
 				.collect(Collectors.toList());
 	}
-
-	// Get RDV By patient Name : %OK%
 
 
 	// Get RDV By patient Name : %OK% getRdvByNomPatientByMedecin
@@ -179,6 +210,7 @@ public class RdvController {
 		return rdvrepository.getRdvByNomPatient(nomPatient, globalVariables.getConnectedUser().getId()).stream()
 				.map(rdv -> mapper.map(rdv, Rendezvous.class)).collect(Collectors.toList());
 	}
+
 	// a revoire
 	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
 	@GetMapping("/patient/rdvByDate")
@@ -208,8 +240,6 @@ public class RdvController {
 	// ADD an RDV by Medecin : %OK%
 
 	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
-
-	// ADD an RDV by Patient : %OK%
 	@PostMapping("patient/addRdvgestion")
 	@ResponseBody
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
@@ -233,10 +263,8 @@ public class RdvController {
 		}
 	}
 
-
-	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
-
 	// ADD an RDV by Patient : %OK%
+	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
 	@PostMapping("patient/addRdv")
 	@ResponseBody
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
@@ -276,11 +304,8 @@ public class RdvController {
 		}}
 
 
-        // DELETE AN RDV By Medecin : %ok%
-
+ // DELETE AN RDV By Medecin : %ok%
 	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
-
-	// DELETE AN RDV By Patient : %ok%
 	@DeleteMapping("/patient/delete/{id}")
 	public ResponseEntity<?> deleteRdvbyPatient(@Valid @PathVariable Long id) throws Exception {
 		// UserDetailsImpl userDetails = (UserDetailsImpl)
@@ -307,9 +332,7 @@ public class RdvController {
 
 
 	// Update RDv bay Medecin : %ok%
-
 	// Get Rdv For connected Medecin : %OK%
-
 	// Get Rdv For connected Patient : %OK%
 	@GetMapping("/rdvs/patient")
 	List<Rendezvous> rendezvousForPatient() throws Exception {
@@ -375,12 +398,8 @@ public class RdvController {
 	}
 
 	// CHANGE RDV Status for connected Medecin : %OK% les autres status.
-
-
-	// CHANGE RDV Status for connected Medecin : %OK% les autres status.
 	@PutMapping("/patient/changestatu/{id}")
 	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
-
 	public ResponseEntity<?> ChangeRdvSttByPatient(@Valid @PathVariable Long id,
 			@Valid @RequestBody RendezvousRequest requestrdv) throws Exception {
 		// Rendezvous rdv = rdvrepository.findById(id)
@@ -412,14 +431,6 @@ public class RdvController {
 	}
 
 	// RDV By DATE FELTRING (day,week, month ,year) :
-	// RDV FOR DOCTOR BY DAY :
-
-
-	// RDV FOR DOCTOR BY WEEK :
-
-
-	// RDV FOR DOCTOR BY MONTH :
-
 
 	/*
 	 * Patient : RDV FOR Patient BY DAY :
@@ -450,7 +461,6 @@ public class RdvController {
 	// RDV FOR Patient BY WEEK :
 	@GetMapping("/patient/rdvbyweek/{week}")
 	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
-
 	List<Rendezvous> rendezvousPatientByweek(@Valid @PathVariable long week) throws Exception {
 		// UserDetailsImpl userDetails = (UserDetailsImpl)
 		// SecurityContextHolder.getContext().getAuthentication()
@@ -495,7 +505,6 @@ public class RdvController {
 	// RDV FOR Patient BY YEAR :
 	@GetMapping("/patient/rdvbyyear/{year}")
 	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
-
 	List<Rendezvous> rendezvousPatientByyear(@Valid @PathVariable long year) throws Exception {
 		// UserDetailsImpl userDetails = (UserDetailsImpl)
 		// SecurityContextHolder.getContext().getAuthentication()
@@ -533,8 +542,6 @@ public class RdvController {
 
 	// RDV FOR Patient BY WEEK :and id patient
 	@GetMapping("/patient/rdvbyweek/{id}/{week}")	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
-
-
 	List<Rendezvous> rdvforSpecificPatientByweek(@Valid @PathVariable long week,
 			@Valid @PathVariable long id) throws Exception {
 		activityServices.createActivity(new Date(), "Read", "Consult Rdv for Patient ID : " + id + " By Week ",
@@ -548,7 +555,6 @@ public class RdvController {
 	// RDV FOR Patient BY MONTH and id patient:
 	@GetMapping("/patient/rdvbymonth/{id}/{month}")
 	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
-
 	List<Rendezvous> rdvforSpecificPatientBymonth(@Valid @PathVariable long month,
 			@Valid @PathVariable long id) throws Exception {
 		activityServices.createActivity(new Date(), "Read", "Consult Rdv for Patient ID : " + id + " By Month ",
@@ -562,7 +568,6 @@ public class RdvController {
 	// RDV FOR Patient BY YEAR :and id patient
 	@GetMapping("/patient/rdvbyyear/{id}/{year}")
 	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
-
 	List<Rendezvous> rdvforSpecificPatientByyear(@Valid @PathVariable long year,
 			@Valid @PathVariable long id) throws Exception {
 		activityServices.createActivity(new Date(), "Read", "Consult Rdv for Patient ID : " + id + " By Year ",
@@ -579,7 +584,6 @@ public class RdvController {
 	@ResponseBody
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
 	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
-
 	public ResponseEntity<?> MoveRDV(@Valid @RequestBody RendezvousRequest rdvDetails,
 			@Valid @PathVariable(value = "id") long idrdv)
 			throws BadRequestException {
@@ -659,3 +663,4 @@ public class RdvController {
 	// }
 
 }
+

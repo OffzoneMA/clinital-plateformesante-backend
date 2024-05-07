@@ -1,5 +1,6 @@
 package com.clinitalPlatform.dto;
 
+import com.clinitalPlatform.enums.CiviliteEnum;
 import com.clinitalPlatform.enums.DemandeStateEnum;
 
 import lombok.Data;
@@ -13,7 +14,7 @@ public class DemandeDTO {
 	
 	private String prenom_med;
 	
-	private String matricule;
+	private String phonenumber;
 	
 	private String mail;
 	
@@ -21,12 +22,10 @@ public class DemandeDTO {
 	
 	private String inpe;
 	
-	private String nom_cab;
-
-	private String adresse;
+	private String ville;
 	
-	private String code_postal;
-
 	private DemandeStateEnum validation;
+	
+	private CiviliteEnum civilite_med;
 
 }
