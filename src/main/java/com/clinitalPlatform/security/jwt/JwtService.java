@@ -49,12 +49,15 @@ public class JwtService {
         return extractExpiration(token).before(new Date());
     }
 
+    //------------------------------------------------------------------------
 
+    //ACCESS TOKEN VALIDATION
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
+    //REFRESH TOKEN VALIDATION
     public Boolean validateRefreshToken(String refreshToken) {
         try {
             // Valider le token en utilisant la méthode extractAllClaims
@@ -67,31 +70,33 @@ public class JwtService {
         }
     }
 
-    //------------------------------------------------------------------------
-
-    public String generateRefreshToken(String userName) {
+    //La generation d'un token lors du rafraichissement
+    public String generateToken(String userName) {
         Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, userName, TokenType.REFRESH_TOKEN);
+        return createToken(claims, userName, TokenType.ACCESS_TOKEN);
     }
 
-    private String createToken(Map<String, Object> claims, String userName,TokenType tokenType) {
-        long expirationTime = (tokenType == TokenType.REFRESH_TOKEN) ? appConfig.getRefreshTokenExpirationMsec() : appConfig.getAccessTokenExpirationMsec();
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(userName)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                //.setExpiration(new Date(System.currentTimeMillis()+1000*60*30))
-                //.setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 90))
-                .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
-                .signWith(getSignKey(), SignatureAlgorithm.HS256).compact();
-    }
-
+    //GÉNÉRER L'ACCÈS ET REFRESH TOKEN LORS DE LA CONNEXION DU USER
     public JwtTokens generateTokens(String userName){
         Map<String,Object> claims=new HashMap<>();
         String accessToken = createToken(claims, userName, TokenType.ACCESS_TOKEN);
         String refreshToken = createToken(claims, userName, TokenType.REFRESH_TOKEN);
         return new JwtTokens(accessToken, refreshToken);
     }
+
+    //CREATION DE L'ACCÈS ET REFRESH TOKEN
+    //EN PRÉCISANT LE TEMPS D'EXPIRATION VIA expirationTime
+    private String createToken(Map<String, Object> claims, String userName,TokenType tokenType) {
+        long expirationTime = (tokenType == TokenType.REFRESH_TOKEN) ? appConfig.getRefreshTokenExpirationMsec() : appConfig.getAccessTokenExpirationMsec();
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(userName)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
+                .signWith(getSignKey(), SignatureAlgorithm.HS256).compact();
+    }
+
+
     private Key getSignKey() {
         byte[] keyBytes= Decoders.BASE64.decode(secret);
         return Keys.hmacShaKeyFor(keyBytes);
@@ -99,22 +104,4 @@ public class JwtService {
 
     //---------------------------------------------------------------------------
 
-
-   /* public String generateToken(String userName){
-        Map<String,Object> claims=new HashMap<>();
-        return createToken(claims,userName);
-    }*/
-   /* private String createToken(Map<String, Object> claims, String userName) {
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(userName)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                //.setExpiration(new Date(System.currentTimeMillis()+1000*60*30))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 90))
-                .signWith(getSignKey(), SignatureAlgorithm.HS256).compact();
-    }*/
-   /* private Key getSignKey() {
-        byte[] keyBytes= Decoders.BASE64.decode(secret);
-        return Keys.hmacShaKeyFor(keyBytes);
-    }*/
 }

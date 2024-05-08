@@ -27,28 +27,10 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private CustomUserDetailsService customUserDetailsService;
 
+    @Autowired
+    private JwtService jwtService;
+
     private static final Logger logger = LoggerFactory.getLogger(TokenAuthenticationFilter.class);
-
-   /* @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        try {
-            String jwt = getJwtFromRequest(request);
-
-            if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
-                Long userId = tokenProvider.getUserIdFromToken(jwt);
-                
-                UserDetails userDetails = customUserDetailsService.loadUserById(userId);
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
-        } catch (Exception ex) {
-            logger.error("Could not set user authentication in security context", ex);
-        }
-
-        filterChain.doFilter(request, response);
-    }*/
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -57,16 +39,23 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
             if (StringUtils.hasText(jwt)) {
                 if (tokenProvider.validateAccessToken(jwt)) {
-                    // C'est un access token valide, authentifiez l'utilisateur comme d'habitude
+                    // This is a valid access token, authenticate the user
                     Long userId = tokenProvider.getUserIdFromToken(jwt);
                     UserDetails userDetails = customUserDetailsService.loadUserById(userId);
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 } else if (tokenProvider.validateRefreshToken(jwt)) {
-                    // C'est un refresh token valide, implémentez la logique pour créer un nouvel access token
-                    // ou rediriger vers une page de connexion
-                    // ...
+
+                    // Create an authentication token with user details
+                    Long userId = tokenProvider.getUserIdFromToken(jwt);
+                    UserDetails userDetails = customUserDetailsService.loadUserById(userId);
+
+                    // Generate a new access token using the service
+                    String newAccessToken = jwtService.generateToken(userDetails.getUsername());
+                    // Update the response header with the new token
+                    response.setHeader("Authorization", "Bearer " + newAccessToken);
+
                 }
             }
         } catch (Exception ex) {

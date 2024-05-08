@@ -166,9 +166,9 @@ public class AuthController {
             System.out.println(user.getEmail());
 
             globalVariables.setConnectedUser(user);
-            System.out.println("accessToken :"+accessToken);
-            System.out.println("-----------------------------------------");
+            System.out.println("accessToken :"+accessToken+"\n");
             System.out.println("refreshToken :"+refreshToken);
+            System.out.println("-----------------------------------------");
             // Mettre à jour la date de dernière connexion et créer une activité de connexion
             autService.updateLastLoginDate(userDetails.getId());
             activityServices.createActivity(new Date(), "Login", "Authentication reussi", user);
@@ -444,6 +444,25 @@ public class AuthController {
         }
     }
 
+//
+
+    //TEST GENERATE NEW ACCESS TOKEN VIA REFRESH TOKEN
+    @GetMapping("/refreshToken/{refreshToken}")
+    public ResponseEntity<?> refreshAccessToken(@PathVariable String refreshToken) {
+        // Vérifiez si le refresh token est valide
+        if (!jwtService.validateRefreshToken(refreshToken)) {
+            return ResponseEntity.badRequest().body("Refresh token invalid or expired");
+        }
+
+        // Extrait le nom d'utilisateur à partir du refresh token
+        String username = jwtService.extractUsername(refreshToken);
+
+        // Génère un nouvel access token à partir du nom d'utilisateur
+        String accessToken = jwtService.generateToken(username);
+
+        // Retourne le nouvel access token
+        return ResponseEntity.ok(accessToken);
+    }
 
 
 

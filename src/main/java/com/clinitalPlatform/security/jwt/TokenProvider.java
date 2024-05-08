@@ -18,7 +18,8 @@ public class TokenProvider {
 
     private final AppConfig appConfig;
 
-    
+
+    //--------------ACCESS TOKEN
     public String createToken(Authentication authentication) {
     	
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
@@ -33,8 +34,7 @@ public class TokenProvider {
                 .compact();
     }
 
-    //---------------------------------------------------
-
+    //--------------REFRESH TOKEN
     public String createRefreshToken(Authentication authentication) {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         Date now = new Date();
@@ -49,11 +49,14 @@ public class TokenProvider {
     }
 
 
-    //_____________________________________________________
+    //____________________EXTRACTION_________________________________
 
+    //Extraction de l'identifiant du nom_user à partir du jeton JWT
 	public String getUserNameFromJwtToken(String token) {
 		return Jwts.parser().setSigningKey(appConfig.getTokenSecret()).parseClaimsJws(token).getBody().getSubject();
 	}
+
+    //Extraction de l'identifiant du user à partir du jeton JWT
     public Long getUserIdFromToken(String token) {
         Claims claims = Jwts.parser()
                 .setSigningKey(appConfig.getTokenSecret())
@@ -63,7 +66,9 @@ public class TokenProvider {
         return Long.parseLong(claims.getSubject());
     }
 
-    //VALIDATETOKEN
+    //_____________________________________________________
+
+    //-----------VALIDATE ACCÈSS TOKEN
     public boolean validateAccessToken(String authToken) {
         try {
             Jwts.parser().setSigningKey(appConfig.getTokenSecret()).parseClaimsJws(authToken);
@@ -82,7 +87,7 @@ public class TokenProvider {
         return false;
     }
 
-    //-----------------------------------------------------------------------------------
+    //-----------VALIDATE REFRESH TOKEN
     public boolean validateRefreshToken(String refreshToken) {
         try {
             Jwts.parser().setSigningKey(appConfig.getTokenSecret()).parseClaimsJws(refreshToken);
@@ -100,5 +105,6 @@ public class TokenProvider {
         }
         return false;
     }
-  //_____________________________________________________________________________
+ //-----------------
+
 }
