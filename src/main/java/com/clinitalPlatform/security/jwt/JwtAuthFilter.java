@@ -1,5 +1,6 @@
 package com.clinitalPlatform.security.jwt;
 
+import com.clinitalPlatform.models.JwtTokens;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,7 +24,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private JwtService jwtService;
     @Autowired
     private UserDetailsServiceImpl userDetailsService;
-    @Override
+   /* @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
     	// Extract Authorization header which contains the JWT token
         String authHeader = request.getHeader("Authorization");
@@ -53,5 +54,35 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
         // Continue with the filter chain
         filterChain.doFilter(request, response);
+    }*/
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        String authHeader = request.getHeader("Authorization");
+        String token = null;
+        String username = null;
+
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7);
+            username = jwtService.extractUsername(token);
+        }
+
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            if (jwtService.validateToken(token, userDetails)) {
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            } else if (jwtService.validateRefreshToken(token)) {
+                // Générer un nouvel access token à partir de la méthode existante generateTokens
+                JwtTokens jwtTokens = jwtService.generateTokens(username);
+                // Rediriger vers une nouvelle URL avec le nouvel access token
+                String redirectUrl = request.getRequestURI() + "?access_token=" + jwtTokens.getAccessToken();
+                response.sendRedirect(redirectUrl);
+            }
+        }
+
+        filterChain.doFilter(request, response);
     }
+
 }

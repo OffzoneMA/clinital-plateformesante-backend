@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 
+import com.clinitalPlatform.models.JwtTokens;
 import com.clinitalPlatform.models.Patient;
 import com.clinitalPlatform.payload.request.*;
 import com.clinitalPlatform.payload.response.MessageResponse;
@@ -86,7 +87,7 @@ public class AuthController {
 
 
     //CONNEXION--------------------------------------------------
-    @PostMapping("/signin")
+   /* @PostMapping("/signin")
     public ResponseEntity<?> authenticateAndGetToken(@RequestBody LoginRequest loginRequest) {
         try {
             // Vérifier si le compte existe (via le mail)
@@ -130,7 +131,62 @@ public class AuthController {
             // Mot de passe incorrect
             return ResponseEntity.ok(new ApiResponse(false, "incorrect_password"));
         }
+    }*/
+
+    //CONNEXION--------------------------------------------------
+    @PostMapping("/signin")
+    public ResponseEntity<?> authenticateAndGetToken(@RequestBody LoginRequest loginRequest) {
+        try {
+            // Vérifier si le compte existe (via le mail)
+            UserDetails userDetail = userDetailsService.loadUserByUsername(loginRequest.getEmail());
+
+            // Vérifier si le compte est activé
+            User useractif = userServices.findByEmail(loginRequest.getEmail());
+            if (useractif != null && !useractif.getEmailVerified()) {
+                LOGGER.info("Email is not verified");
+                return ResponseEntity.ok(new ApiResponse(false, "Email Not Verified"));
+            }
+            // Vérifier si le compte est actif (non bloqué)
+            if (!userDetailsService.isEnabled(loginRequest.getEmail())) {
+                LOGGER.info("Account is blocked");
+                return ResponseEntity.ok(new ApiResponse(false, "Your Account is Blocked please try to Contact Clinical Admin"));
+            }
+
+            // Générer le token JWT et le refresh token et effectuer la connexion
+            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+            // Générer les tokens d'access et refresh
+            JwtTokens tokens = jwtService.generateTokens(loginRequest.getEmail());
+            String accessToken = tokens.getAccessToken();
+            String refreshToken = tokens.getRefreshToken();
+
+            User user = userServices.findById(userDetails.getId());
+            System.out.println(user.getEmail());
+
+            globalVariables.setConnectedUser(user);
+            System.out.println("accessToken :"+accessToken);
+            System.out.println("-----------------------------------------");
+            System.out.println("refreshToken :"+refreshToken);
+            // Mettre à jour la date de dernière connexion et créer une activité de connexion
+            autService.updateLastLoginDate(userDetails.getId());
+            activityServices.createActivity(new Date(), "Login", "Authentication reussi", user);
+            LOGGER.info("Authentication reussi");
+
+            // Retourner la réponse avec le token JWT et les détails de l'utilisateur
+            return ResponseEntity.ok(new JwtResponse(accessToken, userDetails.getId(), userDetails.getEmail(), userDetails.getTelephone(), userDetails.getRole(), refreshToken));
+        } catch (UsernameNotFoundException e) {
+            // Aucun compte associé à cet email
+            System.out.println("no account");
+            return ResponseEntity.ok(new ApiResponse(false, "no_account"));
+        } catch (BadCredentialsException e) {
+            System.out.println("incorrect");
+            // Mot de passe incorrect
+            return ResponseEntity.ok(new ApiResponse(false, "incorrect_password"));
+        }
     }
+
 
     //INSCRIPTION--------------------------------------------------------------
     @PostMapping("/signup")
@@ -232,7 +288,7 @@ public class AuthController {
         return jwtService.validateToken(token, userDetails);
 
     }
-
+//-----------------------------------------------------------------
     //recuperation d'un token de confirmation par user_id
     @GetMapping("/confirmationtoken/{userId}")
     public ResponseEntity<String> getConfirmationToken(@PathVariable Long userId) {
