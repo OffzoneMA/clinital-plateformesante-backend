@@ -3,6 +3,7 @@ package com.clinitalPlatform.security.jwt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,6 +20,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
+/*
 public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
@@ -45,6 +47,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
+
                 } else if (tokenProvider.validateRefreshToken(jwt)) {
 
                     // Create an authentication token with user details
@@ -52,13 +55,14 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
                     UserDetails userDetails = customUserDetailsService.loadUserById(userId);
 
                     // Generate a new access token using the service
-                    String newAccessToken = jwtService.generateToken(userDetails.getUsername());
+                    String newAccessToken = jwtService.generateTokenFromRefreshToken(userDetails.getUsername());
                     // Update the response header with the new token
                     response.setHeader("Authorization", "Bearer " + newAccessToken);
 
                 }
             }
         } catch (Exception ex) {
+            System.out.println("erreur");
             logger.error("Could not set user authentication in security context", ex);
         }
 
@@ -73,4 +77,4 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         }
         return null;
     }
-}
+}*/

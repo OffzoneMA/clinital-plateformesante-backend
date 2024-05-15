@@ -4,6 +4,7 @@ import com.clinitalPlatform.enums.TokenType;
 import com.clinitalPlatform.models.JwtTokens;
 import com.clinitalPlatform.security.config.AppConfig;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -27,9 +28,16 @@ public class JwtService {
     @Autowired
     private AppConfig appConfig;
 
+   /* public String extractUsername(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }*/
     public String extractUsername(String token) {
+        if(isTokenExpired(token)) {
+            throw new ExpiredJwtException(null, null, "JWT expired");
+        }
         return extractClaim(token, Claims::getSubject);
     }
+
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
@@ -45,17 +53,32 @@ public class JwtService {
                 .parseClaimsJws(token)
                 .getBody();
     }
-    private Boolean isTokenExpired(String token) {
+    public Boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 
     //------------------------------------------------------------------------
 
     //ACCESS TOKEN VALIDATION
-    public Boolean validateToken(String token, UserDetails userDetails) {
+   /* public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }*/
+    public Boolean validateToken(String token, UserDetails userDetails) {
+        final String username = extractUsername(token);
+        try {
+            return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        } catch (ExpiredJwtException ex) {
+            System.out.println("Le jeton est expiré: " + ex.getMessage());
+            return false;
+        } catch (Exception e) {
+            // Autres exceptions non liées à l'expiration du jeton
+            System.out.println("Une erreur est survenue lors de la validation du jeton: " + e.getMessage());
+            return false;
+        }
     }
+
+
 
     //REFRESH TOKEN VALIDATION
     public Boolean validateRefreshToken(String refreshToken) {
@@ -66,6 +89,7 @@ public class JwtService {
             return !isTokenExpired(refreshToken);
         } catch (Exception e) {
             // En cas d'erreur de validation, retourner false
+
             return false;
         }
     }
@@ -75,6 +99,18 @@ public class JwtService {
         Map<String, Object> claims = new HashMap<>();
         return createToken(claims, userName, TokenType.ACCESS_TOKEN);
     }
+
+    public String generateTokenFromRefreshToken(String refreshToken) {
+        // Extraire les informations de l'utilisateur à partir du jeton de rafraîchissement
+        String username = extractUsername(refreshToken);
+
+        // Créer de nouvelles revendications pour le nouveau jeton d'accès
+        Map<String, Object> claims = new HashMap<>();
+
+        // Générer le nouveau jeton d'accès
+        return createToken(claims, username, TokenType.ACCESS_TOKEN);
+    }
+
 
     //GÉNÉRER L'ACCÈS ET REFRESH TOKEN LORS DE LA CONNEXION DU USER
     public JwtTokens generateTokens(String userName){

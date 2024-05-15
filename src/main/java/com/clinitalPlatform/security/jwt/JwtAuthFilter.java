@@ -1,6 +1,7 @@
 package com.clinitalPlatform.security.jwt;
 
 import com.clinitalPlatform.models.JwtTokens;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,7 +26,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Autowired
     private UserDetailsServiceImpl userDetailsService;
 
-    @Override
+    /*@Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         // Extract Authorization header which contains the JWT token
         String authHeader = request.getHeader("Authorization");
@@ -52,16 +53,69 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 // Set authentication details
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+                System.out.println("acces token");
             } else if (jwtService.validateRefreshToken(token)) {
                 // Generate a new access token using the existing generateTokens method
                 JwtTokens jwtTokens = jwtService.generateTokens(username);
                 // Redirect to a new URL with the new access token.
                 String redirectUrl = request.getRequestURI() + "?access_token=" + jwtTokens.getAccessToken();
+                System.out.println("refresh token");
                 response.sendRedirect(redirectUrl);
             }
         }
         // Continue with the filter chain
         filterChain.doFilter(request, response);
+    }*/
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        // Extract Authorization header which contains the JWT token
+        String authHeader = request.getHeader("Authorization");
+        String token = null;
+        String username = null;
+
+        try {
+            // Check if Authorization header is present and starts with "Bearer "
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                // Extract the token excluding "Bearer "
+                token = authHeader.substring(7);
+                // Extract username from the token
+                username = jwtService.extractUsername(token);
+            }
+
+            // Check if username is extracted from the token and if the user is not already authenticated
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                // Load user details by username
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+                // Validate the token against the loaded user details
+                if (jwtService.validateToken(token, userDetails)) {
+
+                    // Create authentication token based on user details
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    // Set authentication details
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                    System.out.println("access token");
+                } else if (jwtService.validateRefreshToken(token)) {
+                    // Generate a new access token using the existing generateTokens method
+                    JwtTokens jwtTokens = jwtService.generateTokens(username);
+                    // Redirect to a new URL with the new access token.
+                    String redirectUrl = request.getRequestURI() + "?access_token=" + jwtTokens.getAccessToken();
+                    System.out.println("refresh token");
+                    response.sendRedirect(redirectUrl);
+                }
+            }
+        } catch (ExpiredJwtException e) {
+            // Handle any exception that may occur during token processing
+            filterChain.doFilter(request, response);
+            System.out.println("An error occurred while processing the JWT token: " + e.getMessage());
+            return;
+        }
+
+        // Continue with the filter chain
+        filterChain.doFilter(request, response);
     }
+
 
 }
