@@ -18,6 +18,7 @@ import com.clinitalPlatform.services.interfaces.MedecinService;
 import com.clinitalPlatform.services.interfaces.SecretaireService;
 import com.clinitalPlatform.util.ApiError;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -62,6 +63,10 @@ import javax.validation.Valid;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+
+    @Value("${base.url}")
+    private String baseUrl;
 
     @Autowired
     AuthenticationManager authenticationManager;
@@ -181,7 +186,7 @@ public class AuthController {
 
         if ((confirmationToken.getExpiryDate().getTime() - calendar.getTime().getTime()) <= 0) {
 
-            String newLink = "http://localhost:8080/api/auth/generateNewLink?token=" + token;
+            String newLink = baseUrl +"/api/auth/generateNewLink?token=" + token;
             return ResponseEntity.badRequest().body("Lien expiré, générer un nouveau <a href=\"" + newLink + "\">Ici</a>");
 
         }
