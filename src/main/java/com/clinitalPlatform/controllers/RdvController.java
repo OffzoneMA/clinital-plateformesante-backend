@@ -22,6 +22,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import org.hibernate.validator.constraints.ParameterScriptAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -657,5 +658,14 @@ public class RdvController {
 	// public Medecin medecin;
 	// public Patient patient;
 	// }
+
+
+	@GetMapping("/today/{spec}/{start}")
+	RendezvousDTO rendezvousToday(@PathVariable("spec") long spec,@PathVariable("start") LocalDate start) throws Exception {
+
+		RendezvousDTO rdv=rdvservice.getRdvToday(spec,start);
+		return rdv;
+
+	}
 
 }
