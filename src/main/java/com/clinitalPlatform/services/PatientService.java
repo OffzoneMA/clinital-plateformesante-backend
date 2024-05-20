@@ -14,21 +14,28 @@ import com.clinitalPlatform.util.ClinitalModelMapper;
 import com.clinitalPlatform.util.GlobalVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
 @Transactional
 @Service
 @Primary
 public class PatientService implements IDao<Patient> {
 
+	
+	@Autowired
+	private MedecinRepository medRepository;
+  
 	@Autowired
 	private PatientRepository patientRepository;
 
@@ -39,16 +46,12 @@ public class PatientService implements IDao<Patient> {
     private ClinitalModelMapper modelMapper;
 
 	@Autowired
-	private MedecinRepository medRepository; 
-
-//	@Autowired
-//	private AntecedentsRepository antRepository;
-	@Autowired
 	private RendezvousService rendezvousService;
 	@Autowired
 	private ActivityServices ActivityServices;
 	@Autowired
 	private DocumentRepository documentRepository;
+
 	@Autowired
 	private GlobalVariables globalVariables;
 	private final Logger LOGGER=LoggerFactory.getLogger(getClass());
@@ -75,10 +78,6 @@ public class PatientService implements IDao<Patient> {
 		}
 		return patientRepository.save((Patient) user);
 		
-
-		
-		
-
 	}
 
 	@Override
@@ -101,42 +100,20 @@ public class PatientService implements IDao<Patient> {
 		return patientRepository.findById(id);
 	}
 	
-	/**
-     * It returns a Patient object from the database, where the user_id is equal to the id parameter, and
-     * the patient_type is equal to the string "MOI" it mean the current USER connected
-     *
-     * @param id the id of the user
-     * @return Patient
-     */
-	
 	public Patient getPatientMoiByUserId(long id){
 		
 		return patientRepository.getPatientMoiByUserId(id);
 
 	}
 
-	/**
-	 * I want to find a patient by his id and his user_id and his patient_type
-	 * 
-	 * @param id the id of the user
-	 * @param idpatient the id of the patient
-	 * @return A list of patients
-	 */
-	
 	public ResponseEntity<Patient> findProchByUserId(long id,long idpatient){
 
 		Patient patient = patientRepository.findProchByUserId(id, idpatient);
 		return ResponseEntity.ok(modelMapper.map(patient,Patient.class));
 	}
 
-	/**
-	 * It returns a list of patients that are related to the user with the id passed as a parameter
-	 * where type is PROCHE
-	 * 
-	 * @param id the id of the user
-	 * @return List of Patient
-	 */
 	
+
 	public List<Patient> findALLProchByUserId(long id){
 
 		return patientRepository.findALLProchByUserId(id).stream()
@@ -144,13 +121,43 @@ public class PatientService implements IDao<Patient> {
 
 	}
 
-	/**
-	 * It returns a list of patients that have the same user_id as the id passed in
-	 * 
-	 * @param id the id of the user
-	 * @return List of Patient objects
-	 */
-	
+	// share a folder by patient to a specifique doctor : 
+	public ResponseEntity<?> ShareMedecialFolder(Long iddossier,Long idmed) throws Exception{
+
+			Medecin med = medRepository.findById(idmed).orElseThrow(()->new Exception("NO such Medecin exist"));
+			DossierMedical dossier = dossierMedicalRepository.findById(iddossier).orElseThrow(()->new Exception("NO such Folder exist"));
+
+
+
+			// check if the folder is already shared.
+			Boolean isDossshared=med.getMeddossiers().stream().filter(doss->doss.getId_dossier()==dossier.getId_dossier()).findFirst().isPresent();
+
+			//boolean isDossshared = med.getMeddossiers().stream().anyMatch(o -> doss.getId_dossier()==dossier.getId_dossier());
+			if(!isDossshared){
+				med.getMeddossiers().add(dossier);
+				medRepository.save(med);
+				ResponseEntity.status(200).build();
+			} else{
+				return ResponseEntity.ok(new ApiResponse(false, "You already shared this folder with that doctor"));
+			}
+			
+
+			return ResponseEntity.ok("Folder shared seccessefully !");
+		}
+
+	public void setUserNullByUserId(Long userId) {
+	    // Récupérer tous les patients associés à l'utilisateur ayant user_id=id
+	    List<Patient> patientsToUpdate = patientRepository.findByUserId(userId);
+	    
+	    // Définir la propriété user sur null pour chaque patient récupéré
+	    for (Patient patient : patientsToUpdate) {
+	        patient.setUser(null);
+	    }
+	    
+	    // Enregistrer les changements
+	    patientRepository.saveAll(patientsToUpdate);
+	}
+
 	public List<Patient> findALLPatientByUserId(long id){
 
 		return patientRepository.findALLPatientByUserId(id).stream()
@@ -158,29 +165,6 @@ public class PatientService implements IDao<Patient> {
 
 	}
 
-// share a folder by patient to a specifique doctor : 
-	public ResponseEntity<?> ShareMedecialFolder(Long iddossier,Long idmed) throws Exception{
-
-		Medecin med = medRepository.findById(idmed).orElseThrow(()->new Exception("NO such Medecin exist"));
-		DossierMedical dossier = dossierMedicalRepository.findById(iddossier).orElseThrow(()->new Exception("NO such Folder exist"));
-
-
-
-		// check if the folder is already shared.
-		Boolean isDossshared=med.getMeddossiers().stream().filter(doss->doss.getId_dossier()==dossier.getId_dossier()).findFirst().isPresent();
-
-		//boolean isDossshared = med.getMeddossiers().stream().anyMatch(o -> doss.getId_dossier()==dossier.getId_dossier());
-		if(!isDossshared){
-			med.getMeddossiers().add(dossier);
-			medRepository.save(med);
-			ResponseEntity.status(200).build();
-		} else{
-			return ResponseEntity.ok(new ApiResponse(false, "You already shared this folder with that doctor"));
-		}
-		
-
-		return ResponseEntity.ok("Folder shared seccessefully !");
-	}
 
 
 //GENERATE FICHE PATIENT BY DOCTOR :
@@ -316,5 +300,6 @@ public class PatientService implements IDao<Patient> {
 //
 //
 //}
+
 
 }

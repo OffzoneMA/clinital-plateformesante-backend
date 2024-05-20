@@ -4,20 +4,26 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 
+import com.clinitalPlatform.enums.ERole;
+import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.models.Patient;
+import com.clinitalPlatform.models.Secretaire;
 import com.clinitalPlatform.payload.request.*;
 import com.clinitalPlatform.payload.response.MessageResponse;
 import com.clinitalPlatform.repository.PasswordResetTokenRepository;
 import com.clinitalPlatform.security.jwt.PasswordResetToken;
 import com.clinitalPlatform.security.services.UserDetailsServiceImpl;
 import com.clinitalPlatform.services.EmailSenderService;
+import com.clinitalPlatform.services.interfaces.MedecinService;
+import com.clinitalPlatform.services.interfaces.SecretaireService;
 import com.clinitalPlatform.util.ApiError;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -38,6 +44,7 @@ import com.clinitalPlatform.exception.BadRequestException;
 import com.clinitalPlatform.models.User;
 import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.payload.response.JwtResponse;
+import com.clinitalPlatform.repository.UserRepository;
 import com.clinitalPlatform.security.jwt.ConfirmationToken;
 import com.clinitalPlatform.security.jwt.JwtService;
 import com.clinitalPlatform.security.services.UserDetailsImpl;
@@ -56,6 +63,10 @@ import javax.validation.Valid;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+
+    @Value("${base.url}")
+    private String baseUrl;
 
     @Autowired
     AuthenticationManager authenticationManager;
@@ -81,9 +92,21 @@ public class AuthController {
     EmailSenderService emailSenderService;
     @Autowired
     PasswordEncoder encoder;
+
+    @Autowired
+    MedecinService medecinSevice;
+
+    @Autowired
+    SecretaireService secretaireService;
+
+	
+	
+    @Autowired
+    UserRepository userRepository;
+	
+	
     //Jounalisation
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
-
 
     //CONNEXION--------------------------------------------------
     @PostMapping("/signin")
@@ -163,7 +186,7 @@ public class AuthController {
 
         if ((confirmationToken.getExpiryDate().getTime() - calendar.getTime().getTime()) <= 0) {
 
-            String newLink = "http://localhost:8080/api/auth/generateNewLink?token=" + token;
+            String newLink = baseUrl +"/api/auth/generateNewLink?token=" + token;
             return ResponseEntity.badRequest().body("Lien expiré, générer un nouveau <a href=\"" + newLink + "\">Ici</a>");
 
         }
@@ -278,7 +301,7 @@ public class AuthController {
             return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
         } catch (Exception e) {
             // Gestion des autres exceptions
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(false, "Une erreur s'est produite lors de l'envoi du mail de confirmation."));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(false, "Une erreur s'est iduite lors de l'envoi du mail de confirmation."));
         }
     }
 
@@ -388,7 +411,103 @@ public class AuthController {
         }
     }
 
+    //MOT DE PASSE OUBLIÉ POUR ROLE MEDECIN ET SECRETAIRE, PARTIE PRO
+    @PostMapping("/forgotpasswordPro")
+    public ResponseEntity<?> forgotPasswordPro(@RequestBody ForgetPwdProRequest forgetPwdProRequest) {
+        try {
+            // Vérifier si l'e-mail et la date de naissance sont fournis
+            System.out.println("forgetPwdProRequest: " + forgetPwdProRequest);
+            if (forgetPwdProRequest.getProEmail() != null && !forgetPwdProRequest.getProEmail().isEmpty() && forgetPwdProRequest.getDateNaissance() != null) {
+                // Récupérer le user associé à l'e-mail
+
+                User user = userServices.findByEmail(forgetPwdProRequest.getProEmail());
+
+                if (user!=null) {
+                    Date dateNaissance = null;
+
+                        switch (user.getRole()) {
+                            case ROLE_MEDECIN :
+
+                                Medecin medecin= medecinSevice.findById(user.getId());
+                                dateNaissance= medecin.getDateNaissance();
+                                break;
+
+                            case ROLE_SECRETAIRE:
+
+                                Secretaire secretaire= secretaireService.findById(user.getId());
+                                dateNaissance= secretaire.getDateNaissance();
+                                break;
+
+                            //other case here
+
+                            default:
+                                break;
+                        }
 
 
 
+                    if (dateNaissance != null) {
+                        //Formattage de la date de naissance du Patient
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+                        String formattedProDateOfBirth = dateFormat.format(dateNaissance);//formatter la date de nainssance du patient
+                        String formattedUserDateOfBirth = dateFormat.format(forgetPwdProRequest.getDateNaissance());//Formatter à nouveau la date de naissance entrer
+
+                        // Vérifier si la date de naissance fournie correspond à celle du pro user
+                        if (formattedProDateOfBirth.equals(formattedUserDateOfBirth)) {
+
+
+                            // Si les informations fournies par l'utilisateur correspondent, on va générer le token de réinitialisation
+                            PasswordResetToken resetToken = autService.createRestetToken(user);
+                            String tokenValue = resetToken.getResetToken();
+
+                            // Envoie de l'e-mail de réinitialisation à l'utilisateur
+                            emailSenderService.sendResetPasswordMail(forgetPwdProRequest.getProEmail(), tokenValue);
+                            // Retourner un message de succès
+                            System.out.println("Un e-mail de réinitialisation a été envoyé à l'adresse " + forgetPwdProRequest.getProEmail());
+                            return ResponseEntity.ok(new ApiResponse(true, "Un e-mail de réinitialisation a été envoyé à l'adresse " + forgetPwdProRequest.getProEmail()));
+
+                        } else {
+                            // Si les informations fournies par l'utilisateur ne correspondent pas, retourner un message d'erreur
+                            System.out.println("Les informations fournies ne correspondent pas. Veuillez vérifier votre e-mail et votre date de naissance");
+                            return ResponseEntity.ok(new ApiResponse(false, "Les informations fournies ne correspondent pas. Veuillez vérifier votre e-mail et votre date de naissance."));
+
+                        }
+                    } else {
+                        // La date de naissance du patient n'est pas disponible, retourner un message d'erreur
+                        return ResponseEntity.ok(new ApiResponse(false, "La date de naissance pour l'utilisateur associé à l'e-mail fourni n'est pas disponible. Veuillez contacter le support."));
+                    }
+
+
+                } else {
+                    System.out.println("Aucun utilisateur n'a été retrouvé avec l'email: " + forgetPwdProRequest.getProEmail());
+                    return ResponseEntity.ok(new ApiResponse(false, "Aucun user trouvé pour l'e-mail: " + forgetPwdProRequest.getProEmail()));
+                }
+            } else {
+                System.out.println("L'e-mail et la date de naissance sont requis");
+                return ResponseEntity.ok(new ApiResponse(false, "L'e-mail et la date de naissance sont requis."));
+
+            }
+        } catch (Exception e) {
+            System.out.println("Erreur de traitement. Veuillez réessayer plus tard");
+            return ResponseEntity.ok(new ApiResponse(false, "Erreur de traitement. Veuillez réessayer plus tard."));
+
+        }
+    }
+
+
+	@PostMapping("/checkPassword")
+	@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_PATIENT')")
+	public ResponseEntity<?> checkPassword(@Valid @RequestBody String password)throws Exception {
+		User user = userRepository.getById(globalVariables.getConnectedUser().getId());
+	    
+	    // Vérifier si le mot de passe fourni correspond au mot de passe de l'utilisateur connecté
+	    boolean passwordMatch = encoder.matches(password, user.getPassword());
+	    
+	    if (passwordMatch) {
+	        return ResponseEntity.ok(new ApiResponse(true, "Password matches"));
+	    } else {
+	        return ResponseEntity.ok(new ApiResponse(false, "Password does not match"));
+	    }
+	}
 }

@@ -78,16 +78,16 @@ public class WebSecurityConfig {
     			"/api/med/medByVille",
     			"/api/med/getAllSpec",
                 "/api/med/medByNameCabinetOrSpec",
-                //"/api/med/**",
                 "/api/med/cabinets/**",
                 "/api/med/agenda/**",
                 "/api/med/medByCabinetName",
                 "/api/med/medecins/schedules/filter",
                 "/api/med/byLangue/**",
     			"/api/ville/**",
+    			"/api/specialites/**",
                 "/api/langues/**",
                 "/api/tarifmed/**",
-                "/api/rdv/rdvs/patient",
+          "/api/rdv/rdvs/patient",
                 "/api/rdv/patient/rdvbyday",
                 "/api/cabinet/medecin/**",
                 "/api/medecinSchedule/shedulebyMed/**"
@@ -96,18 +96,9 @@ public class WebSecurityConfig {
 
 
         };
-      
-        String[] authenticatedRoutes = {"/api/demandes/**","/api/med/**",
-                "/api/doc/**", "/api/shares/**",
-                "/api/medecinSchedule/**",
-                "/api/patient/**",
-                "/api/rdv/patient/**",
-//                "/api/rdv/patient/rdvById/**","/api/rdv/MoveRdv/**",
-//                "/api/rdv/patient/updateRdv/**","/api/rdv/patient/updateeRdv/{id}",
-//                "/api/rdv/patient/cancelRdv/**","/api/rdv/patient/rdvbyday","/api/rdv/patient/rdvbyday/**",
-//                "/api/rdv/patient/changestatu/**"
-//                "/api/tarifmed/**",
-//                "/api/langues/**"
+
+        String[] authenticatedRoutes = {"/api/demandes/**", "/api/med/**", "/api/doc/**", "/api/shares/**","/api/patient/**","/api/medecinSchedule/**","/api/users/**",
+                "/api/rdv/patient/**", "/api/rdv/**"
         };
 
 

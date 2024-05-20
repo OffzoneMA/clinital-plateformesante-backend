@@ -255,7 +255,8 @@ public class RendezvousService implements IDao<Rendezvous>  {
 	public List<Rendezvous> getRdvMedByMonth(long month,long id){
 		return rdvrepo.getRendezvousMedByMonth(month,id);
 	}
-	//Get Rdv By Day : 
+
+	//Get Rdv By Day :
 	public List<Rendezvous> getRdvMedByYear(long year,long id){
 		return rdvrepo.getRendezvousMedByYear(year,id);
 	}
@@ -275,6 +276,7 @@ public List<Rendezvous> getRdvPatientByDayWeek(long day,long id){
 		return rdvrepo.getRendezvousPatientByWeek(week,id);
 	}
 	//Get Rdv By Day : 
+
 	public List<Rendezvous> getRdvPatientByMonth(long month,long id){
 		return rdvrepo.getRendezvousPatientByMonth(month,id);
 	}

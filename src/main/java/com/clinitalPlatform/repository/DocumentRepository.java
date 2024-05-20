@@ -6,6 +6,7 @@ import com.clinitalPlatform.models.DossierMedical;
 import com.clinitalPlatform.models.Patient;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -34,15 +35,19 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 	@Query(value = "SELECT documents.* FROM documents, document_medecin dm WHERE documents.id_doc=dm.document_id AND documents.patient_id= ?1", nativeQuery = true)
 	List<Document> getDocByPatientIdAndMedecin(Long patientId);
 
-	@Query(value = "SELECT d.* FROM documents d, patients p WHERE d.patient_id=p.id AND p.patient_type='PROCHE' AND p.user_id= ?1", nativeQuery = true)
-	List<Document> getDocPatientPROCH(Long patientId);
+	/*@Query(value = "SELECT d.* FROM documents d, patients p WHERE d.patient_id=p.id AND p.patient_type='PROCHE' AND p.user_id= ?1", nativeQuery = true)
+	List<Document> getDocPatientPROCH(Long patientId);*/
+	@Query(value = "SELECT d FROM Document d JOIN FETCH d.patient p WHERE p.patient_type = 'PROCHE' AND p.user.id = ?1")
+	List<Document> getDocPatientPROCH(Long userId);
+
 	@Query(value = "SELECT d.* FROM documents d, patients p WHERE d.patient_id=p.id AND p.patient_type='MOI' AND d.patient_id= ?1", nativeQuery = true)
 	List<Document> getDocPatientMOI(Long patientId);
 
     @Query(value = "SELECT d.* FROM documents d WHERE d.id_dossier=?1", nativeQuery = true)
 	List<Document> findByIdDossier(long iddoss);
 
-	@Query(value = "SELECT p.* FROM patients p WHERE p.user_id= ?1 AND p.patient_type='PROCHE'", nativeQuery = true)
-	List<Patient> getMesProches(Long connectedUserId);
+	@Query(value = "SELECT p FROM Patient p WHERE p.user.id = :userId")
+	List<Patient> getMeAndMesProches(@Param("userId") Long userId);
+
 
 }

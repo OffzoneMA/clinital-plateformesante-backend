@@ -21,4 +21,6 @@ public interface ActivityRespository extends JpaRepository<LogActivityUser, Long
 
     public LogActivityUser findActivityById(Long id);
     
+    List<LogActivityUser> findActivityByUserId(Long userId);
+    
 }

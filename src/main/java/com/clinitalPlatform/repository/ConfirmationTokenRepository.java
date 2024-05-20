@@ -1,5 +1,7 @@
 package com.clinitalPlatform.repository;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -14,4 +16,6 @@ public interface ConfirmationTokenRepository
 
     @Query(value = "", nativeQuery = true)
     ConfirmationToken getConfirmationTokenByUserId(long id);
+    
+    List<ConfirmationToken> findByUserId(Long userId);
 }

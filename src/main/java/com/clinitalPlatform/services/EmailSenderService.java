@@ -66,35 +66,7 @@ public class EmailSenderService {
 	}
 	//end new link email
 
-	public void sendMailDemande(Demande demande) {
-		SimpleMailMessage mailMessage = new SimpleMailMessage();
-		mailMessage.setTo(demande.getMail());
-		mailMessage.setFrom("clinitalcontact@gmail.com");
-		mailMessage.setSubject("Activation de la partie pro pour le médecin : "+demande.getNom_med());
-		mailMessage.setText("Le Médecin :"+demande.getNom_med()+" veut accéder à la partie pro"
-				+ "\n leurs cordonnées :  \n\n"
-				+ "Medecin: \r\n"
-				+ "Nom: "+demande.getNom_med()+"\n"
-				+ "\r\n"
-				+ "Prenom: "+demande.getPrenom_med()+"\n"
-				+ "\r\n"
-				+ "Matricule: "+demande.getMatricule()+"\n"
-				+ "\r\n"
-				+ "Spécialité: "+demande.getSpecialite()+"\n"
-				+ "\r\n"
-				+ "INPE: "+demande.getInpe()+"\n"
-				+ "\r\n"
-				+ "Cabinet : \r\n"+demande.getNom_cab() + "\r\n"
-				+ "Nom : "+demande.getNom_cab()+"\n"
-				+ "\r\n"
-				+ "Adresse: "+demande.getAdresse()+"\n"
-				+ "\r\n"
-				+ "Code postale: "+demande.getCode_postal());
-				
-		javaMailSender.send(mailMessage);
-		LOGGER.info("A New Pro Account has been created ");
-		System.out.println("Email sent");
-	}
+
 	
 	public void sendMailDemandeValidation(Demande demande,String pw ) {
 		SimpleMailMessage mailMessage = new SimpleMailMessage();
@@ -108,29 +80,53 @@ public class EmailSenderService {
 				+ "\r\n"
 				+ "Prenom:"+demande.getPrenom_med()+"\n"
 				+ "\r\n"
-				+ "\r\n"
-				//+ "passwaord provesoire:"+user.getPassword()+"\n"
-				+ "Matricule:"+demande.getMatricule()+"\n"
-				+ "\r\n"
-				+ "Spécialité"+demande.getSpecialite()+"\n"
-				+ "\r\n"
-				+ "INPE:"+demande.getInpe()+"\n"
-				+ "\r\n"
-				+ "Cabinet : \r\n"
-				+ "\r\n"
-				+ "Nom: "+demande.getNom_cab()+"\n"
-				+ "\r\n"
-				+ "Adresse: "+demande.getAdresse()+"\n"
-				+ "\r\n"
-				+ "Code postale: "+demande.getCode_postal()
-				+ "\r\n"
+				
 				+ "Password provisoire: "+pw);
 				
 		javaMailSender.send(mailMessage);
 		LOGGER.info("A New Demande has been created ");
 		System.out.println("Email sent");
 	}
+	public void sendMailConfirmationCode(String userEmail, String confirmationcode) {
+		
+	    try {
+	        String message = "Bonjour,\n\n"
+	                + "Vous avez demandé la suppression de votre compte sur la plateforme Clinital.\n\n"
+	                + "Si vous souhaitez toujours supprimer votre compte, voila  le code de confirmation "
+	                + "\n\n"
+	                + confirmationcode + "\n\n"
+	                + "vous pouvez ignorer cet email.";
 
+	        SimpleMailMessage mailMessage = new SimpleMailMessage();
+	        mailMessage.setTo(userEmail);
+	        mailMessage.setFrom("clinitalcontact@gmail.com");
+	        mailMessage.setSubject("Code de confirmation du suppression   de   votre compte clinital!");
+	        mailMessage.setText(message);
+
+	        javaMailSender.send(mailMessage);
+	        LOGGER.info("Un email de  code de confirmation a été envoyé à l'adresse : {}", userEmail);
+	    } catch (Exception e) {
+	        LOGGER.error("Erreur lors de l'envoi de l'e-mail de confirmation : {}", e);
+	    }
+	}
+ public void sendMailChangePassword(String userEmail) {
+		
+	    try {
+	    	 String message = "Bonjour,\n\n"
+	                    + "Votre mot de passe a été modifié avec succès sur la plateforme Clinital.\n\n"
+	                    + "Si vous n'avez pas effectué cette modification, veuillez contacter notre équipe de support.";
+
+	        SimpleMailMessage mailMessage = new SimpleMailMessage();
+	        mailMessage.setTo(userEmail);
+	        mailMessage.setFrom("clinitalcontact@gmail.com");
+	        mailMessage.setSubject("Code de confirmation du suppression   de   votre compte clinital!");
+	        mailMessage.setText(message);
+	        javaMailSender.send(mailMessage);
+            LOGGER.info("Un email de notification de changement de mot de passe a été envoyé à l'adresse : {}", userEmail);
+        } catch (Exception e) {
+            LOGGER.error("Erreur lors de l'envoi de l'e-mail de notification de changement de mot de passe : {}", e);
+        }
+    }
 
 	public void sendMail(String userEmail, String confirmationToken) {
 
@@ -178,8 +174,5 @@ public class EmailSenderService {
 			LOGGER.error("Erreur lors de l'envoi de l'e-mail de réinitialisation du mot de passe : {}", e);
 		}
 	}
-
-
-
 
 }

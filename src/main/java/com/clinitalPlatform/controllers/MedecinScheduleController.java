@@ -17,6 +17,7 @@ import com.clinitalPlatform.util.GlobalVariables;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PostAuthorize;
@@ -25,6 +26,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.DayOfWeek;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -157,6 +159,25 @@ public class MedecinScheduleController {
                 .collect(Collectors.toList()));
 
 
+    }
+    @GetMapping("fromCreno")
+    public ResponseEntity<?> getScheduleFromCreno(@RequestParam("creno") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime creno,
+                                                  @RequestParam("day") DayOfWeek day,
+                                                  @RequestParam("idmed") long idmed) {
+        try {
+            // Appeler la fonction pour récupérer le planning
+            MedecinSchedule schedule = medecinScheduleService.getScheduleFromCreno(creno.toLocalTime(), day, idmed);
+            if (schedule != null) {
+                // Planning trouvé, retourner le résultat
+                return ResponseEntity.ok(schedule);
+            } else {
+                // Planning non trouvé pour ce créneau
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            // Gérer les erreurs
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de la récupération du planning.");
+        }
     }
 
     //FILTRE DISPONIBILITÉ--------------------------------------------

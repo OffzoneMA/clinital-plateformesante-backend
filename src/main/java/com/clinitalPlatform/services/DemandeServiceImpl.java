@@ -62,7 +62,6 @@ public class DemandeServiceImpl implements DemandeService{
 
 		Demande d = modelMapper.map(demande,Demande.class);
 		Demande saved = demandeRepository.save(d);
-		emailSenderService.sendMailDemande(saved);
 	
         LOGGER.info("Demande d'inscription cree par un Medecin son email : "+d.getMail());
 		return ResponseEntity.ok(modelMapper.map(saved, Demande.class));

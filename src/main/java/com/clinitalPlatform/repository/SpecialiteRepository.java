@@ -19,4 +19,5 @@ public interface SpecialiteRepository extends JpaRepository<Specialite, Long>{
     @Query(value = "SELECT * FROM `specialites` WHERE libelle LIKE ?1%",nativeQuery = true)
     Specialite getSpecialiteByName(String name);
 
+    boolean existsByLibelle(String libelle);
 }

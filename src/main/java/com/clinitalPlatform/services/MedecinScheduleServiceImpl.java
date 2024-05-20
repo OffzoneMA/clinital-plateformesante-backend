@@ -252,6 +252,31 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
 
     }
 
+
+    public MedecinSchedule getScheduleFromCreno(LocalTime creno, DayOfWeek day, long idmed) throws Exception {
+        // Récupérer la liste des plannings du médecin
+        List<MedecinSchedule> schedules = this.getAllSchedulesByMedId(idmed);
+
+        // Parcourir chaque planning
+        for (MedecinSchedule schedule : schedules) {
+            // Vérifier si le jour correspond au jour du planning
+            if (schedule.getDay().equals(day)) {
+                // Vérifier si le créneau se situe entre l'heure de début et de fin du planning
+                LocalTime start = schedule.getAvailabilityStart().toLocalTime();
+                LocalTime end = schedule.getAvailabilityEnd().toLocalTime();
+                if (creno.equals(start) || (creno.isAfter(start) && creno.isBefore(end))) {
+                    // Le créneau appartient à ce planning, retourner ce planning
+                    return schedule;
+                }
+            }
+        }
+
+        // Aucun planning trouvé pour ce créneau
+        return null;
+    }
+
+
+
     //FILTRE SUR LES HORAIRES-----------------------------------------------
 
     //Filtre de crenneau selon la disponobilité

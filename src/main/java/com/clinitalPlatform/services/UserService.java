@@ -124,7 +124,6 @@ public class UserService {
 						Medecin medecin = new Medecin();
 						medecin.setNom_med(demande.getNom_med());
 						medecin.setPrenom_med(demande.getPrenom_med());
-						medecin.setMatricule_med(demande.getMatricule());
 						medecin.setInpe(demande.getInpe());
 						medecin.setPhoto_med(null);
 						medecin.setPhoto_couverture_med(null);
@@ -193,5 +192,15 @@ public class UserService {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiError(false, "An error occurred while registering new user."));
 		}
 	}
+	 public boolean changePassword(User user, String password) {
+	    	
+			user.setPassword(encoder.encode(password));
+			if (userRepository.save(user) != null) {
+				emailSenderService.sendMailChangePassword(user.getEmail());
+				return true;
+				
+			}
+			return false;
+		}
 
 }

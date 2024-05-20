@@ -14,23 +14,22 @@ import java.util.Optional;
 
 @Component
 public class UserDetailsServiceImpl implements UserDetailsService {
+  
     @Autowired
     private UserRepository userRepository;
+  
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-
-
+      
         Optional<User> userInfo = userRepository.findUserByEmail(username);
-
         return userInfo.map(UserDetailsImpl::new)
                 .orElseThrow(() -> new UsernameNotFoundException("user not found " + username));
     }
 
-
-  @Transactional
+    @Transactional
     public UserDetails loadUserById(Long id) throws UsernameNotFoundException {
+      
         User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("User" + id));
-
         return UserDetailsImpl.build(user);
     }
 
@@ -49,7 +48,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public boolean isEnabled(String email) {
         return userRepository.findIsEnabledByEmail(email).orElse(false);
     }
-
 
 
 }
