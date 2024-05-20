@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 
+import com.clinitalPlatform.models.JwtTokens;
 import com.clinitalPlatform.models.Patient;
 import com.clinitalPlatform.payload.request.*;
 import com.clinitalPlatform.payload.response.MessageResponse;
@@ -12,6 +13,7 @@ import com.clinitalPlatform.security.jwt.PasswordResetToken;
 import com.clinitalPlatform.security.services.UserDetailsServiceImpl;
 import com.clinitalPlatform.services.EmailSenderService;
 import com.clinitalPlatform.util.ApiError;
+import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -86,7 +88,7 @@ public class AuthController {
 
 
     //CONNEXION--------------------------------------------------
-    @PostMapping("/signin")
+   /* @PostMapping("/signin")
     public ResponseEntity<?> authenticateAndGetToken(@RequestBody LoginRequest loginRequest) {
         try {
             // Vérifier si le compte existe (via le mail)
@@ -130,7 +132,62 @@ public class AuthController {
             // Mot de passe incorrect
             return ResponseEntity.ok(new ApiResponse(false, "incorrect_password"));
         }
+    }*/
+
+    //CONNEXION--------------------------------------------------
+    @PostMapping("/signin")
+    public ResponseEntity<?> authenticateAndGetToken(@RequestBody LoginRequest loginRequest) {
+        try {
+            // Vérifier si le compte existe (via le mail)
+            UserDetails userDetail = userDetailsService.loadUserByUsername(loginRequest.getEmail());
+
+            // Vérifier si le compte est activé
+            User useractif = userServices.findByEmail(loginRequest.getEmail());
+            if (useractif != null && !useractif.getEmailVerified()) {
+                LOGGER.info("Email is not verified");
+                return ResponseEntity.ok(new ApiResponse(false, "Email Not Verified"));
+            }
+            // Vérifier si le compte est actif (non bloqué)
+            if (!userDetailsService.isEnabled(loginRequest.getEmail())) {
+                LOGGER.info("Account is blocked");
+                return ResponseEntity.ok(new ApiResponse(false, "Your Account is Blocked please try to Contact Clinical Admin"));
+            }
+
+            // Générer le token JWT et le refresh token et effectuer la connexion
+            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+            // Générer les tokens d'access et refresh
+            JwtTokens tokens = jwtService.generateTokens(loginRequest.getEmail());
+            String accessToken = tokens.getAccessToken();
+            String refreshToken = tokens.getRefreshToken();
+
+            User user = userServices.findById(userDetails.getId());
+            System.out.println(user.getEmail());
+
+            globalVariables.setConnectedUser(user);
+            System.out.println("accessToken :"+accessToken+"\n");
+            System.out.println("refreshToken :"+refreshToken);
+            System.out.println("-----------------------------------------");
+            // Mettre à jour la date de dernière connexion et créer une activité de connexion
+            autService.updateLastLoginDate(userDetails.getId());
+            activityServices.createActivity(new Date(), "Login", "Authentication reussi", user);
+            LOGGER.info("Authentication reussi");
+
+            // Retourner la réponse avec le token JWT et les détails de l'utilisateur
+            return ResponseEntity.ok(new JwtResponse(accessToken, userDetails.getId(), userDetails.getEmail(), userDetails.getTelephone(), userDetails.getRole(), refreshToken));
+        } catch (UsernameNotFoundException e) {
+            // Aucun compte associé à cet email
+            System.out.println("no account");
+            return ResponseEntity.ok(new ApiResponse(false, "no_account"));
+        } catch (BadCredentialsException e) {
+            System.out.println("incorrect");
+            // Mot de passe incorrect
+            return ResponseEntity.ok(new ApiResponse(false, "incorrect_password"));
+        }
     }
+
 
     //INSCRIPTION--------------------------------------------------------------
     @PostMapping("/signup")
@@ -224,15 +281,61 @@ public class AuthController {
     }
 
     //Verifification du token-----------------------------------------
-    @GetMapping("/checkToken/{token}")
+  /*  @GetMapping("/checkToken/{token}")
     public Boolean verifierValiditeToken(@PathVariable String token) {
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(jwtService.extractUsername(token));
         System.out.println("token verifié:" + token);
         return jwtService.validateToken(token, userDetails);
 
+    }*/
+   @GetMapping("/checkToken/{token}")
+    public Boolean verifierValiditeToken(@PathVariable String token) {
+        try {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(jwtService.extractUsername(token));
+            System.out.println("token vérifié: " + token);
+            return jwtService.validateToken(token, userDetails);
+        } catch (ExpiredJwtException ex) {
+            System.out.println("Le jeton est expiré: " + ex.getMessage());
+            return false;
+        } catch (Exception e) {
+            // Autres exceptions non liées à l'expiration du jeton
+            System.out.println("Une erreur est survenue lors de la validation du jeton: " + e.getMessage());
+            return false;
+        }
     }
 
+
+   /* @GetMapping("/checkToken/{accessToken}")
+    public ResponseEntity<?> verifyToken(@PathVariable String accessToken) {
+        try {
+            // Vérifier si le jeton d'accès est valide
+            UserDetails userDetails = userDetailsService.loadUserByUsername(jwtService.extractUsername(accessToken));
+            if (userDetails != null && jwtService.validateToken(accessToken, userDetails)) {
+                // Le jeton d'accès est valide, retourner une réponse réussie
+                return ResponseEntity.ok(new ApiResponse(true, "Token valide"));
+            } else {
+                // Le jeton d'accès est invalide, retourner une réponse indiquant que le jeton est invalide
+                return ResponseEntity.ok(new ApiResponse(false, "Le jeton d'accès est invalide"));
+            }
+        } catch (Exception e) {
+            // Une erreur s'est produite lors de la vérification du jeton
+            System.out.println("Erreur lors de la vérification du token : " + e.getMessage());
+            // Si c'est une exception d'expiration de token, retournez une réponse indiquant que le token est expiré
+            if (e instanceof ExpiredJwtException) {
+                return ResponseEntity.ok(new ApiResponse(false, "Le jeton d'accès est expiré"));
+            } else {
+                // Sinon, retournez une réponse indiquant une erreur générale
+                return ResponseEntity.ok(new ApiResponse(false, "Erreur lors de la vérification du token"));
+            }
+        }
+    }*/
+
+
+
+
+
+    //-----------------------------------------------------------------
     //recuperation d'un token de confirmation par user_id
     @GetMapping("/confirmationtoken/{userId}")
     public ResponseEntity<String> getConfirmationToken(@PathVariable Long userId) {
@@ -387,6 +490,103 @@ public class AuthController {
             return ResponseEntity.badRequest().body(new MessageResponse("Jeton de réinitialisation invalide."));
         }
     }
+
+//
+
+    //TEST GENERATE NEW ACCESS TOKEN VIA REFRESH TOKEN
+    /*@GetMapping("/refreshToken/{refreshToken}")
+    public ResponseEntity<?> refreshAccessToken(@PathVariable String refreshToken) {
+        // Vérifiez si le refresh token est valide
+        if (!jwtService.validateRefreshToken(refreshToken)) {
+            return ResponseEntity.badRequest().body("Refresh token invalid or expired");
+        }
+
+        // Extrait le nom d'utilisateur à partir du refresh token
+        String username = jwtService.extractUsername(refreshToken);
+
+        // Génère un nouvel access token à partir du nom d'utilisateur
+        String accessToken = jwtService.generateToken(username);
+        System.out.println("accessToken:"+accessToken);
+        // Retourne le nouvel access token
+        return ResponseEntity.ok(accessToken);
+    }*/
+   /* @GetMapping("/refreshToken/{refreshToken}")
+    public ResponseEntity<?> refreshAccessToken(@PathVariable String refreshToken) {
+        // Vérifiez si le refresh token est valide
+        if (!jwtService.validateRefreshToken(refreshToken)) {
+            return ResponseEntity.badRequest().body("Refresh token invalid or expired");
+        }
+
+        // Extrait le nom d'utilisateur à partir du refresh token
+        String username = jwtService.extractUsername(refreshToken);
+
+        // Vérifiez si le jeton d'accès actuel est toujours valide
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        String currentAccessToken = jwtService.generateToken(username);
+
+        // Si le jeton d'accès actuel est toujours valide, retournez-le
+        if (jwtService.validateToken(currentAccessToken, userDetails)) {
+            return ResponseEntity.ok(currentAccessToken);
+        }
+
+        // Si le jeton d'accès actuel est expiré, générez un nouveau jeton d'accès
+        String newAccessToken = jwtService.generateToken(username);
+        System.out.println("New access token: " + newAccessToken);
+        return ResponseEntity.ok(newAccessToken);
+    }*/
+
+    //----------------------------
+   /* @PostMapping("/refreshToken/{refreshToken}")
+    public ResponseEntity<?> refreshAccessToken(@PathVariable String refreshToken) {
+        // Vérifiez si le refresh token est valide
+        if (!jwtService.validateRefreshToken(refreshToken)) {
+            return ResponseEntity.badRequest().body("Refresh token invalid or expired");
+        }
+
+        // Extrait le nom d'utilisateur à partir du refresh token
+        String username = jwtService.extractUsername(refreshToken);
+
+        // Vérifiez si le jeton d'accès actuel est toujours valide
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        String currentAccessToken = jwtService.generateToken(username);
+
+        // Si le jeton d'accès actuel est toujours valide, retournez-le
+        if (jwtService.validateToken(currentAccessToken, userDetails)) {
+            return ResponseEntity.ok(new ApiResponse(true,"Le token est encore valide",currentAccessToken));
+        }
+
+        // Si le jeton d'accès actuel est expiré, générez un nouveau jeton d'accès
+        String newAccessToken = jwtService.generateToken(username);
+        System.out.println("New access token: " + newAccessToken);
+        return ResponseEntity.ok(new ApiResponse(true,"new token generate",newAccessToken));
+
+
+    }*/
+
+    @PostMapping("/refreshToken/{accessToken}/{refreshToken}")
+    public ResponseEntity<?> refreshAccessToken(@PathVariable String accessToken, @PathVariable String refreshToken) {
+        // Vérifiez si le token d'accès est valide
+        UserDetails userDetails = null;
+        try {
+            userDetails = userDetailsService.loadUserByUsername(jwtService.extractUsername(accessToken));
+            if (jwtService.validateToken(accessToken, userDetails)) {
+                // Le token d'accès est toujours valide, retournez-le tel quel
+                System.out.println("ACCESS TOKEN A JOUR :"+accessToken);
+                return ResponseEntity.ok(new ApiResponse(true, "Le token d'accès est encore valide", accessToken));
+            }
+        } catch (ExpiredJwtException e) {
+            // Le token d'accès est expiré
+        } catch (Exception e) {
+            // Une erreur s'est produite lors de la vérification du token
+        }
+
+        // Générez un nouveau jeton d'accès
+        String newAccessToken = jwtService.generateTokenFromRefreshToken(refreshToken);
+        System.out.println("NEW TOKEN: "+newAccessToken);
+
+        return ResponseEntity.ok(new ApiResponse(true, "Nouveau token généré", newAccessToken));
+    }
+
 
 
 

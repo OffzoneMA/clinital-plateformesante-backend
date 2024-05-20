@@ -69,7 +69,7 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         String[] permitAllRoutes = {"/api/auth/**", "/api/users/activity/**","/api/demandes/create","/api/cabinet/**",
-        		"/api/med/medecins",	
+        		"/api/med/medecins",
         		"/api/med/medById/**",
     			"/api/med/medByName",
     			"/api/med/medByNameOrSpecAndVille/**",
@@ -84,13 +84,15 @@ public class WebSecurityConfig {
                 "/api/med/medByCabinetName",
                 "/api/med/medecins/schedules/filter",
                 "/api/med/byLangue/**",
+                "/api/med/byLangue/**",
     			"/api/ville/**",
                 "/api/langues/**",
                 "/api/tarifmed/**",
                 "/api/rdv/rdvs/patient",
                 "/api/rdv/patient/rdvbyday",
                 "/api/cabinet/medecin/**",
-                "/api/medecinSchedule/shedulebyMed/**"
+                "/api/medecinSchedule/shedulebyMed/**",
+                "/api/med/schedulesofMed/**",
 
 
 
