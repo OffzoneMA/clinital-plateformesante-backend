@@ -1,8 +1,10 @@
 package com.clinitalPlatform.services;
 
 
-import java.util.Date;
-import java.util.List;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
+import java.util.*;
 
 import com.clinitalPlatform.enums.RdvStatutEnum;
 import org.slf4j.Logger;
@@ -59,6 +61,9 @@ public class MedecinServiceImpl implements MedecinService {
 
     @Autowired
     RendezvousService rendezvousService;
+
+    @Autowired
+    MedecinScheduleRepository medecinScheduleRepository;
 
 
 
@@ -190,6 +195,72 @@ public Medecin getMedecinByUserId(long id) throws Exception {
 
         return daysInMonth;
     }
+
+    //Recuperer les langues parlées par les médecins par medecinId
+    @Override
+    public List<Langue> getLanguesByMedecinId(Long medecinId) throws Exception {
+        // Rechercher le médecin par son ID
+        Medecin medecin = medecinRepository.findById(medecinId)
+                .orElseThrow(() -> new Exception("Médecin non trouvé pour l'ID: " + medecinId));
+
+        // Récupérer les langues associées à ce médecin
+        return medecin.getLangues();
+    }
+
+    //Recuperer les langues parlées par les médecins par le nom du medecin
+
+    @Override
+    public List<Langue> getLanguesByMedecinName(String nomMed) throws Exception {
+        Optional<Medecin> optionalMedecin = medecinRepository.findMedecinByName(nomMed);
+
+        if (optionalMedecin.isEmpty()) {
+            throw new Exception("Aucun médecin trouvé pour le nom: " + nomMed);
+        }
+
+        Medecin medecin = optionalMedecin.get();
+        return medecin.getLangues();
+    }
+
+    @Override
+    public List<Tarif> getTarifByMedecinId(Long medecinId) throws Exception {
+        Medecin medecin = medecinRepository.findById(medecinId)
+                .orElseThrow(() -> new Exception("Médecin non trouvé pour l'ID: " + medecinId));
+
+
+        return medecin.getTarifs();
+    }
+
+    @Override
+    public List<Tarif> getTarifByMedecinName(String nomMed) throws Exception {
+        Optional<Medecin> optionalMedecin = medecinRepository.findMedecinByName(nomMed);
+
+        if (optionalMedecin.isEmpty()) {
+            throw new Exception("Aucun médecin trouvé pour le nom: " + nomMed);
+        }
+
+        Medecin medecin = optionalMedecin.get();
+        return medecin.getTarifs();
+    }
+
+    @Override
+    public List<Medecin> findMedecinsByLangues_Name(String langueName) {
+        return medecinRepository.findMedecinsByLangues_Name(langueName);
+
+    }
+
+    public List<Medecin> filterMedecinsByLangue(List<Long> medecinIds, String langueName) {
+        // Récupérez les médecins correspondant aux IDs fournis
+        List<Medecin> medecins = medecinRepository.findAllById(medecinIds);
+
+        // Filtrer les médecins par langue
+        List<Medecin> filteredMedecins = medecins.stream()
+                .filter(medecin -> medecin.getLangues().stream()
+                        .anyMatch(langue -> langue.getName().equals(langueName)))
+                .collect(Collectors.toList());
+
+        return filteredMedecins;
+    }
+
 
 
 

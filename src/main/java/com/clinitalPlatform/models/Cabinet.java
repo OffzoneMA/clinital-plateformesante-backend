@@ -44,6 +44,7 @@ public class Cabinet {
 	private List<Secretaire> secretaire;
 
 	@ManyToOne(cascade = CascadeType.ALL)
+	@JsonIgnore
 	private Medecin creator;
 
 	private Boolean state;

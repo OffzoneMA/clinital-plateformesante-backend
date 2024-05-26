@@ -1,9 +1,12 @@
 package com.clinitalPlatform.services;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.clinitalPlatform.dto.CabinetDTO;
+import com.clinitalPlatform.dto.MedecinDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.models.Ville;
+import com.clinitalPlatform.models.CabinetMedecinsSpace;
+
 import com.clinitalPlatform.payload.request.CabinetRequest;
 import com.clinitalPlatform.repository.VilleRepository;
 import com.clinitalPlatform.repository.MedecinRepository;
@@ -86,5 +91,15 @@ public class CabinetServiceImpl implements CabinetService{
 	  }
 				
 	}
+
+	public List<Cabinet> getAllCabinetsByMedecinId(Long medecinId) {
+		Medecin medecin = medrepo.findById(medecinId)
+				.orElseThrow(() -> new RuntimeException("Medecin not found with ID: " + medecinId));
+		return medecin.getCabinets().stream()
+				.map(CabinetMedecinsSpace::getCabinet)
+				.collect(Collectors.toList());
+	}
+
+
 
 }

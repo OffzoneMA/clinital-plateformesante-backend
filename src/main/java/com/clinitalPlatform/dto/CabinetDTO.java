@@ -3,6 +3,7 @@ package com.clinitalPlatform.dto;
 import java.util.Date;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
@@ -18,7 +19,8 @@ public class CabinetDTO {
 	private Date horaires;
 	
 	private String phoneNumber;
-	
+
+	@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
 	private List<MedecinDTO> medecins;
 
 }
