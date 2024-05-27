@@ -10,10 +10,13 @@ import com.clinitalPlatform.security.config.VideoCall.UrlVideoCallGenerator;
 import com.clinitalPlatform.util.ApiError;
 import com.clinitalPlatform.util.ClinitalModelMapper;
 import com.clinitalPlatform.util.GlobalVariables;
+<<<<<<< HEAD
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.validation.Valid;
+=======
+>>>>>>> origin/CP-105-Ajouter-des-regles-de-gestions-sur-le-rendez-vous
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +27,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+<<<<<<< HEAD
+=======
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.validation.Valid;
+>>>>>>> origin/CP-105-Ajouter-des-regles-de-gestions-sur-le-rendez-vous
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -31,6 +40,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+<<<<<<< HEAD
+=======
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+>>>>>>> origin/CP-105-Ajouter-des-regles-de-gestions-sur-le-rendez-vous
 @JsonIgnoreProperties({"hibernateLazyInitializer","handler"})
 @Service
 @Transactional(propagation = Propagation.REQUIRED)
@@ -111,6 +124,7 @@ public class RendezvousService implements IDao<Rendezvous>  {
        
         
     }
+<<<<<<< HEAD
 //	public Rendezvous updateRendezvous(RendezvousDTO rendezvousDTO) throws Exception {
 //
 ////		Rendezvous existingRendezvous = rdvrepo.findById(rendezvousDTO.getId())
@@ -140,6 +154,9 @@ public class RendezvousService implements IDao<Rendezvous>  {
 ////		return rdvrepo.UpdateRdvByIdRdv();
 //
 //	}
+=======
+
+>>>>>>> origin/CP-105-Ajouter-des-regles-de-gestions-sur-le-rendez-vous
 
 	public RendezvousDTO convertToDTO(Rendezvous rendezvous, RendezvousDTO dto) {
 		dto.setId(rendezvous.getId());
@@ -255,8 +272,12 @@ public class RendezvousService implements IDao<Rendezvous>  {
 	public List<Rendezvous> getRdvMedByMonth(long month,long id){
 		return rdvrepo.getRendezvousMedByMonth(month,id);
 	}
+<<<<<<< HEAD
 
 	//Get Rdv By Day :
+=======
+	//Get Rdv By Day : 
+>>>>>>> origin/CP-105-Ajouter-des-regles-de-gestions-sur-le-rendez-vous
 	public List<Rendezvous> getRdvMedByYear(long year,long id){
 		return rdvrepo.getRendezvousMedByYear(year,id);
 	}
@@ -276,7 +297,10 @@ public List<Rendezvous> getRdvPatientByDayWeek(long day,long id){
 		return rdvrepo.getRendezvousPatientByWeek(week,id);
 	}
 	//Get Rdv By Day : 
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/CP-105-Ajouter-des-regles-de-gestions-sur-le-rendez-vous
 	public List<Rendezvous> getRdvPatientByMonth(long month,long id){
 		return rdvrepo.getRendezvousPatientByMonth(month,id);
 	}
@@ -319,6 +343,7 @@ public List<Rendezvous> getRdvPatientByDayWeek(long day,long id){
 		return !existingRDVs.isEmpty();
 	}
 
+<<<<<<< HEAD
 //	public ResponseEntity<?> AddnewRdvgestionregle(User user,RendezvousDTO c,Medecin medecin,Patient patient) throws Exception{
 //		try {
 //			// DayOfWeek day = DayOfWeek.valueOf(c.getDay());
@@ -370,16 +395,25 @@ public List<Rendezvous> getRdvPatientByDayWeek(long day,long id){
 
 
 
+=======
+>>>>>>> origin/CP-105-Ajouter-des-regles-de-gestions-sur-le-rendez-vous
 	 //Add RDV :
 	 public ResponseEntity<?> AddnewRdv(User user,RendezvousDTO c,Medecin medecin,Patient patient) throws Exception{
 
 		try {
 		// DayOfWeek day = DayOfWeek.valueOf(c.getDay());
 	MotifConsultation motif = mRepository.findById(c.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a Motif"));
+<<<<<<< HEAD
 	ModeConsultation mode =moderespo.findById(c.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a Mode consultation"));
 	Cabinet cabinet=cabrepo.findById(c.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a cabinet"));
 	Boolean isReserved = false,ModeMedecin=false;
 	isReserved=	this.isHasRdvToday( medecin.getSpecialite().getId_spec(), c.getStart().toLocalDate());
+=======
+	ModeConsultation mode =moderespo.findById(c.getModeconsultation()).orElseThrow(()->new Exception("No such Id exist for a Mode consultation"));
+	Cabinet cabinet=cabrepo.findById(c.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a cabinet"));
+	Boolean isReserved = false,ModeMedecin=false;
+	isReserved=	this.isHasRdvToday( medecin.getSpecialite().getId_spec(), c.getStart().toLocalDate(),patient.getId());
+>>>>>>> origin/CP-105-Ajouter-des-regles-de-gestions-sur-le-rendez-vous
 	ModeMedecin=isReserved?false:true;
 
 	if (!isReserved||ModeMedecin) {
@@ -484,6 +518,7 @@ public List<Rendezvous> getRdvPatientByDayWeek(long day,long id){
 			throw new Exception(e.getMessage());
 		}
 	}
+<<<<<<< HEAD
 //	private boolean hasExistingAppointment(Long patientId, Long specialtyId, LocalDate appointmentDate) {
 //		// Query the database to check if there is an existing appointment for the patient
 //		// with the same specialty on the same day
@@ -555,6 +590,15 @@ public List<Rendezvous> getRdvPatientByDayWeek(long day,long id){
 	public Boolean isHasRdvToday(Long spec,LocalDate date) throws Exception{
 		try {
 			 List<Rendezvous> rdv= rdvrepo.findRdvBySpecInDate(spec, date);
+=======
+
+
+
+	// Checking if a patient has a rendezvous with a doctor today.
+	public Boolean isHasRdvToday(Long spec,LocalDate date,Long idpat) throws Exception{
+		try {
+			 List<Rendezvous> rdv= rdvrepo.findRdvByPatientandSpecInDate(spec,idpat, date);
+>>>>>>> origin/CP-105-Ajouter-des-regles-de-gestions-sur-le-rendez-vous
 		
 		if(rdv.isEmpty()){
 			return false;
