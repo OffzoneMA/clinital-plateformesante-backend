@@ -15,6 +15,9 @@ import jakarta.persistence.PersistenceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -222,9 +225,18 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
 
     // A method that returns a list of MedecinSchedule objects by id Medecin.
     public List<MedecinSchedule> getAllSchedulesByMedId(long idmed) throws Exception {
-        activityServices.createActivity(new Date(),"Read","Consulting All Schedules",globalVariables.getConnectedUser());
-        LOGGER.info("Consulting All Schedules , UserID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
-        return medecinScheduleRepository.getAllSchedulesByMedId(idmed)
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!(authentication instanceof AnonymousAuthenticationToken)) {
+            // L'utilisateur est authentifié, créez l'activité
+            User connectedUser = globalVariables.getConnectedUser();
+            if (connectedUser != null) {
+                activityServices.createActivity(new Date(),"Read","Consulting All Schedules",globalVariables.getConnectedUser());
+                LOGGER.info("Consulting All Schedules , UserID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+
+            }
+        }
+                return medecinScheduleRepository.getAllSchedulesByMedId(idmed)
                 .stream()
                 .map(schedule -> modelMapper.map(schedule, MedecinSchedule.class))
                 .collect(Collectors.toList());

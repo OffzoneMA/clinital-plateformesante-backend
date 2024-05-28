@@ -100,8 +100,13 @@ public class WebSecurityConfig {
 
         };
 
-        String[] authenticatedRoutes = {"/api/demandes/**", "/api/med/**", "/api/doc/**", "/api/shares/**","/api/patient/**","/api/medecinSchedule/**","/api/users/**",
-                "/api/rdv/patient/**", "/api/rdv/**"
+        String[] authenticatedRoutes = {"/api/demandes/**", "/api/med/**", "/api/doc/**",
+                "/api/shares/**","/api/patient/**",
+                "/api/medecinSchedule/**","/api/users/**",
+                "/api/rdv/patient/**", "/api/rdv/**","/api/rdv/today/**",
+
+                "/api/med/agenda/**", "/api/medecinSchedule/fromCreno/**",
+                "/api/rdv/rdvs/patient","/api/rdv/patient/rdvbyday"
         };
 
 

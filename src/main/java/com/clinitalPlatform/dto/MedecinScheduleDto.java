@@ -19,6 +19,8 @@ public class MedecinScheduleDto implements Serializable {
 
     private ModeConsultationDTO Mode;
 
+    private MotifConsultationDTO motif;
+
     private  ConsultationPeriodEnum periode;
 
     private MedecinDTO medecin;

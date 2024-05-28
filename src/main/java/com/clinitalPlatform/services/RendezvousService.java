@@ -380,6 +380,8 @@ public List<Rendezvous> getRdvPatientByDayWeek(long day,long id){
 	Cabinet cabinet=cabrepo.findById(c.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a cabinet"));
 	Boolean isReserved = false,ModeMedecin=false;
 	isReserved=	this.isHasRdvToday( medecin.getSpecialite().getId_spec(), c.getStart().toLocalDate());
+	RendezvousDTO rdvReserved=this.getRdvToday( medecin.getSpecialite().getId_spec(), c.getStart().toLocalDate());
+
 	ModeMedecin=isReserved?false:true;
 
 	if (!isReserved||ModeMedecin) {
@@ -413,7 +415,7 @@ public List<Rendezvous> getRdvPatientByDayWeek(long day,long id){
 		return ResponseEntity.ok(mapper.map(rendezvous, Rendezvous.class));
 
 	} else
-		return ResponseEntity.ok(new ApiResponse(false, "You have already an other RDV "));
+		return ResponseEntity.ok(new ApiResponse(false, "You have already an other RDV ",rdvReserved));
 
 		} catch (Exception e) {
 			// TODO: handle exception
@@ -564,6 +566,23 @@ public List<Rendezvous> getRdvPatientByDayWeek(long day,long id){
 			throw new Exception(e.getMessage());
 		}
 		
+	}
+
+	public RendezvousDTO getRdvToday(Long spec,LocalDate date) throws Exception{
+		try {
+			List<Rendezvous> rdvs= rdvrepo.findRdvBySpecInDate(spec, date);
+			RendezvousDTO rdto=new RendezvousDTO();
+			for(Rendezvous rdv : rdvs){
+				if(rdv!=null){
+					return convertToDTO(rdv,rdto);
+				}
+			}
+			return null;
+		} catch (Exception e) {
+			// TODO: handle exception
+			throw new Exception(e.getMessage());
+		}
+
 	}
  
 }

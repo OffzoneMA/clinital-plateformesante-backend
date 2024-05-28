@@ -581,7 +581,6 @@ public class MedecinController {
 	/*@GetMapping("/agenda/{idmed}/{weeks}/{startDate}")
 	@JsonSerialize(using = LocalDateSerializer.class)
 	public List<AgendaResponse> GetCreno(@Validated @PathVariable long idmed, @PathVariable long weeks,
-
 										 @PathVariable(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)  LocalDate startDate)
 			throws Exception {
 
@@ -609,7 +608,6 @@ public class MedecinController {
 							if (medsch.getDay().getValue() == startDate.getDayOfWeek().getValue())
 									//medsch.getAvailabilityStart().toLocalDate().isAfter(startDate)) // a retirer
 							{
-
 							checkday = true;
 								AgendaResponse agenda = null;
 								// Rechercher une AgendaResponse correspondante dans agendaResponseList
@@ -697,10 +695,20 @@ public class MedecinController {
 			// with no duplicates to the list
 			agendaResponseList.addAll(set);
 
-			if(globalVariables.getConnectedUser()!=null){
-				activityServices.createActivity(new Date(),"Read","Consult Medecin Agenda by his ID : "+idmed,globalVariables.getConnectedUser());
-				LOGGER.info("Consult Medecin Agenda By his ID : "+idmed+" by User : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+
+			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+			if (!(authentication instanceof AnonymousAuthenticationToken)) {
+				// L'utilisateur est authentifié, créez l'activité
+				User connectedUser = globalVariables.getConnectedUser();
+				if (connectedUser != null) {
+					activityServices.createActivity(new Date(),"Read","Consult Medecin Agenda by his ID : "+idmed, connectedUser);
+					LOGGER.info("Consult Medecin Agenda By his ID : "+idmed+" by User : "+(connectedUser instanceof User ? connectedUser.getId():""));
+				}
 			}
+//			if(globalVariables != null && globalVariables.getConnectedUser()!=null){
+//				activityServices.createActivity(new Date(),"Read","Consult Medecin Agenda by his ID : "+idmed,globalVariables.getConnectedUser());
+//				LOGGER.info("Consult Medecin Agenda By his ID : "+idmed+" by User : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+//			}
 
 			return agendaResponseList;
 
@@ -887,7 +895,6 @@ public class MedecinController {
 
 	}
 
-
 	//FILTRE DE MEDECIN SELON LA DISPONIBILITÉ-------------------------------------------
 
 	@PostMapping("/medecins/schedules/filter")
@@ -947,8 +954,6 @@ public class MedecinController {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
 		}
 	}
-
-
 
 
 }

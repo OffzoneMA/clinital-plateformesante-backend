@@ -131,10 +131,12 @@ public Medecin getMedecinByUserId(long id) throws Exception {
                         continue;
                     }
                     //cas conge longue duree
-//                    if (rdvStart.toLocalDate().isBefore(date.toLocalDate()) && rdvEnd.toLocalDate().isAfter(date.toLocalDate())) {
-//                        isReserved = true;
-//                        break;
-//                    }
+                    if(rdv.getStatut().equals(RdvStatutEnum.CONJE)) {
+                        if (rdvStart.toLocalDate().isBefore(date.toLocalDate()) && rdvEnd.toLocalDate().isAfter(date.toLocalDate()) || rdvStart.toLocalDate().isEqual(date.toLocalDate()) || rdvEnd.toLocalDate().isEqual(date.toLocalDate())) {
+                            isReserved = true;
+                            break;
+                        }
+                    }
                     if ((slotTime.getHour() == rdvStart.getHour() && slotTime.getMinute() == rdvStart.getMinute())
                             || (slotTime.toLocalTime().isAfter(rdvStart.toLocalTime()) && slotTime.toLocalTime().isBefore(rdvEnd.toLocalTime()))
                             && date.toLocalDate().isEqual(rdvStart.toLocalDate()) ) {
@@ -143,7 +145,7 @@ public Medecin getMedecinByUserId(long id) throws Exception {
                     }
 
 //
-            }
+                }
 
             if (!isReserved) {
                 agenda.getAvailableSlot().add((timer.getHour() < 10 ? "0" : "") + timer.getHour() + ":" +
