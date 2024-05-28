@@ -379,7 +379,7 @@ public List<Rendezvous> getRdvPatientByDayWeek(long day,long id){
 	ModeConsultation mode =moderespo.findById(c.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a Mode consultation"));
 	Cabinet cabinet=cabrepo.findById(c.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a cabinet"));
 	Boolean isReserved = false,ModeMedecin=false;
-	isReserved= this.isHasRdvToday( medecin.getSpecialite().getId_spec(), c.getStart().toLocalDate(),patient.getId());
+	isReserved=	this.isHasRdvToday( medecin.getSpecialite().getId_spec(), c.getStart().toLocalDate());
 	ModeMedecin=isReserved?false:true;
 
 	if (!isReserved||ModeMedecin) {
@@ -552,20 +552,18 @@ public List<Rendezvous> getRdvPatientByDayWeek(long day,long id){
 
 
 	// Checking if a patient has a rendezvous with a doctor today.
-	public Boolean isHasRdvToday(Long spec,LocalDate date,Long idpat) throws Exception{
+	public Boolean isHasRdvToday(Long spec,LocalDate date) throws Exception{
 		try {
-
-			List<Rendezvous> rdv= rdvrepo.findRdvByPatientandSpecInDate(idpat,spec, date);
-			System.out.println(mapper.map(rdv, Rendezvous.class));
-
-			if(rdv.isEmpty()){
-				return false;
-			} else return true;
+			 List<Rendezvous> rdv= rdvrepo.findRdvBySpecInDate(spec, date);
+		
+		if(rdv.isEmpty()){
+			return false;
+		} else return true;
 		} catch (Exception e) {
 			// TODO: handle exception
 			throw new Exception(e.getMessage());
 		}
-
+		
 	}
  
 }

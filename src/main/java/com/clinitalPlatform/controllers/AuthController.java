@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 
+import com.clinitalPlatform.models.JwtTokens;
 import com.clinitalPlatform.enums.ERole;
 import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.models.Patient;
@@ -17,7 +18,9 @@ import com.clinitalPlatform.services.EmailSenderService;
 import com.clinitalPlatform.services.interfaces.MedecinService;
 import com.clinitalPlatform.services.interfaces.SecretaireService;
 import com.clinitalPlatform.util.ApiError;
+import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -63,6 +66,10 @@ import javax.validation.Valid;
 @RequestMapping("/api/auth")
 public class AuthController {
 
+
+    @Value("${base.url}")
+    private String baseUrl;
+
     @Autowired
     AuthenticationManager authenticationManager;
 
@@ -104,7 +111,7 @@ public class AuthController {
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
     //CONNEXION--------------------------------------------------
-    @PostMapping("/signin")
+   /* @PostMapping("/signin")
     public ResponseEntity<?> authenticateAndGetToken(@RequestBody LoginRequest loginRequest) {
         try {
             // Vérifier si le compte existe (via le mail)
@@ -148,7 +155,62 @@ public class AuthController {
             // Mot de passe incorrect
             return ResponseEntity.ok(new ApiResponse(false, "incorrect_password"));
         }
+    }*/
+
+    //CONNEXION--------------------------------------------------
+    @PostMapping("/signin")
+    public ResponseEntity<?> authenticateAndGetToken(@RequestBody LoginRequest loginRequest) {
+        try {
+            // Vérifier si le compte existe (via le mail)
+            UserDetails userDetail = userDetailsService.loadUserByUsername(loginRequest.getEmail());
+
+            // Vérifier si le compte est activé
+            User useractif = userServices.findByEmail(loginRequest.getEmail());
+            if (useractif != null && !useractif.getEmailVerified()) {
+                LOGGER.info("Email is not verified");
+                return ResponseEntity.ok(new ApiResponse(false, "Email Not Verified"));
+            }
+            // Vérifier si le compte est actif (non bloqué)
+            if (!userDetailsService.isEnabled(loginRequest.getEmail())) {
+                LOGGER.info("Account is blocked");
+                return ResponseEntity.ok(new ApiResponse(false, "Your Account is Blocked please try to Contact Clinical Admin"));
+            }
+
+            // Générer le token JWT et le refresh token et effectuer la connexion
+            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+            // Générer les tokens d'access et refresh
+            JwtTokens tokens = jwtService.generateTokens(loginRequest.getEmail());
+            String accessToken = tokens.getAccessToken();
+            String refreshToken = tokens.getRefreshToken();
+
+            User user = userServices.findById(userDetails.getId());
+            System.out.println(user.getEmail());
+
+            globalVariables.setConnectedUser(user);
+            System.out.println("accessToken :"+accessToken+"\n");
+            System.out.println("refreshToken :"+refreshToken);
+            System.out.println("-----------------------------------------");
+            // Mettre à jour la date de dernière connexion et créer une activité de connexion
+            autService.updateLastLoginDate(userDetails.getId());
+            activityServices.createActivity(new Date(), "Login", "Authentication reussi", user);
+            LOGGER.info("Authentication reussi");
+
+            // Retourner la réponse avec le token JWT et les détails de l'utilisateur
+            return ResponseEntity.ok(new JwtResponse(accessToken, userDetails.getId(), userDetails.getEmail(), userDetails.getTelephone(), userDetails.getRole(), refreshToken));
+        } catch (UsernameNotFoundException e) {
+            // Aucun compte associé à cet email
+            System.out.println("no account");
+            return ResponseEntity.ok(new ApiResponse(false, "no_account"));
+        } catch (BadCredentialsException e) {
+            System.out.println("incorrect");
+            // Mot de passe incorrect
+            return ResponseEntity.ok(new ApiResponse(false, "incorrect_password"));
+        }
     }
+
 
     //INSCRIPTION--------------------------------------------------------------
     @PostMapping("/signup")
@@ -181,7 +243,7 @@ public class AuthController {
 
         if ((confirmationToken.getExpiryDate().getTime() - calendar.getTime().getTime()) <= 0) {
 
-            String newLink = "http://localhost:8080/api/auth/generateNewLink?token=" + token;
+            String newLink = baseUrl +"/api/auth/generateNewLink?token=" + token;
             return ResponseEntity.badRequest().body("Lien expiré, générer un nouveau <a href=\"" + newLink + "\">Ici</a>");
 
         }
@@ -242,15 +304,61 @@ public class AuthController {
     }
 
     //Verifification du token-----------------------------------------
-    @GetMapping("/checkToken/{token}")
+  /*  @GetMapping("/checkToken/{token}")
     public Boolean verifierValiditeToken(@PathVariable String token) {
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(jwtService.extractUsername(token));
         System.out.println("token verifié:" + token);
         return jwtService.validateToken(token, userDetails);
 
+    }*/
+   @GetMapping("/checkToken/{token}")
+    public Boolean verifierValiditeToken(@PathVariable String token) {
+        try {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(jwtService.extractUsername(token));
+            System.out.println("token vérifié: " + token);
+            return jwtService.validateToken(token, userDetails);
+        } catch (ExpiredJwtException ex) {
+            System.out.println("Le jeton est expiré: " + ex.getMessage());
+            return false;
+        } catch (Exception e) {
+            // Autres exceptions non liées à l'expiration du jeton
+            System.out.println("Une erreur est survenue lors de la validation du jeton: " + e.getMessage());
+            return false;
+        }
     }
 
+
+   /* @GetMapping("/checkToken/{accessToken}")
+    public ResponseEntity<?> verifyToken(@PathVariable String accessToken) {
+        try {
+            // Vérifier si le jeton d'accès est valide
+            UserDetails userDetails = userDetailsService.loadUserByUsername(jwtService.extractUsername(accessToken));
+            if (userDetails != null && jwtService.validateToken(accessToken, userDetails)) {
+                // Le jeton d'accès est valide, retourner une réponse réussie
+                return ResponseEntity.ok(new ApiResponse(true, "Token valide"));
+            } else {
+                // Le jeton d'accès est invalide, retourner une réponse indiquant que le jeton est invalide
+                return ResponseEntity.ok(new ApiResponse(false, "Le jeton d'accès est invalide"));
+            }
+        } catch (Exception e) {
+            // Une erreur s'est produite lors de la vérification du jeton
+            System.out.println("Erreur lors de la vérification du token : " + e.getMessage());
+            // Si c'est une exception d'expiration de token, retournez une réponse indiquant que le token est expiré
+            if (e instanceof ExpiredJwtException) {
+                return ResponseEntity.ok(new ApiResponse(false, "Le jeton d'accès est expiré"));
+            } else {
+                // Sinon, retournez une réponse indiquant une erreur générale
+                return ResponseEntity.ok(new ApiResponse(false, "Erreur lors de la vérification du token"));
+            }
+        }
+    }*/
+
+
+
+
+
+    //-----------------------------------------------------------------
     //recuperation d'un token de confirmation par user_id
     @GetMapping("/confirmationtoken/{userId}")
     public ResponseEntity<String> getConfirmationToken(@PathVariable Long userId) {
@@ -406,103 +514,7 @@ public class AuthController {
         }
     }
 
-    //MOT DE PASSE OUBLIÉ POUR ROLE MEDECIN ET SECRETAIRE, PARTIE PRO
-    @PostMapping("/forgotpasswordPro")
-    public ResponseEntity<?> forgotPasswordPro(@RequestBody ForgetPwdProRequest forgetPwdProRequest) {
-        try {
-            // Vérifier si l'e-mail et la date de naissance sont fournis
-            System.out.println("forgetPwdProRequest: " + forgetPwdProRequest);
-            if (forgetPwdProRequest.getProEmail() != null && !forgetPwdProRequest.getProEmail().isEmpty() && forgetPwdProRequest.getDateNaissance() != null) {
-                // Récupérer le user associé à l'e-mail
-
-                User user = userServices.findByEmail(forgetPwdProRequest.getProEmail());
-
-                if (user!=null) {
-                    Date dateNaissance = null;
-
-                        switch (user.getRole()) {
-                            case ROLE_MEDECIN :
-
-                                Medecin medecin= medecinSevice.findById(user.getId());
-                                dateNaissance= medecin.getDateNaissance();
-                                break;
-
-                            case ROLE_SECRETAIRE:
-
-                                Secretaire secretaire= secretaireService.findById(user.getId());
-                                dateNaissance= secretaire.getDateNaissance();
-                                break;
-
-                            //other case here
-
-                            default:
-                                break;
-                        }
 
 
 
-                    if (dateNaissance != null) {
-                        //Formattage de la date de naissance du Patient
-                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-
-                        String formattedProDateOfBirth = dateFormat.format(dateNaissance);//formatter la date de nainssance du patient
-                        String formattedUserDateOfBirth = dateFormat.format(forgetPwdProRequest.getDateNaissance());//Formatter à nouveau la date de naissance entrer
-
-                        // Vérifier si la date de naissance fournie correspond à celle du pro user
-                        if (formattedProDateOfBirth.equals(formattedUserDateOfBirth)) {
-
-
-                            // Si les informations fournies par l'utilisateur correspondent, on va générer le token de réinitialisation
-                            PasswordResetToken resetToken = autService.createRestetToken(user);
-                            String tokenValue = resetToken.getResetToken();
-
-                            // Envoie de l'e-mail de réinitialisation à l'utilisateur
-                            emailSenderService.sendResetPasswordMail(forgetPwdProRequest.getProEmail(), tokenValue);
-                            // Retourner un message de succès
-                            System.out.println("Un e-mail de réinitialisation a été envoyé à l'adresse " + forgetPwdProRequest.getProEmail());
-                            return ResponseEntity.ok(new ApiResponse(true, "Un e-mail de réinitialisation a été envoyé à l'adresse " + forgetPwdProRequest.getProEmail()));
-
-                        } else {
-                            // Si les informations fournies par l'utilisateur ne correspondent pas, retourner un message d'erreur
-                            System.out.println("Les informations fournies ne correspondent pas. Veuillez vérifier votre e-mail et votre date de naissance");
-                            return ResponseEntity.ok(new ApiResponse(false, "Les informations fournies ne correspondent pas. Veuillez vérifier votre e-mail et votre date de naissance."));
-
-                        }
-                    } else {
-                        // La date de naissance du patient n'est pas disponible, retourner un message d'erreur
-                        return ResponseEntity.ok(new ApiResponse(false, "La date de naissance pour l'utilisateur associé à l'e-mail fourni n'est pas disponible. Veuillez contacter le support."));
-                    }
-
-
-                } else {
-                    System.out.println("Aucun utilisateur n'a été retrouvé avec l'email: " + forgetPwdProRequest.getProEmail());
-                    return ResponseEntity.ok(new ApiResponse(false, "Aucun user trouvé pour l'e-mail: " + forgetPwdProRequest.getProEmail()));
-                }
-            } else {
-                System.out.println("L'e-mail et la date de naissance sont requis");
-                return ResponseEntity.ok(new ApiResponse(false, "L'e-mail et la date de naissance sont requis."));
-
-            }
-        } catch (Exception e) {
-            System.out.println("Erreur de traitement. Veuillez réessayer plus tard");
-            return ResponseEntity.ok(new ApiResponse(false, "Erreur de traitement. Veuillez réessayer plus tard."));
-
-        }
-    }
-
-
-	@PostMapping("/checkPassword")
-	@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_PATIENT')")
-	public ResponseEntity<?> checkPassword(@Valid @RequestBody String password)throws Exception {
-		User user = userRepository.getById(globalVariables.getConnectedUser().getId());
-	    
-	    // Vérifier si le mot de passe fourni correspond au mot de passe de l'utilisateur connecté
-	    boolean passwordMatch = encoder.matches(password, user.getPassword());
-	    
-	    if (passwordMatch) {
-	        return ResponseEntity.ok(new ApiResponse(true, "Password matches"));
-	    } else {
-	        return ResponseEntity.ok(new ApiResponse(false, "Password does not match"));
-	    }
-	}
 }
