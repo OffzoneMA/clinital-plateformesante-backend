@@ -1,5 +1,6 @@
 package com.clinitalPlatform.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,8 +16,9 @@ public class PaymentInfo {
     private String rib;
     private String codeSwift;
 
-   // @OneToOne(mappedBy = "paymentInfo")
-    //private Cabinet cabinet;
+   //@OneToOne(mappedBy = "paymentInfo")
+   //@JsonBackReference
+   // private Cabinet cabinet;
     public PaymentInfo() {
         super();
     }
