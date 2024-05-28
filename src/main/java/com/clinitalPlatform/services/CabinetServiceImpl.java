@@ -7,20 +7,17 @@ import java.util.stream.Collectors;
 
 import com.clinitalPlatform.dto.CabinetDTO;
 import com.clinitalPlatform.dto.MedecinDTO;
+import com.clinitalPlatform.models.*;
+import com.clinitalPlatform.repository.PaymentInfoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.clinitalPlatform.models.Medecin;
-import com.clinitalPlatform.models.Ville;
-import com.clinitalPlatform.models.CabinetMedecinsSpace;
-
 import com.clinitalPlatform.payload.request.CabinetRequest;
 import com.clinitalPlatform.repository.VilleRepository;
 import com.clinitalPlatform.repository.MedecinRepository;
-import com.clinitalPlatform.models.Cabinet;
 import com.clinitalPlatform.repository.CabinetRepository;
 import com.clinitalPlatform.services.interfaces.CabinetService;
 import com.clinitalPlatform.util.ClinitalModelMapper;
@@ -38,7 +35,9 @@ public class CabinetServiceImpl implements CabinetService{
 	private VilleRepository villerepo;
 	@Autowired
 	private MedecinRepository medrepo;
-	
+
+	@Autowired
+	private PaymentInfoRepository paymentInfoRepository;
 	public final Logger LOGGER=LoggerFactory.getLogger(this.getClass());
 
 	@Override
@@ -66,6 +65,15 @@ public class CabinetServiceImpl implements CabinetService{
 	public Cabinet create(CabinetRequest cabinetreq,Medecin med) throws Exception {
 		
 		Ville ville= villerepo.findById(cabinetreq.getId_ville()).orElseThrow(()->new Exception("No matching ville"));
+
+
+		PaymentInfo paymentInfo = new PaymentInfo();
+		paymentInfo.setIntituleCompte(cabinetreq.getIntituleCompte());
+		paymentInfo.setRib(cabinetreq.getRib());
+		paymentInfo.setCodeSwift(cabinetreq.getCodeSwift());
+
+		paymentInfo = paymentInfoRepository.save(paymentInfo);
+
 		Cabinet cabinet = new Cabinet();
 		cabinet.setNom(cabinetreq.getNom());
 		cabinet.setAdresse(cabinetreq.getAdresse());
@@ -74,6 +82,7 @@ public class CabinetServiceImpl implements CabinetService{
 		cabinet.setPhoneNumber(cabinetreq.getPhoneNumber());
 		cabinet.setCreator(med);
 		cabinet.setState(false);
+		cabinet.setPaymentInfo(paymentInfo);
 		cabinetRepository.save(cabinet);
 	
 		return cabinet;

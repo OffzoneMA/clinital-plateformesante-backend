@@ -48,11 +48,15 @@ public class Cabinet {
 	private Medecin creator;
 
 	private Boolean state;
+
+	@OneToOne(cascade = CascadeType.ALL)
+	//@JsonIgnore
+	private PaymentInfo paymentInfo;
 	public Cabinet() {
 		super();
 	}
 
-	public Cabinet(@NotNull String nom, @NotNull String adresse, @NotNull String code_post,String phoneNumber, @NotNull Ville ville,Medecin creator,Boolean state
+	public Cabinet(@NotNull String nom, @NotNull String adresse, @NotNull String code_post,String phoneNumber, @NotNull Ville ville,Medecin creator,Boolean state,@NotNull PaymentInfo paymentInfo
 			) {
 		super();
 		this.nom = nom;
@@ -62,6 +66,7 @@ public class Cabinet {
 		this.ville=ville;
 		this.creator=creator;
 		this.state=state;
+		this.paymentInfo=paymentInfo;
 	
 	}
 

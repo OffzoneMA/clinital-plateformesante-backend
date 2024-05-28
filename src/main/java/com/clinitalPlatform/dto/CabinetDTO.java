@@ -6,6 +6,8 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
+
 @Data
 public class CabinetDTO {
 	private Long id_cabinet;
@@ -20,7 +22,10 @@ public class CabinetDTO {
 	
 	private String phoneNumber;
 
+	private PaymentInfoDTO paymentInfo;
+
 	@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
 	private List<MedecinDTO> medecins;
+
 
 }
