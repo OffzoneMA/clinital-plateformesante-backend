@@ -50,14 +50,5 @@ public interface MedecinScheduleRepository extends JpaRepository<MedecinSchedule
     List<MedecinSchedule> findByMedIdAndDay( @Param("medecinId")Long medecinId,
                                             @Param("day") Integer day);
 
-    //FILTRE DISPONIBILITÉ-----------------------------------------
-    @Query(value = "SELECT * FROM medecin_schedule WHERE DAYOFWEEK(day) IN (1, 7)", nativeQuery = true)
-    List<MedecinSchedule> findSchedulesForWeekend();
 
-    // Recupère sur les deux jours
-    @Query(value = "SELECT * FROM medecin_schedule WHERE availability_start >= :startDate AND availability_end <= :endDate", nativeQuery = true)
-    List<MedecinSchedule> findSchedulesBetweenDates(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
-
-    @Query(value = "SELECT * FROM medecin_schedule WHERE medecin_id = :medecinId AND DAYOFWEEK(day) = :dayOfWeek", nativeQuery = true)
-    List<MedecinSchedule> findSchedulesForWeekday(@Param("medecinId") Long medecinId, @Param("dayOfWeek") int dayOfWeek);
 }

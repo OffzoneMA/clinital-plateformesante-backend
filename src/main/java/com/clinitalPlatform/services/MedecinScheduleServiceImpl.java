@@ -19,10 +19,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -274,92 +275,6 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
         // Aucun planning trouvé pour ce créneau
         return null;
     }
-
-
-
-    //FILTRE SUR LES HORAIRES-----------------------------------------------
-
-    //Filtre de crenneau selon la disponobilité
-    public Map<Long, List<MedecinSchedule>> filterSchedulesByAvailability(List<Long> medecinIds, String filter) {
-        return medecinIds.stream()
-                .collect(Collectors.toMap(
-                        medecinId -> medecinId,
-                        medecinId -> filterSchedulesByMedecinAndAvailability(medecinId, filter)
-                ));
-    }
-
-    private List<MedecinSchedule> filterSchedulesByMedecinAndAvailability(Long medecinId, String filter) {
-        List<MedecinSchedule> schedules = medecinScheduleRepository.findByMedId(medecinId);
-
-        switch (filter) {
-            case "nextTwoDays":
-                return filterSchedulesForNextTwoDays(schedules);
-            case "weekend":
-                return filterSchedulesForWeekend(schedules);
-            case "weekday":
-                return filterSchedulesForWeekday(schedules);
-            default:
-                return schedules;
-        }
-    }
-
-    private List<MedecinSchedule> filterSchedulesForNextTwoDays(List<MedecinSchedule> schedules) {
-        LocalDate now = LocalDate.now();
-        LocalDate twoDaysLater = now.plusDays(2);
-        return schedules.stream()
-                .filter(schedule -> schedule.getAvailabilityStart().toLocalDate().isAfter(now) &&
-                        schedule.getAvailabilityStart().toLocalDate().isBefore(twoDaysLater))
-                .collect(Collectors.toList());
-    }
-
-    private List<MedecinSchedule> filterSchedulesForWeekend(List<MedecinSchedule> schedules) {
-        return schedules.stream()
-                .filter(schedule -> schedule.getDay() == DayOfWeek.SATURDAY || schedule.getDay() == DayOfWeek.SUNDAY)
-                .collect(Collectors.toList());
-    }
-
-    private List<MedecinSchedule> filterSchedulesForWeekday(List<MedecinSchedule> schedules) {
-        return schedules.stream()
-                .filter(schedule -> schedule.getDay() != DayOfWeek.SATURDAY && schedule.getDay() != DayOfWeek.SUNDAY)
-                .collect(Collectors.toList());
-    }
-
-
-    //FILTRE DE CRENEAU PAR  DISPONIBILITÉ DES MEDECINS------------------------
-
-    public List<Medecin> filterMedecinsByAvailability(List<Long> medecinIds, String filter) {
-        // Récupérez les plannings filtrés
-        Map<Long, List<MedecinSchedule>> filteredSchedules = filterSchedulesByAvailability(medecinIds, filter);
-
-        // Initialisez une liste pour stocker les médecins filtrés
-        List<Medecin> filteredMedecins = new ArrayList<>();
-
-        // Parcourez chaque liste de plannings dans la carte filtrée
-        for (List<MedecinSchedule> schedules : filteredSchedules.values()) {
-            // Parcourez chaque planning dans la liste
-            for (MedecinSchedule schedule : schedules) {
-                // Vérifiez si le médecin associé n'est pas déjà présent dans la liste
-                if (!filteredMedecins.contains(schedule.getMedecin())) {
-                    // Ajoutez le médecin à la liste filtrée
-                    filteredMedecins.add(schedule.getMedecin());
-                }
-            }
-        }
-
-        // Retournez la liste des médecins filtrés
-        return filteredMedecins;
-    }
-//FILTRE SELON LE MOTIF DE CONSULTATION
-
-    //Filtrer les crennaux selon la disponibilité
-   /* private List<MedecinSchedule> filterSchedulesByMotif(List<MedecinSchedule> schedules, String motif) {
-        return schedules.stream()
-                .filter(schedule -> schedule.getMotifConsultation().equals(motif))
-                .collect(Collectors.toList());
-    }*/
-
-
-
 
 
 }

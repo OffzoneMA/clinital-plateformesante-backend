@@ -42,11 +42,6 @@ public class Medecin {
 
 
 	@ManyToMany
-	@JoinTable(
-			name = "expertises_medecins",
-			joinColumns = @JoinColumn(name = "medecins_id"),
-			inverseJoinColumns = @JoinColumn(name = "expertises_id")
-	)
 	private List<ExpertisesMedecin> expertises_med;
 
 	@OneToMany(mappedBy = "medecin")
@@ -96,7 +91,7 @@ public class Medecin {
 
 	// in this we create a Bridge table between Medecin and Cabinet to link them together
 	@OneToMany(mappedBy = "medecin",cascade = CascadeType.ALL,fetch = FetchType.EAGER)
-	//@JsonIgnore
+	@JsonIgnore
 	private List<CabinetMedecinsSpace> cabinets;
 
 	private Boolean isActive;
@@ -117,23 +112,7 @@ public class Medecin {
 	@OneToMany(mappedBy = "medecin")
 	@JsonIgnore
 	private List<Ordonnance> Ordonnance;
-//-------------------------------------------
 
-	//in this we create a Bridge table between Medecin and langue to link them together
-	@ManyToMany(fetch = FetchType.EAGER)
-	@JoinTable(
-			name = "langue_medecin",
-			joinColumns = @JoinColumn(name = "medecin_id", referencedColumnName = "id"),
-			inverseJoinColumns = @JoinColumn(name = "langue_id")
-	)
-	//@JsonIgnore
-	private List<Langue> langues;
-    //Tarifs
-
-	@OneToMany(mappedBy = "medecin", cascade = CascadeType.ALL)
-	//@JsonIgnore
-	private List<Tarif> tarifs;
-//--------------------------------------------------------
 
 	public void removeCabinet(Cabinet cabinet) {
         for (Iterator<CabinetMedecinsSpace> iterator = cabinets.iterator(); 
@@ -153,7 +132,7 @@ public class Medecin {
 				   String photo_med, String photo_couverture_med, List<ExpertisesMedecin> expertises_med, List<DiplomeMedecin> diplome_med,
 				   String description_med, String contact_urgence_med,CiviliteEnum civilite_med,
 				   List<ExperienceMedecin> experience_med, Ville ville, Specialite specialite,
-				   List<MoyenPaiement> moyenPaiement, User user,boolean isActive,List<Langue>langues, List<Tarif> tarifs) {
+				   List<MoyenPaiement> moyenPaiement, User user,boolean isActive) {
 		this.id = id;
 		this.matricule_med = matricule_med;
 		this.inpe = inpe;
@@ -172,8 +151,6 @@ public class Medecin {
 		this.moyenPaiement = moyenPaiement;
 		this.user = user;
 		this.isActive=isActive;
-		this.langues=langues;
-		this.tarifs=tarifs;
 		
 	}
 }

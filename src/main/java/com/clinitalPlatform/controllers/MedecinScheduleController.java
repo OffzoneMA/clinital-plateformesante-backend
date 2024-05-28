@@ -5,7 +5,6 @@ import com.clinitalPlatform.exception.ConflictException;
 import com.clinitalPlatform.models.Demande;
 import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.models.MedecinSchedule;
-import com.clinitalPlatform.payload.request.FilterRequest;
 import com.clinitalPlatform.payload.request.MedecinScheduleRequest;
 import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.repository.MedecinScheduleRepository;
@@ -28,7 +27,6 @@ import org.springframework.web.bind.annotation.*;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -103,10 +101,8 @@ public class MedecinScheduleController {
     @GetMapping("shedulebyMed")
     @ResponseBody
     public ResponseEntity<?> getAllSchedulesByMedId() throws Exception{
-        System.out.println("med");
         Medecin med = medservice.getMedecinByUserId(globalVariables.getConnectedUser().getId());
         try {
-
             return ResponseEntity.ok(medecinScheduleService.getAllSchedulesByMedId(med.getId())
                     .stream().map(sched -> modelMapper.map(sched, MedecinSchedule.class))
                     .collect(Collectors.toList()));
@@ -179,39 +175,6 @@ public class MedecinScheduleController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de la récupération du planning.");
         }
     }
-
-    //FILTRE DISPONIBILITÉ--------------------------------------------
-
-   /* @GetMapping("/medecins/schedules/filter")
-    public ResponseEntity<Map<Long, List<MedecinSchedule>>> filterMedecinSchedulesByAvailability(
-            @RequestParam List<Long> medecinIds,
-            @RequestParam String filter
-    ) {
-        Map<Long, List<MedecinSchedule>> filteredSchedules = medecinScheduleService.filterSchedulesByAvailability(medecinIds, filter);
-        return new ResponseEntity<>(filteredSchedules, HttpStatus.OK);
-    }*/
-
-    @PostMapping("/medecins/schedules/filter")
-    public ResponseEntity<Map<Long, List<MedecinSchedule>>> filterMedecinSchedulesByAvailability(
-            @RequestBody FilterRequest filterRequest
-    ) {
-        List<Long> medecinIds = filterRequest.getMedecinIds();
-        String filter = filterRequest.getFilter();
-        System.out.println("ici:"+filter);
-        System.out.println("d"+medecinIds);
-
-        // Utilisez medecinIds et filter pour filtrer les plannings des médecins
-        Map<Long, List<MedecinSchedule>> filteredSchedules = medecinScheduleService.filterSchedulesByAvailability(medecinIds, filter);
-
-        //return ResponseEntity.ok(new ApiResponse(false, "No matching Found"));
-        System.out.println("OKOKOKOKOK");
-
-        return new ResponseEntity<>(filteredSchedules, HttpStatus.OK);
-    }
-
-
-
-
 
 
 }

@@ -15,6 +15,4 @@ public interface CabinetService {
 	 Cabinet create(CabinetRequest cabinetreq,Medecin med) throws Exception;
 	 List<Cabinet> allCabinetsByMedID(Long id) throws Exception;
 
-
-
 }
