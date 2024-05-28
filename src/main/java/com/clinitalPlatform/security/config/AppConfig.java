@@ -19,15 +19,5 @@ public class AppConfig {
 
     private long tokenExpirationMsec;
 
-    private long accessTokenExpirationMsec;
 
-    public long getAccessTokenExpirationMsec() {
-        return accessTokenExpirationMsec;
-    }
-
-    private long refreshTokenExpirationMsec;
-
-    public long getRefreshTokenExpirationMsec() {
-        return refreshTokenExpirationMsec;
-    }
 }

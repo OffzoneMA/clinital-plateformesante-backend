@@ -63,17 +63,11 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
    @Query(value = "SELECT p.* FROM patients p WHERE p.user_id=?1",nativeQuery = true)
    Optional<Patient> findPatientByUserId(long id);
 
-        @Query(value = "SELECT p.* FROM patients p WHERE p.id_dossier=?1",nativeQuery = true)
-        Optional<Patient> findPatientByDossMedicale(Long iddoss);
+   @Query(value = "SELECT p.* FROM patients p WHERE p.id_dossier=?1",nativeQuery = true)
+   Optional<Patient> findPatientByDossMedicale(Long iddoss);
 
+   Optional<Patient> findByPatientEmail(String patientEmail);
 
-
-       Optional<Patient> findByPatientEmail(String patientEmail);
-    }
-
-
-
- 
-
+ }
 
 

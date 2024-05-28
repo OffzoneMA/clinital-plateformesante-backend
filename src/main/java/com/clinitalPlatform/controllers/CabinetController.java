@@ -1,6 +1,5 @@
 package com.clinitalPlatform.controllers;
 
-import com.clinitalPlatform.models.Cabinet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,8 +14,6 @@ import com.clinitalPlatform.services.CabinetServiceImpl;
 import com.clinitalPlatform.repository.CabinetRepository;
 import com.clinitalPlatform.repository.MedecinRepository;
 import com.clinitalPlatform.util.GlobalVariables;
-
-import java.util.List;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -51,15 +48,6 @@ public class CabinetController {
 	public ResponseEntity<?> getCabinetByName(@PathVariable String name) throws Exception {
 		return ResponseEntity.ok(cabservice.findByName(name));
 	}
-
-	//Recherche du cabinet par Medecin ID
-	@GetMapping("/medecin/{id}")
-	public ResponseEntity<List<Cabinet>> getAllCabinetsByMedecinId(@PathVariable Long id) {
-		List<Cabinet> cabinets = cabservice.getAllCabinetsByMedecinId(id);
-		return ResponseEntity.ok(cabinets);
-	}
-
-
 
 
 }

@@ -6,8 +6,6 @@ import org.springframework.stereotype.Repository;
 
 import com.clinitalPlatform.models.Specialite;
 
-import java.util.List;
-
 
 @Repository
 public interface SpecialiteRepository extends JpaRepository<Specialite, Long>{

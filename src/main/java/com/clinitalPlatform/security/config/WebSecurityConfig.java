@@ -69,34 +69,17 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         String[] permitAllRoutes = {"/api/auth/**", "/api/users/activity/**","/api/demandes/create","/api/cabinet/**",
-        		"/api/med/medecins",
+        		"/api/med/medecins",	
         		"/api/med/medById/**",
     			"/api/med/medByName",
-    			"/api/med/medByNameOrSpecAndVille/**",
+    			"/api/med/medByNameOrSpecAndVille",
     			"/api/med/medByNameAndSpec",
     			"/api/med/medByNameOrSpec",
     			"/api/med/medByVille",
     			"/api/med/getAllSpec",
-                "/api/med/medByNameCabinetOrSpec",
-                "/api/med/cabinets/**",
-                "/api/med/agenda/**",
-                "/api/med/medByCabinetName",
-                "/api/med/medecins/schedules/filter",
-                "/api/med/byLangue/**",
-                "/api/med/byLangue/**",
     			"/api/ville/**",
     			"/api/specialites/**",
-                "/api/langues/**",
-                "/api/tarifmed/**",
-          "/api/rdv/rdvs/patient",
-                "/api/rdv/patient/rdvbyday",
-                "/api/cabinet/medecin/**",
-                "/api/medecinSchedule/shedulebyMed/**",
-                "/api/med/schedulesofMed/**",
-
-
-
-
+          "/api/rdv/rdvs/patient","/api/rdv/patient/rdvbyday"
         };
 
         String[] authenticatedRoutes = {"/api/demandes/**", "/api/med/**", "/api/doc/**", "/api/shares/**","/api/patient/**","/api/medecinSchedule/**","/api/users/**",
