@@ -1,0 +1,58 @@
+version: "3.8"
+
+services:
+  db:
+    image: mysql:5.7
+    ports:
+      - "3307:3306"
+    restart: always
+    environment:
+      MYSQL_DATABASE: ClinitalPlatform
+      MYSQL_USER: platform
+      MYSQL_PASSWORD: callicoder
+      MYSQL_ROOT_PASSWORD: callicoder
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"  
+      MYSQL_RANDOM_ROOT_PASSWORD: "false" 
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - backend
+
+  phpmyadmin:
+    depends_on:
+      - db
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    ports:
+      - '8081:80'
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: callicoder
+    networks:
+      - backend
+
+  backend:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    restart: always
+    depends_on:
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/ClinitalPlatform?useSSL=false&serverTimezone=UTC&useLegacyDatetimeCode=false
+      SPRING_DATASOURCE_USERNAME: platform
+      SPRING_DATASOURCE_PASSWORD: callicoder
+      VIRTUAL_HOST: apidb.clinital.io
+      VIRTUAL_PORT: 8080
+      LETSENCRYPT_HOST: apidb.clinital.io
+      LETSENCRYPT_EMAIL: support@clinital.io
+    networks:
+      - backend
+
+networks:
+  backend:
+
+volumes:
+  db-data:
