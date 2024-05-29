@@ -67,8 +67,16 @@ public class Medecin {
 	@ManyToOne(cascade = CascadeType.ALL)
 	private Specialite specialite;
 
-	@OneToMany
-	@JsonIgnore
+	//@OneToMany
+	//@JsonIgnore
+	//private List<MoyenPaiement> moyenPaiement;
+
+	@ManyToMany
+	@JoinTable(
+			name = "medecins_moyen_paiement",
+			joinColumns = @JoinColumn(name = "medecin_id"),
+			inverseJoinColumns = @JoinColumn(name = "moyen_paiement_id_mp")
+	)
 	private List<MoyenPaiement> moyenPaiement;
 
 	@OneToOne
