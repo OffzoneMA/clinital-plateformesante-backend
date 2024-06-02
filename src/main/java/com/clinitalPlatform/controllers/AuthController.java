@@ -6,6 +6,7 @@ import java.util.*;
 
 import com.clinitalPlatform.models.JwtTokens;
 import com.clinitalPlatform.enums.ERole;
+import com.clinitalPlatform.models.Demande;
 import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.models.Patient;
 import com.clinitalPlatform.models.Secretaire;
@@ -52,6 +53,7 @@ import com.clinitalPlatform.security.jwt.JwtService;
 import com.clinitalPlatform.security.services.UserDetailsImpl;
 import com.clinitalPlatform.services.ActivityServices;
 import com.clinitalPlatform.services.AutService;
+import com.clinitalPlatform.services.DemandeServiceImpl;
 import com.clinitalPlatform.services.UserService;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -101,7 +103,8 @@ public class AuthController {
     @Autowired
     SecretaireService secretaireService;
 
-	
+	@Autowired
+	private DemandeServiceImpl demandeService;
 	
     @Autowired
     UserRepository userRepository;
@@ -197,7 +200,10 @@ public class AuthController {
             autService.updateLastLoginDate(userDetails.getId());
             activityServices.createActivity(new Date(), "Login", "Authentication reussi", user);
             LOGGER.info("Authentication reussi");
-
+            if(userDetails.getRole().equals(ERole.ROLE_MEDECIN)) {
+                Demande demande = demandeService.findDemandeByConnectedUser(userDetails.getId());
+                return ResponseEntity.ok(new JwtResponse(accessToken, userDetails.getId(), userDetails.getEmail(), userDetails.getTelephone(), userDetails.getRole(),refreshToken,demande.getState()));	
+            }
             // Retourner la réponse avec le token JWT et les détails de l'utilisateur
             return ResponseEntity.ok(new JwtResponse(accessToken, userDetails.getId(), userDetails.getEmail(), userDetails.getTelephone(), userDetails.getRole(), refreshToken));
         } catch (UsernameNotFoundException e) {
