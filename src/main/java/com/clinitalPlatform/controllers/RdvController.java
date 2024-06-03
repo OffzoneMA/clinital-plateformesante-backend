@@ -673,13 +673,7 @@ public class RdvController {
 	// }
 
 
-	@GetMapping("/today/{spec}/{start}")
-	RendezvousDTO rendezvousToday(@PathVariable("spec") long spec,@PathVariable("start") LocalDate start) throws Exception {
 
-		RendezvousDTO rdv=rdvservice.getRdvToday(spec,start);
-		return rdv;
-
-	}
 
 }
 

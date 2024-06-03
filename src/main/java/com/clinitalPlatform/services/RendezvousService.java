@@ -40,15 +40,15 @@ public class RendezvousService implements IDao<Rendezvous>  {
 	@Autowired
 	private RdvRepository rdvrepo;
 
-	 @Autowired
-	 private DocumentRepository docrepo;
-	 @Autowired
-	 private PatientRepository patientRepo;
+	@Autowired
+	private DocumentRepository docrepo;
+	@Autowired
+	private PatientRepository patientRepo;
 	@Autowired
 	private MedecinRepository medRepo;
-	 @Autowired
-	 private ModeConsultRespository moderespo;
-	 @PersistenceContext
+	@Autowired
+	private ModeConsultRespository moderespo;
+	@PersistenceContext
 	private EntityManager entityManger;
 	@Autowired
 	private SpecialiteRepository specialiteRepository;
@@ -76,10 +76,10 @@ public class RendezvousService implements IDao<Rendezvous>  {
 	public void update(Rendezvous o) {
 		rdvrepo.save(o);
 	}
-	
 
-	
-	
+
+
+
 
 	@Override
 	public void delete(Rendezvous o) {
@@ -88,29 +88,29 @@ public class RendezvousService implements IDao<Rendezvous>  {
 	}
 
 	public void deleteRendezvous(Long idrdv) throws Exception {
-        
-        
-        Optional<Rendezvous> rdv = rdvrepo.findById(idrdv);
 
-		
 
-        if (rdv.isPresent()){
+		Optional<Rendezvous> rdv = rdvrepo.findById(idrdv);
+
+
+
+		if (rdv.isPresent()){
 			List<Document> docs = docrepo.getDocByIdRendezvous(idrdv);
 
 			docs.forEach(doc -> doc.setRendezvous(null));
-			
-            rdvrepo.DeletRdvByIdProfile(idrdv);
-            
-        }
-        else
-            {
-               
-                throw new Exception("Fail to delete");
-                
-            }
-       
-        
-    }
+
+			rdvrepo.DeletRdvByIdProfile(idrdv);
+
+		}
+		else
+		{
+
+			throw new Exception("Fail to delete");
+
+		}
+
+
+	}
 //	public Rendezvous updateRendezvous(RendezvousDTO rendezvousDTO) throws Exception {
 //
 ////		Rendezvous existingRendezvous = rdvrepo.findById(rendezvousDTO.getId())
@@ -193,14 +193,14 @@ public class RendezvousService implements IDao<Rendezvous>  {
 
 			ActivityServices.createActivity(new Date(), "Update", "You Cant Change this Rdv : "+id,
 					globalVariables.getConnectedUser());
-		LOGGER.info("You Cant Change this Rdv , UserID : " + globalVariables.getConnectedUser().getId());
-			
+			LOGGER.info("You Cant Change this Rdv , UserID : " + globalVariables.getConnectedUser().getId());
+
 			return ResponseEntity.accepted().body(new ApiError(HttpStatus.FORBIDDEN, "You cant update this date", null));
-			
+
 		} else {
 			ActivityServices.createActivity(new Date(), "Update", "Update Rdv for Patient",
 					globalVariables.getConnectedUser());
-		LOGGER.info("Update Rdv for Patient, UserID : " + globalVariables.getConnectedUser().getId());
+			LOGGER.info("Update Rdv for Patient, UserID : " + globalVariables.getConnectedUser().getId());
 			rdvrepo.UpdateRdvdatestart(day, req.getStart(), req.getEnd(), id);
 			return ResponseEntity.ok(rdvrepo.getById(id)) ;
 		}
@@ -231,27 +231,27 @@ public class RendezvousService implements IDao<Rendezvous>  {
 //		Date endDate = Date.from(zonedDateTimeTo.toInstant());
 
 		return rdvrepo.findByDateAndMedecin(date.toLocalDate(), medecinId).stream()
-		.map(rdv -> mapper.map(rdv, Rendezvous.class)).collect(Collectors.toList());
+				.map(rdv -> mapper.map(rdv, Rendezvous.class)).collect(Collectors.toList());
 
 	}
 	public List<Rendezvous> findRendezvousByPatientAndDate(Long patId, LocalDateTime fromDate) {
-				return rdvrepo.findByDateAndPatient(fromDate, patId).stream()
-						.map(rdv -> mapper.map(rdv, Rendezvous.class)).collect(Collectors.toList());
-		
-			}
-		
+		return rdvrepo.findByDateAndPatient(fromDate, patId).stream()
+				.map(rdv -> mapper.map(rdv, Rendezvous.class)).collect(Collectors.toList());
 
-	
-//RDV BY DATE (DAR,WEEK,MONTH,YEAR) For A DOCTOR :
-	//Get Rdv By Day : 
+	}
+
+
+
+	//RDV BY DATE (DAR,WEEK,MONTH,YEAR) For A DOCTOR :
+	//Get Rdv By Day :
 	public List<Rendezvous> getRdvMedByDay(@Valid long day,long id){
 		return rdvrepo.getRendezvousPatientByDay(day,id);
 	}
-	//Get Rdv By Day : 
+	//Get Rdv By Day :
 	public List<Rendezvous> getRdvMedByWeek(long week,long id){
 		return rdvrepo.getRendezvousMedByWeek(week,id);
 	}
-	//Get Rdv By Day : 
+	//Get Rdv By Day :
 	public List<Rendezvous> getRdvMedByMonth(long month,long id){
 		return rdvrepo.getRendezvousMedByMonth(month,id);
 	}
@@ -260,44 +260,44 @@ public class RendezvousService implements IDao<Rendezvous>  {
 	public List<Rendezvous> getRdvMedByYear(long year,long id){
 		return rdvrepo.getRendezvousMedByYear(year,id);
 	}
-	
+
 //RDV BY DATE (DAR,WEEK,MONTH,YEAR) For A Patient :
 
-//Get Rdv By Day of Week : 
-public List<Rendezvous> getRdvPatientByDayWeek(long day,long id){
-	return rdvrepo.getRendezvousPatientByDayofweek(day,id);
-}
-	//Get Rdv By Day : 
+	//Get Rdv By Day of Week :
+	public List<Rendezvous> getRdvPatientByDayWeek(long day,long id){
+		return rdvrepo.getRendezvousPatientByDayofweek(day,id);
+	}
+	//Get Rdv By Day :
 	public List<Rendezvous> getRdvPatientByDay(long day,long id){
 		return rdvrepo.getRendezvousPatientByDay(day,id);
 	}
-	//Get Rdv By Day : 
+	//Get Rdv By Day :
 	public List<Rendezvous> getRdvPatientByWeek(long week,long id){
 		return rdvrepo.getRendezvousPatientByWeek(week,id);
 	}
-	//Get Rdv By Day : 
+	//Get Rdv By Day :
 
 	public List<Rendezvous> getRdvPatientByMonth(long month,long id){
 		return rdvrepo.getRendezvousPatientByMonth(month,id);
 	}
-	//Get Rdv By Day : 
+	//Get Rdv By Day :
 	public List<Rendezvous> getRdvPatientByYear(long year,long id){
 		return rdvrepo.getRendezvousPatientByYear(year,id);
 	}
 
 	//RDV by Id User and Patient ID :
-	 public List<Rendezvous> findRdvByIdUserandPatient(long iduser,long idpatient){
+	public List<Rendezvous> findRdvByIdUserandPatient(long iduser,long idpatient){
 		return rdvrepo.findRdvByIduserandPatient(iduser, idpatient)
-		.stream().map(pat->mapper.map(pat, Rendezvous.class))
-		.collect(Collectors.toList());
+				.stream().map(pat->mapper.map(pat, Rendezvous.class))
+				.collect(Collectors.toList());
 
-	 }
+	}
 
 	//RDV by Id and Patient ID :
 	public Rendezvous findRdvByIdUserandId(long iduser,long id){
-				return rdvrepo.findRdvByIdUserandId(iduser, id);
+		return rdvrepo.findRdvByIdUserandId(iduser, id);
 
-	 }
+	}
 
 	public List<Rendezvous> getRdvByIdMedecinandIdPatient(long idmed,long patid){
 		return rdvrepo.getRdvByIdMedecinandIdPatientandDate(idmed,patid);
@@ -370,91 +370,23 @@ public List<Rendezvous> getRdvPatientByDayWeek(long day,long id){
 
 
 
-	 //Add RDV :
-	 public ResponseEntity<?> AddnewRdv(User user,RendezvousDTO c,Medecin medecin,Patient patient) throws Exception{
-
-		try {
-		// DayOfWeek day = DayOfWeek.valueOf(c.getDay());
-	MotifConsultation motif = mRepository.findById(c.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a Motif"));
-	ModeConsultation mode =moderespo.findById(c.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a Mode consultation"));
-	Cabinet cabinet=cabrepo.findById(c.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a cabinet"));
-	Boolean isReserved = false,ModeMedecin=false;
-
-			isReserved= this.isHasRdvToday( medecin.getSpecialite().getId_spec(), c.getStart().toLocalDate(),patient.getId());
-
-	ModeMedecin=isReserved?false:true;
-
-	if (!isReserved||ModeMedecin) {
-
-		// DayOfWeek day = DayOfWeek.valueOf(c.getDay());
-		Rendezvous rendezvous = new Rendezvous();
-//		rendezvous.setId(c.getId());
-		rendezvous.setMedecin(medecin);
-		rendezvous.setMotifConsultation(motif);
-		rendezvous.setPatient(patient);
-		rendezvous.setDay(c.getDay());
-		rendezvous.setStart(c.getStart());
-		rendezvous.setEnd(c.getEnd());
-		rendezvous.setStatut(c.getStatut());
-		rendezvous.setCanceledAt(c.getCanceledat());
-		rendezvous.setModeConsultation(mode);
-		rendezvous.setISnewPatient(c.getIsnewpatient());
-		if (user != null && rendezvous != null) {
-			ERole userRole = user.getRole();
-			if (userRole == ERole.ROLE_MEDECIN && c != null && c.getCommantaire() != null) {
-				rendezvous.setCommantaire(c.getCommantaire());
-			}
-		}
-		rendezvous.setLinkVideoCall(urlVideoCallGenerator.joinConference());
-		rendezvous.setCabinet(cabinet);
-		LOGGER.info("id="+ rendezvous.getId());
-		//rdvrepo.save(rendezvous);
-		entityManger.persist(rendezvous);
-		ActivityServices.createActivity(new Date(),"Add","Add New Rdv ",user);
-		LOGGER.info("Add new Rdv, UserID : "+user.getId());
-		return ResponseEntity.ok(mapper.map(rendezvous, Rendezvous.class));
-
-	} else
-		return ResponseEntity.ok(new ApiResponse(false, "You have already an other RDV ",rdvReserved));
-
-		} catch (Exception e) {
-			// TODO: handle exception
-			throw new Exception(e.getMessage());
-		}
-	 }
-	public Rendezvous updateerdv(long rdvId,RendezvousDTO rdvDTO, Medecin medecin, Patient patient) throws Exception{
-		Rendezvous rdv = rdvrepo.findById(rdvId).orElseThrow(() -> new Exception("RDV not found"));
-
-			MotifConsultation motif = mRepository.findById(rdvDTO.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a Motif"));
-			ModeConsultation mode =moderespo.findById(rdvDTO.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a Mode consultation"));
-			Cabinet cabinet=cabrepo.findById(rdvDTO.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a cabinet"));
-			rdv.setId(rdvDTO.getId());
-			rdv.setCanceledAt(rdvDTO.getCanceledat());
-			rdv.setDay(rdvDTO.getDay());
-			rdv.setStart(rdvDTO.getStart());
-			rdv.setEnd(rdvDTO.getEnd());
-			rdv.setMedecin(medecin);
-			rdv.setMotif(motif);
-			rdv.setPatient(patient);
-			rdv.setStatut(rdvDTO.getStatut());
-			rdv.setModeConsultation(mode);
-			rdv.setISnewPatient(rdvDTO.getIsnewpatient());
-			rdv.setCommantaire(rdvDTO.getCommantaire());
-			rdv.setCabinet(cabinet);
-			return rdvrepo.save(rdv);
-
-	}
-
-
-	public ResponseEntity<?> Updaterdv(User user,RendezvousDTO c,Medecin medecin,Patient patient,@Param("id") long id) throws Exception{
+	//Add RDV :
+	public ResponseEntity<?> AddnewRdv(User user,RendezvousDTO c,Medecin medecin,Patient patient) throws Exception{
 
 		try {
 			// DayOfWeek day = DayOfWeek.valueOf(c.getDay());
 			MotifConsultation motif = mRepository.findById(c.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a Motif"));
 			ModeConsultation mode =moderespo.findById(c.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a Mode consultation"));
 			Cabinet cabinet=cabrepo.findById(c.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a cabinet"));
-	// DayOfWeek day = DayOfWeek.valueOf(c.getDay());
-				Rendezvous rendezvous = (Rendezvous) rdvrepo.getRendezvousById(id);
+			Boolean isReserved = false,ModeMedecin=false;
+			isReserved= this.isHasRdvToday( medecin.getSpecialite().getId_spec(), c.getStart().toLocalDate(),patient.getId());
+			ModeMedecin=isReserved?false:true;
+
+			if (!isReserved||ModeMedecin) {
+
+				// DayOfWeek day = DayOfWeek.valueOf(c.getDay());
+				Rendezvous rendezvous = new Rendezvous();
+//		rendezvous.setId(c.getId());
 				rendezvous.setMedecin(medecin);
 				rendezvous.setMotifConsultation(motif);
 				rendezvous.setPatient(patient);
@@ -473,11 +405,77 @@ public List<Rendezvous> getRdvPatientByDayWeek(long day,long id){
 				}
 				rendezvous.setLinkVideoCall(urlVideoCallGenerator.joinConference());
 				rendezvous.setCabinet(cabinet);
+				LOGGER.info("id="+ rendezvous.getId());
 				//rdvrepo.save(rendezvous);
 				entityManger.persist(rendezvous);
-				ActivityServices.createActivity(new Date(),"Update","Update  Rdv ",user);
-				LOGGER.info("Update new Rdv, UserID : "+user.getId());
+				ActivityServices.createActivity(new Date(),"Add","Add New Rdv ",user);
+				LOGGER.info("Add new Rdv, UserID : "+user.getId());
 				return ResponseEntity.ok(mapper.map(rendezvous, Rendezvous.class));
+
+			} else
+				return ResponseEntity.ok(new ApiResponse(false, "You have already an other RDV "));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			throw new Exception(e.getMessage());
+		}
+	}
+	public Rendezvous updateerdv(long rdvId,RendezvousDTO rdvDTO, Medecin medecin, Patient patient) throws Exception{
+		Rendezvous rdv = rdvrepo.findById(rdvId).orElseThrow(() -> new Exception("RDV not found"));
+
+		MotifConsultation motif = mRepository.findById(rdvDTO.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a Motif"));
+		ModeConsultation mode =moderespo.findById(rdvDTO.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a Mode consultation"));
+		Cabinet cabinet=cabrepo.findById(rdvDTO.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a cabinet"));
+		rdv.setId(rdvDTO.getId());
+		rdv.setCanceledAt(rdvDTO.getCanceledat());
+		rdv.setDay(rdvDTO.getDay());
+		rdv.setStart(rdvDTO.getStart());
+		rdv.setEnd(rdvDTO.getEnd());
+		rdv.setMedecin(medecin);
+		rdv.setMotif(motif);
+		rdv.setPatient(patient);
+		rdv.setStatut(rdvDTO.getStatut());
+		rdv.setModeConsultation(mode);
+		rdv.setISnewPatient(rdvDTO.getIsnewpatient());
+		rdv.setCommantaire(rdvDTO.getCommantaire());
+		rdv.setCabinet(cabinet);
+		return rdvrepo.save(rdv);
+
+	}
+
+
+	public ResponseEntity<?> Updaterdv(User user,RendezvousDTO c,Medecin medecin,Patient patient,@Param("id") long id) throws Exception{
+
+		try {
+			// DayOfWeek day = DayOfWeek.valueOf(c.getDay());
+			MotifConsultation motif = mRepository.findById(c.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a Motif"));
+			ModeConsultation mode =moderespo.findById(c.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a Mode consultation"));
+			Cabinet cabinet=cabrepo.findById(c.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a cabinet"));
+			// DayOfWeek day = DayOfWeek.valueOf(c.getDay());
+			Rendezvous rendezvous = (Rendezvous) rdvrepo.getRendezvousById(id);
+			rendezvous.setMedecin(medecin);
+			rendezvous.setMotifConsultation(motif);
+			rendezvous.setPatient(patient);
+			rendezvous.setDay(c.getDay());
+			rendezvous.setStart(c.getStart());
+			rendezvous.setEnd(c.getEnd());
+			rendezvous.setStatut(c.getStatut());
+			rendezvous.setCanceledAt(c.getCanceledat());
+			rendezvous.setModeConsultation(mode);
+			rendezvous.setISnewPatient(c.getIsnewpatient());
+			if (user != null && rendezvous != null) {
+				ERole userRole = user.getRole();
+				if (userRole == ERole.ROLE_MEDECIN && c != null && c.getCommantaire() != null) {
+					rendezvous.setCommantaire(c.getCommantaire());
+				}
+			}
+			rendezvous.setLinkVideoCall(urlVideoCallGenerator.joinConference());
+			rendezvous.setCabinet(cabinet);
+			//rdvrepo.save(rendezvous);
+			entityManger.persist(rendezvous);
+			ActivityServices.createActivity(new Date(),"Update","Update  Rdv ",user);
+			LOGGER.info("Update new Rdv, UserID : "+user.getId());
+			return ResponseEntity.ok(mapper.map(rendezvous, Rendezvous.class));
 
 
 
@@ -569,21 +567,4 @@ public List<Rendezvous> getRdvPatientByDayWeek(long day,long id){
 
 	}
 
-	public RendezvousDTO getRdvToday(Long spec,LocalDate date) throws Exception{
-		try {
-			List<Rendezvous> rdvs= rdvrepo.findRdvBySpecInDate(spec, date);
-			RendezvousDTO rdto=new RendezvousDTO();
-			for(Rendezvous rdv : rdvs){
-				if(rdv!=null){
-					return convertToDTO(rdv,rdto);
-				}
-			}
-			return null;
-		} catch (Exception e) {
-			// TODO: handle exception
-			throw new Exception(e.getMessage());
-		}
-
-	}
- 
 }
