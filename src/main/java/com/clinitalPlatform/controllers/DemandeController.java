@@ -24,6 +24,7 @@ import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.dto.DemandeDTO;
 import com.clinitalPlatform.services.DemandeServiceImpl;
 import com.clinitalPlatform.util.ClinitalModelMapper;
+import com.clinitalPlatform.util.GlobalVariables;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -35,6 +36,9 @@ public class DemandeController {
 	
 	@Autowired
 	ClinitalModelMapper modelMapper;
+	
+	@Autowired
+	GlobalVariables globalVariables;
 	
 	// A method that creates a demande.
 	@PostMapping("create")
@@ -97,5 +101,17 @@ public class DemandeController {
 		return ResponseEntity.accepted().body(demande2);
 	}
 	
+	@PutMapping("updateDemandeStateByUserId/{newState}")
+	@PreAuthorize("hasAuthority('ROLE_MEDECIN')")
+	public ResponseEntity<?> updateDemandeStateByUserId(@PathVariable int newState)  throws Exception {
+	  
+	        // Récupérer l'ID de l'utilisateur connecté à partir de globalVariables
+	        Long userId = globalVariables.getConnectedUser().getId();
+	        
+	        // Appeler la méthode du service pour mettre à jour l'état de la demande
+	        Demande updatedDemande = demandeService.updateDemandeStateByUserId(userId, newState);
+	        
+	        return ResponseEntity.ok(updatedDemande);    
+	}
 
 }
