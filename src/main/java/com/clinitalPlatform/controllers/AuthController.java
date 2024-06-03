@@ -6,6 +6,7 @@ import java.util.*;
 
 import com.clinitalPlatform.models.JwtTokens;
 import com.clinitalPlatform.enums.ERole;
+ import com.clinitalPlatform.models.Demande;
 import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.models.Patient;
 import com.clinitalPlatform.models.Secretaire;
@@ -52,6 +53,7 @@ import com.clinitalPlatform.security.jwt.JwtService;
 import com.clinitalPlatform.security.services.UserDetailsImpl;
 import com.clinitalPlatform.services.ActivityServices;
 import com.clinitalPlatform.services.AutService;
+import com.clinitalPlatform.services.DemandeServiceImpl;
 import com.clinitalPlatform.services.UserService;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -101,7 +103,8 @@ public class AuthController {
     @Autowired
     SecretaireService secretaireService;
 
-	
+	@Autowired
+	private DemandeServiceImpl demandeService;
 	
     @Autowired
     UserRepository userRepository;
@@ -197,7 +200,10 @@ public class AuthController {
             autService.updateLastLoginDate(userDetails.getId());
             activityServices.createActivity(new Date(), "Login", "Authentication reussi", user);
             LOGGER.info("Authentication reussi");
-
+            if(userDetails.getRole().equals(ERole.ROLE_MEDECIN)) {
+                Demande demande = demandeService.findDemandeByConnectedUser(userDetails.getId());
+                return ResponseEntity.ok(new JwtResponse(accessToken, userDetails.getId(), userDetails.getEmail(), userDetails.getTelephone(), userDetails.getRole(),refreshToken,demande.getState()));	
+            }
             // Retourner la réponse avec le token JWT et les détails de l'utilisateur
             return ResponseEntity.ok(new JwtResponse(accessToken, userDetails.getId(), userDetails.getEmail(), userDetails.getTelephone(), userDetails.getRole(), refreshToken));
         } catch (UsernameNotFoundException e) {
@@ -515,6 +521,88 @@ public class AuthController {
     }
 
 
+    //MOT DE PASSE OUBLIÉ POUR ROLE MEDECIN ET SECRETAIRE, PARTIE PRO
+    @PostMapping("/forgotpasswordPro")
+    public ResponseEntity<?> forgotPasswordPro(@RequestBody ForgetPwdProRequest forgetPwdProRequest) {
+        try {
+            // Vérifier si l'e-mail et la date de naissance sont fournis
+            System.out.println("forgetPwdProRequest: " + forgetPwdProRequest);
+            if (forgetPwdProRequest.getProEmail() != null && !forgetPwdProRequest.getProEmail().isEmpty() && forgetPwdProRequest.getDateNaissance() != null) {
+                // Récupérer le user associé à l'e-mail
 
+                User user = userServices.findByEmail(forgetPwdProRequest.getProEmail());
+
+                if (user!=null) {
+                    Date dateNaissance = null;
+
+                    switch (user.getRole()) {
+                        case ROLE_MEDECIN :
+
+                            Medecin medecin= medecinSevice.findById(user.getId());
+                            dateNaissance= medecin.getDateNaissance();
+                            break;
+
+                        case ROLE_SECRETAIRE:
+
+                            Secretaire secretaire= secretaireService.findById(user.getId());
+                            dateNaissance= secretaire.getDateNaissance();
+                            break;
+
+                        //other case here
+
+                        default:
+                            break;
+                    }
+
+
+
+                    if (dateNaissance != null) {
+                        //Formattage de la date de naissance du Patient
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+                        String formattedProDateOfBirth = dateFormat.format(dateNaissance);//formatter la date de nainssance du patient
+                        String formattedUserDateOfBirth = dateFormat.format(forgetPwdProRequest.getDateNaissance());//Formatter à nouveau la date de naissance entrer
+
+                        // Vérifier si la date de naissance fournie correspond à celle du pro user
+                        if (formattedProDateOfBirth.equals(formattedUserDateOfBirth)) {
+
+
+                            // Si les informations fournies par l'utilisateur correspondent, on va générer le token de réinitialisation
+                            PasswordResetToken resetToken = autService.createRestetToken(user);
+                            String tokenValue = resetToken.getResetToken();
+
+                            // Envoie de l'e-mail de réinitialisation à l'utilisateur
+                            emailSenderService.sendResetPasswordMail(forgetPwdProRequest.getProEmail(), tokenValue);
+                            // Retourner un message de succès
+                            System.out.println("Un e-mail de réinitialisation a été envoyé à l'adresse " + forgetPwdProRequest.getProEmail());
+                            return ResponseEntity.ok(new ApiResponse(true, "Un e-mail de réinitialisation a été envoyé à l'adresse " + forgetPwdProRequest.getProEmail()));
+
+                        } else {
+                            // Si les informations fournies par l'utilisateur ne correspondent pas, retourner un message d'erreur
+                            System.out.println("Les informations fournies ne correspondent pas. Veuillez vérifier votre e-mail et votre date de naissance");
+                            return ResponseEntity.ok(new ApiResponse(false, "Les informations fournies ne correspondent pas. Veuillez vérifier votre e-mail et votre date de naissance."));
+
+                        }
+                    } else {
+                        // La date de naissance du patient n'est pas disponible, retourner un message d'erreur
+                        return ResponseEntity.ok(new ApiResponse(false, "La date de naissance pour l'utilisateur associé à l'e-mail fourni n'est pas disponible. Veuillez contacter le support."));
+                    }
+
+
+                } else {
+                    System.out.println("Aucun utilisateur n'a été retrouvé avec l'email: " + forgetPwdProRequest.getProEmail());
+                    return ResponseEntity.ok(new ApiResponse(false, "Aucun user trouvé pour l'e-mail: " + forgetPwdProRequest.getProEmail()));
+                }
+            } else {
+                System.out.println("L'e-mail et la date de naissance sont requis");
+                return ResponseEntity.ok(new ApiResponse(false, "L'e-mail et la date de naissance sont requis."));
+
+            }
+        } catch (Exception e) {
+            System.out.println("Erreur de traitement. Veuillez réessayer plus tard");
+            return ResponseEntity.ok(new ApiResponse(false, "Erreur de traitement. Veuillez réessayer plus tard."));
+
+        }
+    }
 
 }

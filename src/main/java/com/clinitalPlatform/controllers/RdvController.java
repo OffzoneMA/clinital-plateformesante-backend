@@ -604,6 +604,15 @@ public class RdvController {
 		}
 	}
 
+	@GetMapping("/rdvs/medecin")
+	Iterable<Rendezvous> rendezvousForMedecin() throws Exception {
+		activityServices.createActivity(new Date(), "Read", "Show All Rdv for Medecin",
+				globalVariables.getConnectedUser());
+		LOGGER.info("Show All Rdv for Medecin, UserID : " + globalVariables.getConnectedUser().getId());
+		Medecin medecin = medRepo.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+		return rdvrepository.findByAllRdvByMedecin(medecin.getId());
+	}
+
 //	@PostMapping(path = "/uploadDocRdv")
 //	@ResponseBody
 //	public ResponseEntity<?> uploadDocRdv(@RequestParam Long id, @RequestParam MultipartFile docFile)

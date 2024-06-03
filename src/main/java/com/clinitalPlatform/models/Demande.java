@@ -3,6 +3,7 @@ package com.clinitalPlatform.models;
 
 import com.clinitalPlatform.enums.CiviliteEnum;
 import com.clinitalPlatform.enums.DemandeStateEnum;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -27,6 +28,8 @@ public class Demande {
 	@Column(name="prenom_medecin")
 	private String prenom_med;
 	
+	@Column(name="state")
+	private int state;
 	
 	@Column(name="mail_medecin")
 	private String mail;
@@ -43,6 +46,10 @@ public class Demande {
 	
 	@Column(name="phonenumber")
 	private String phonenumber;
+	
+	@OneToOne(fetch = FetchType.EAGER,cascade = CascadeType.ALL)
+	@JsonIgnore
+	private User user;
 
 	@Column(name="validation")//l'etat du demande si valider ou pas :
 	@Enumerated(EnumType.STRING)
