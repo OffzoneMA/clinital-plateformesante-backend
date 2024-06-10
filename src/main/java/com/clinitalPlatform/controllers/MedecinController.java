@@ -11,7 +11,7 @@ import javax.validation.Valid;
 import com.clinitalPlatform.dto.*;
 import com.clinitalPlatform.exception.BadRequestException;
 import com.clinitalPlatform.models.*;
-import com.clinitalPlatform.payload.request.FilterRequest;
+import com.clinitalPlatform.payload.request.*;
 import com.clinitalPlatform.payload.response.AgendaResponse;
 import com.clinitalPlatform.payload.response.GeneralResponse;
 import com.clinitalPlatform.payload.response.HorairesResponse;
@@ -33,16 +33,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.clinitalPlatform.services.MedecinServiceImpl;
@@ -52,16 +43,13 @@ import com.clinitalPlatform.util.GlobalVariables;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
-import com.clinitalPlatform.payload.request.DocumentsCabinetRequest;
 import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.security.services.UserDetailsImpl;
-import com.clinitalPlatform.payload.request.OrdonnanceRequest;
 import com.clinitalPlatform.util.PDFGenerator;
 import com.clinitalPlatform.util.ClinitalModelMapper;
 import com.clinitalPlatform.services.interfaces.SpecialiteService;
 import com.clinitalPlatform.exception.BadRequestException;
 import com.clinitalPlatform.models.User;
-import com.clinitalPlatform.payload.request.CabinetRequest;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.validation.annotation.Validated;
@@ -131,6 +119,8 @@ public class MedecinController {
 	@Autowired
 	private TarifRepository tarifRepository;
 
+	@Autowired
+	private MedecinNetworkService medecinNetworkService;
 	private final Logger LOGGER=LoggerFactory.getLogger(getClass());
 
 //start zakia
@@ -955,5 +945,100 @@ public class MedecinController {
 		}
 	}
 
+//----------------------NETWORK-----------------------------------
+	// Add a New Doctor to the Network : %OK%
+	@PostMapping("/addNewNetwork")
+	public ResponseEntity<?> addNewNetwork(@Valid @RequestBody networkRequest network) throws Exception {
+		Long followerId = network.getFollower_id();
+		Medecin follower = medrepository.getMedecinById(network.getFollower_id());
+
+        //Verification du medecin liés au user connecter
+		Medecin connectedMedecin = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+		if (connectedMedecin == null) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Impossible de trouver le médecin connecté.");
+		}
+		//Verification du medecin qu'on veut follow
+		if (follower == null) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Le médecin follower spécifié n'existe pas.");
+		}
+		// Vérifier si le médecin follower est le même que le médecin connecté
+		if (follower.getId().equals(connectedMedecin.getId())) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Vous ne pouvez pas vous suivre vous-même.");
+		}
+
+		MedecinNetwork medNet = medecinNetworkService.addMedecinNetwork(network, globalVariables.getConnectedUser().getId());
+		activityServices.createActivity(new Date(), "Add", "Add Medecin By ID: " + network.getFollower_id() + " for Connected Medecin Network", globalVariables.getConnectedUser());
+		LOGGER.info("Add Medecin by id " + network.getFollower_id() + " for Medecin Connected, User ID: " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+		return ResponseEntity.ok(mapper.map(medNet, MedecinNetwork.class));
+	}
+
+	// Find a Medecin in a network : %OK%
+	/*@GetMapping("/getMedNetWork/{follower_id}")
+	public MedecinDTO getMedecinNetworkbyId(@Valid @PathVariable Long follower_id) throws Exception {
+		Medecin med = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+		Medecin follower = medrepository.getMedecinById(follower_id);
+		if (follower == null) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Le médecin follower spécifié n'existe pas.");
+		}
+		activityServices.createActivity(new Date(), "Read", "Consulting Medecin Follower By ID: " + follower_id + " for Connected Medecin Network", globalVariables.getConnectedUser());
+		LOGGER.info("Consulting Medecin Follower by id " + follower_id + " for Medecin Connected, User ID: " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+		return mapper.map(medecinNetworkService.getMedecinfollewerById(med.getId(), follower_id), MedecinDTO.class);
+	}*/
+	@GetMapping("/getMedNetWork/{follower_id}")
+	public ResponseEntity<?> getMedecinNetworkbyId(@Valid @PathVariable Long follower_id) throws Exception {
+		// Récupérer le médecin follower à partir de l'ID follower
+		Medecin follower = medrepository.getMedecinById(follower_id);
+		if (follower == null) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Le médecin follower spécifié n'existe pas.");
+		}
+
+		// Récupérer le médecin connecté à partir de l'ID utilisateur
+		Medecin med = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+
+		// Créer une activité de consultation
+		activityServices.createActivity(new Date(), "Read", "Consulting Medecin Follower By ID: " + follower_id + " for Connected Medecin Network", globalVariables.getConnectedUser());
+		LOGGER.info("Consulting Medecin Follower by id " + follower_id + " for Medecin Connected, User ID: " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+
+		// Mapper et retourner le DTO du médecin follower
+		MedecinDTO medecinDTO = mapper.map(follower, MedecinDTO.class);
+		return ResponseEntity.ok(medecinDTO);
+	}
+
+	// Delete a Medecin from network : %OK%
+	@DeleteMapping(path = "/deletNetwork/{follower_id}")
+	public ResponseEntity<?> deleteMedecinNetwork(@Valid @PathVariable Long follower_id) throws Exception {
+
+		Medecin med = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+		Medecin follower = medrepository.getMedecinById(follower_id);
+		if (follower == null) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Le médecin follower spécifié n'existe pas.");
+		}
+
+		medecinNetworkService.deleteMedecinNetwork(med.getId(), follower_id);
+
+		return ResponseEntity.ok(new ApiResponse(true, "Deleted"));
+
+	}
+
+
+	// Show all Network of a doc : %OK%
+	@GetMapping("/getAllMedNetWork")
+	public ResponseEntity<List<MedecinDTO>> getAllMedecinNetwork() throws Exception {
+		Medecin med = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+		List<MedecinDTO> followers = medecinNetworkService.getAllMedecinNetwork(med.getId()).stream()
+				.map(follower -> mapper.map(follower, MedecinDTO.class))
+				.collect(Collectors.toList());
+		activityServices.createActivity(new Date(), "Read", "Consult Medecin Network for Connected Medecin Network", globalVariables.getConnectedUser());
+		LOGGER.info("Consult Medecin Network for Medecin Connected, User ID: " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+		return ResponseEntity.ok(followers);
+	}
+	// Update an existing Doctor in the Network
+	@PutMapping("/updateNetwork")
+	public ResponseEntity<?> updateNetwork(@Valid @RequestBody MedecinNetworkDTO medecinNetworkDTO) throws Exception {
+		MedecinNetworkDTO updatedMedNet = medecinNetworkService.updateMedecinNetwork(medecinNetworkDTO);
+		activityServices.createActivity(new Date(), "Update", "Updated Medecin Network for ID: " + medecinNetworkDTO.getId().getId_medecin() + " with follower ID: " + medecinNetworkDTO.getId().getId_follower(), globalVariables.getConnectedUser());
+		LOGGER.info("Updated Medecin Network for ID: " + medecinNetworkDTO.getId().getId_medecin() + " with follower ID: " + medecinNetworkDTO.getId().getId_follower() + ", User ID: " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+		return ResponseEntity.ok(updatedMedNet);
+	}
 
 }

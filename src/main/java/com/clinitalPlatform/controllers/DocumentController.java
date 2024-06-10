@@ -99,6 +99,9 @@ public class DocumentController {
 
             activityServices.createActivity(new Date(), "Read", "Consulting all patients concerned", globalVariables.getConnectedUser());
             LOGGER.info("Consulting All patients concerned By User ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+            System.out.println("TEST ici"+globalVariables.getConnectedUser());
+
+
             return docrepository.getMeAndMesProches(patient.get().getId())
                     .stream().collect(Collectors.toList());
         }

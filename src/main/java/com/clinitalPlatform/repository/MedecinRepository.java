@@ -3,8 +3,10 @@ package com.clinitalPlatform.repository;
 import java.util.List;
 
 import com.clinitalPlatform.models.Langue;
+import com.clinitalPlatform.models.MedecinNetwork;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -80,5 +82,21 @@ public interface MedecinRepository extends JpaRepository<Medecin, Long> {
 	public List<Medecin> getAllMedecinsByCabinetName(String nomCabinet);
 
 	List<Medecin> findMedecinsByLangues_Name(String langueName);
+
+//-----------------------------------------------NETWORK------------------
+	@Query(value = "SELECT m.* FROM medecins m where id= ?1 AND is_active = 1", nativeQuery = true)
+	Medecin getMedecinById(Long id);
+
+
+	//	query to retrive all network
+	@Query(value = "SELECT m.* FROM medecins m INNER JOIN medecin_network on m.id = medecin_network.id_follower WHERE medecin_network.id_medecin = ?1", nativeQuery = true)
+	List<Medecin> getAllMedecinNetwork(long id_medecin) throws Exception;
+
+	// query to retrive a network
+	@Query(value = "SELECT m.* FROM medecins m INNER JOIN medecin_network on m.id = medecin_network.id_follower WHERE  medecin_network.id_medecin = :id_medecin AND medecin_network.id_follower= :id_follower", nativeQuery = true)
+	Medecin getMedecinsFollowerByID(@Param("id_medecin")Long id_medecin,@Param("id_follower") Long id_follower) throws Exception;
+
+
+
 }
 
