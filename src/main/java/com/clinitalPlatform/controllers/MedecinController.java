@@ -945,7 +945,7 @@ public class MedecinController {
 		}
 	}
 
-//----------------------NETWORK-----------------------------------
+//-----------------------------------------------NETWORK---------------------------------------------------
 	// Add a New Doctor to the Network : %OK%
 	@PostMapping("/addNewNetwork")
 	public ResponseEntity<?> addNewNetwork(@Valid @RequestBody networkRequest network) throws Exception {
@@ -964,6 +964,10 @@ public class MedecinController {
 		// Vérifier si le médecin follower est le même que le médecin connecté
 		if (follower.getId().equals(connectedMedecin.getId())) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Vous ne pouvez pas vous suivre vous-même.");
+		}
+		// Vérifier si le médecin est déjà dans le réseau du médecin connecté
+		if (connectedMedecin.getFollowers().stream().anyMatch(f -> f.getFollower().getId().equals(followerId))) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Le médecin que vous essayez d'ajouter est déjà dans votre réseau.");
 		}
 
 		MedecinNetwork medNet = medecinNetworkService.addMedecinNetwork(network, globalVariables.getConnectedUser().getId());
@@ -1032,6 +1036,7 @@ public class MedecinController {
 		LOGGER.info("Consult Medecin Network for Medecin Connected, User ID: " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
 		return ResponseEntity.ok(followers);
 	}
+
 	// Update an existing Doctor in the Network
 	@PutMapping("/updateNetwork")
 	public ResponseEntity<?> updateNetwork(@Valid @RequestBody MedecinNetworkDTO medecinNetworkDTO) throws Exception {
@@ -1040,5 +1045,85 @@ public class MedecinController {
 		LOGGER.info("Updated Medecin Network for ID: " + medecinNetworkDTO.getId().getId_medecin() + " with follower ID: " + medecinNetworkDTO.getId().getId_follower() + ", User ID: " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
 		return ResponseEntity.ok(updatedMedNet);
 	}
+
+
+
+	//---FILTRE MEDECIN NETWORK----------------------------------
+
+	@GetMapping("/medNetByVille")
+	public ResponseEntity<List<MedecinDTO>> findMedNetByVille(@RequestParam Long id_ville) throws Exception {
+		// Récupérer l'utilisateur connecté
+		User connectedUser = globalVariables.getConnectedUser();
+
+		// Récupérer le médecin correspondant à l'utilisateur connecté
+		Medecin medecin = medrepository.getMedecinByUserId(connectedUser.getId());
+
+		// Récupérer les followers du réseau de l'utilisateur connecté et les convertir en DTO
+		List<MedecinDTO> followers = medecinNetworkService.getAllMedecinNetwork(medecin.getId()).stream()
+				.map(follower -> mapper.map(follower, MedecinDTO.class))
+				.collect(Collectors.toList());
+
+		// Filtrer les followers par ville
+		List<MedecinDTO> medecinsByVille = followers.stream()
+				.filter(follower -> follower.getVille() != null && follower.getVille().getId_ville().equals(id_ville))
+				.collect(Collectors.toList());
+
+		// Enregistrer l'activité
+		//activityServices.createActivity(new Date(), "Read", "Consult Medecin Network by Ville", connectedUser);
+		LOGGER.info("Consult Medecin Network by Ville for Connected Medecin, User ID: " + connectedUser.getId());
+
+		return ResponseEntity.ok(medecinsByVille);
+	}
+
+	//BYSPECIALITY
+	@GetMapping("/medNetByNameOrSpec")
+	public ResponseEntity<List<MedecinDTO>> findMedecinnetBySpecialiteOrName(@RequestParam String search) throws Exception {
+		// Récupérer le médecin connecté (supposons que cela soit déjà fait)
+		Medecin medecinConnecte = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+
+		// Récupérer les médecins du réseau (les followers) du médecin connecté
+		List<MedecinDTO> followers = medecinNetworkService.getAllMedecinNetwork(medecinConnecte.getId()).stream()
+				.map(follower -> mapper.map(follower, MedecinDTO.class))
+				.collect(Collectors.toList());
+
+		// Filtrer les followers par spécialité ou nom et par statut actif
+		List<MedecinDTO> medecinsFiltres = followers.stream()
+				.filter(follower -> {
+					// Vérifier si la spécialité de follower correspond à la recherche
+					Optional<SpecialiteDTO> specialiteFollower = Optional.ofNullable(follower.getSpecialite());
+					if (specialiteFollower.isPresent()) {
+						return specialiteFollower.get().getLibelle().equalsIgnoreCase(search);
+					}
+
+					// Vérifier si le nom de follower correspond à la recherche
+					String nomFollower = follower.getNom_med();
+					return nomFollower != null && nomFollower.equalsIgnoreCase(search);
+				})
+				.collect(Collectors.toList());
+
+		// Enregistrer l'activité
+		LOGGER.info("Consult Medecin Network by Speciality or Name for Connected Medecin Network, User ID: " + globalVariables.getConnectedUser().getId());
+
+		return ResponseEntity.ok(medecinsFiltres);
+	}
+
+
+
+
+	@GetMapping("/medNetByNameOrSpecAndVille")
+	@ResponseBody
+	public Iterable<Medecin> medNetByNameOrSpecAndVille(@RequestParam String ville,
+													 @RequestParam String search) throws Exception {
+
+		System.out.println("la ville: " + ville);
+		System.out.println("recherche: " + search);
+
+		List<Medecin> medecins = medrepository.getMedecinBySpecialiteOrNameOrCabinetAndVille(search, ville).stream()
+				.filter(med -> med.getIsActive() == true)
+				.collect(Collectors.toList());
+
+		return medecins;
+	}
+//------------------------------------------------------------------------------------------------------------------
 
 }
