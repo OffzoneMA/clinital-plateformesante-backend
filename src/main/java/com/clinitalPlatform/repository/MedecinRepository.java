@@ -25,7 +25,7 @@ public interface MedecinRepository extends JpaRepository<Medecin, Long> {
 	
 	@Query(value = "SELECT m.* FROM medecins m where m.nom_med = ?1 AND is_active = 1", nativeQuery = true)
 	List<Medecin> getMedecinByName(String nom_med);
-	
+
 	@Query(value = "SELECT m.* FROM medecins m, villes v WHERE m.ville_id_ville = v.id_ville AND"
 			+ " m.ville_id_ville = ?1 AND m.is_active = 1", nativeQuery = true)
 	List<Medecin> getMedecinByVille(Long id_ville);

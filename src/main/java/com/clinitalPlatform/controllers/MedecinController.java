@@ -1049,8 +1049,32 @@ public class MedecinController {
 
 
 	//---FILTRE MEDECIN NETWORK----------------------------------
-
+	//FILTRE MULTI VILLE
 	@GetMapping("/medNetByVille")
+	public ResponseEntity<List<MedecinDTO>> findMedecinnetByVille(@RequestParam List<Long> id_ville) throws Exception {
+		// Récupérer le médecin connecté (supposons que cela soit déjà fait)
+		Medecin medecinConnecte = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+
+		// Récupérer les médecins du réseau (les followers) du médecin connecté
+		List<MedecinDTO> followers = medecinNetworkService.getAllMedecinNetwork(medecinConnecte.getId()).stream()
+				.map(follower -> mapper.map(follower, MedecinDTO.class))
+				.collect(Collectors.toList());
+
+		// Filtrer les followers par ID de ville
+		List<MedecinDTO> medecinsFiltres = followers.stream()
+				.filter(follower -> {
+					// Vérifier si l'ID de ville du follower est contenu dans la liste des IDs de ville fournie
+					Long idVilleFollower = follower.getVille() != null ? follower.getVille().getId_ville() : null;
+					return idVilleFollower != null && id_ville.contains(idVilleFollower);
+				})
+				.collect(Collectors.toList());
+
+		// Enregistrer l'activité
+		LOGGER.info("Consult Medecin Network by Ville for Connected Medecin Network, User ID: " + globalVariables.getConnectedUser().getId());
+
+		return ResponseEntity.ok(medecinsFiltres);
+	}
+/*@GetMapping("/medNetByVille")
 	public ResponseEntity<List<MedecinDTO>> findMedNetByVille(@RequestParam Long id_ville) throws Exception {
 		// Récupérer l'utilisateur connecté
 		User connectedUser = globalVariables.getConnectedUser();
@@ -1073,10 +1097,45 @@ public class MedecinController {
 		LOGGER.info("Consult Medecin Network by Ville for Connected Medecin, User ID: " + connectedUser.getId());
 
 		return ResponseEntity.ok(medecinsByVille);
-	}
+	}*/
 
 	//BYSPECIALITY
+	//Filtre multispecialité
 	@GetMapping("/medNetByNameOrSpec")
+	public ResponseEntity<List<MedecinDTO>> findMedecinnetBySpecialiteOrName(@RequestParam String search) throws Exception {
+		// Récupérer le médecin connecté (supposons que cela soit déjà fait)
+		Medecin medecinConnecte = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+
+		// Récupérer les médecins du réseau (les followers) du médecin connecté
+		List<MedecinDTO> followers = medecinNetworkService.getAllMedecinNetwork(medecinConnecte.getId()).stream()
+				.map(follower -> mapper.map(follower, MedecinDTO.class))
+				.collect(Collectors.toList());
+
+		// Split the search parameter into a list of specialities or names
+		List<String> searchTerms = Arrays.asList(search.split(","));
+
+		// Filtrer les followers par spécialité ou nom
+		List<MedecinDTO> medecinsFiltres = followers.stream()
+				.filter(follower -> {
+					// Vérifier si la spécialité ou le nom de follower correspond à l'une des recherches
+					Optional<SpecialiteDTO> specialiteFollower = Optional.ofNullable(follower.getSpecialite());
+					boolean matchesSpecialite = specialiteFollower.isPresent() &&
+							searchTerms.contains(specialiteFollower.get().getLibelle());
+
+					String nomFollower = follower.getNom_med();
+					boolean matchesName = nomFollower != null && searchTerms.contains(nomFollower);
+
+					return matchesSpecialite || matchesName;
+				})
+				.collect(Collectors.toList());
+
+		// Enregistrer l'activité
+		LOGGER.info("Consult Medecin Network by Specialities or Name for Connected Medecin Network, User ID: " + globalVariables.getConnectedUser().getId());
+
+		return ResponseEntity.ok(medecinsFiltres);
+	}
+
+	/*@GetMapping("/medNetByNameOrSpec")
 	public ResponseEntity<List<MedecinDTO>> findMedecinnetBySpecialiteOrName(@RequestParam String search) throws Exception {
 		// Récupérer le médecin connecté (supposons que cela soit déjà fait)
 		Medecin medecinConnecte = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
@@ -1105,9 +1164,7 @@ public class MedecinController {
 		LOGGER.info("Consult Medecin Network by Speciality or Name for Connected Medecin Network, User ID: " + globalVariables.getConnectedUser().getId());
 
 		return ResponseEntity.ok(medecinsFiltres);
-	}
-
-
+	}*/
 
 
 	@GetMapping("/medNetByNameOrSpecAndVille")
