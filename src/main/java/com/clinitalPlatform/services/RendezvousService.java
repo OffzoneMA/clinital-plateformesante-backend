@@ -584,5 +584,14 @@ public List<Rendezvous> getRdvPatientByDayWeek(long day,long id){
 		}
 
 	}
- 
+
+	public int getStatisticsByMed(LocalDate date, long idmed) throws Exception {
+		return rdvrepo.findRdvByMedcinInDate(date, idmed);
+	}
+	public int getMonthlyStatisticsByMed(int year, int month, long idmed) throws Exception {
+		return rdvrepo.findRdvByMedcinInMonth(year, month, idmed);
+	}
+	public int getTotalPatientsByMed(long idmed) throws Exception {
+		return rdvrepo.findPatientsByMedcin(idmed);
+	}
 }

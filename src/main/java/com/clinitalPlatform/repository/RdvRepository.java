@@ -161,4 +161,16 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 
 
 //	List<Rendezvous> findByPatientIdAndMedecinSpecialiteIdAndDay(Long patientId, Long specialtyId, DayOfWeek dayOfWeek);
+
+	@Query(value = "SELECT COUNT(*) FROM rendezvous p WHERE DATE(p.start) = :date AND p.medecin = :idmed", nativeQuery = true)
+	int findRdvByMedcinInDate(@Param("date") LocalDate date, @Param("idmed") long idmed) throws Exception;
+
+	@Query(value = "SELECT COUNT(*) FROM rendezvous p WHERE YEAR(p.start) = :year AND MONTH(p.start) = :month AND p.medecin = :idmed", nativeQuery = true)
+	int findRdvByMedcinInMonth(@Param("year") int year, @Param("month") int month, @Param("idmed") long idmed) throws Exception;
+
+//	@Query(value = "SELECT COUNT(DISTINCT patient) FROM rendezvous WHERE medecin = :idmed", nativeQuery = true)
+//	int findPatientsByMedcin(@Param("idmed") long idmed);
+	@Query(value = "SELECT COUNT(DISTINCT dc.patient_id) AS nombre_patients FROM dossier_medecin d JOIN documents dc ON d.dossier_id = dc.id_dossier  WHERE d.medecin_id = :idmed GROUP BY d.medecin_id", nativeQuery = true)
+	int findPatientsByMedcin(@Param("idmed") long idmed);
+
 }
