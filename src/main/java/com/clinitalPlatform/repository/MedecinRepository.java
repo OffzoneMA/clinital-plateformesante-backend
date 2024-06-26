@@ -96,6 +96,14 @@ public interface MedecinRepository extends JpaRepository<Medecin, Long> {
 	@Query(value = "SELECT m.* FROM medecins m INNER JOIN medecin_network on m.id = medecin_network.id_follower WHERE  medecin_network.id_medecin = :id_medecin AND medecin_network.id_follower= :id_follower", nativeQuery = true)
 	Medecin getMedecinsFollowerByID(@Param("id_medecin")Long id_medecin,@Param("id_follower") Long id_follower) throws Exception;
 
+
+
+	@Query(value = "SELECT m.* " +
+			"FROM medecins m " +
+			"INNER JOIN medecin_network mn ON m.id = mn.id_follower " +
+			"WHERE mn.id_medecin = :id_medecin AND mn.id_follower = :followerId",
+			nativeQuery = true)
+	Medecin findFollowerInNetwork(@Param("id_medecin") Long idMedecin, @Param("followerId") Long followerId);
 //-------------------------NETWORK FILTER--------------------------------
 
 	/*@Query(value = "SELECT m.* FROM medecins m, villes v WHERE m.ville_id_ville = v.id_ville AND"

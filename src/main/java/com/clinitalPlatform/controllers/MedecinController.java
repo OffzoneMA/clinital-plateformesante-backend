@@ -965,10 +965,12 @@ public class MedecinController {
 		if (follower.getId().equals(connectedMedecin.getId())) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Vous ne pouvez pas vous suivre vous-même.");
 		}
-		// Vérifier si le médecin est déjà dans le réseau du médecin connecté
-		if (connectedMedecin.getFollowers().stream().anyMatch(f -> f.getFollower().getId().equals(followerId))) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Le médecin que vous essayez d'ajouter est déjà dans votre réseau.");
+		Medecin followers = medrepository.findFollowerInNetwork(connectedMedecin.getId(), followerId);
+		if (followers != null) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body("Le médecin que vous essayez d'ajouter est déjà dans votre réseau.");
 		}
+
 
 		MedecinNetwork medNet = medecinNetworkService.addMedecinNetwork(network, globalVariables.getConnectedUser().getId());
 		activityServices.createActivity(new Date(), "Add", "Add Medecin By ID: " + network.getFollower_id() + " for Connected Medecin Network", globalVariables.getConnectedUser());
@@ -995,6 +997,7 @@ public class MedecinController {
 		if (follower == null) {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Le médecin follower spécifié n'existe pas.");
 		}
+		List<Cabinet> cabinets = cabservice.getAllCabinetsByMedecinId(follower_id);
 
 		// Récupérer le médecin connecté à partir de l'ID utilisateur
 		Medecin med = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
@@ -1005,11 +1008,17 @@ public class MedecinController {
 
 		// Mapper et retourner le DTO du médecin follower
 		MedecinDTO medecinDTO = mapper.map(follower, MedecinDTO.class);
+		List<CabinetDTO> cabinetDTOList = cabinets.stream()
+				.map(cabinet -> mapper.map(cabinet, CabinetDTO.class))
+				.collect(Collectors.toList());
+
+		// Assigner la liste de cabinets au MedecinDTO
+		medecinDTO.setCabinet(cabinetDTOList);
 		return ResponseEntity.ok(medecinDTO);
 	}
 
 	// Delete a Medecin from network : %OK%
-	@DeleteMapping(path = "/deletNetwork/{follower_id}")
+	@DeleteMapping(path = "/deleteNetwork/{follower_id}")
 	public ResponseEntity<?> deleteMedecinNetwork(@Valid @PathVariable Long follower_id) throws Exception {
 
 		Medecin med = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
