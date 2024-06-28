@@ -104,7 +104,6 @@ public class WebSecurityConfig {
                 "/api/shares/**","/api/patient/**",
                 "/api/medecinSchedule/**","/api/users/**",
                 "/api/rdv/patient/**", "/api/rdv/**","/api/rdv/today/**",
-
                 "/api/med/agenda/**", "/api/medecinSchedule/fromCreno/**",
                 "/api/rdv/rdvs/patient","/api/rdv/patient/rdvbyday"
         };

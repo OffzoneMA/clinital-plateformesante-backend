@@ -978,18 +978,22 @@ public class MedecinController {
 		return ResponseEntity.ok(mapper.map(medNet, MedecinNetwork.class));
 	}
 
-	// Find a Medecin in a network : %OK%
-	/*@GetMapping("/getMedNetWork/{follower_id}")
-	public MedecinDTO getMedecinNetworkbyId(@Valid @PathVariable Long follower_id) throws Exception {
-		Medecin med = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
-		Medecin follower = medrepository.getMedecinById(follower_id);
-		if (follower == null) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Le médecin follower spécifié n'existe pas.");
+	@GetMapping("/checkIfInNetwork/{followerId}")
+	public ResponseEntity<?> checkIfInNetwork(@PathVariable Long followerId) {
+		try {
+			Medecin connectedMedecin = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+
+			// Logique pour vérifier si le médecin est dans le réseau
+			Medecin followers = medrepository.findFollowerInNetwork(connectedMedecin.getId(), followerId);
+			if (followers != null) {
+				return ResponseEntity.ok("true");
+			} else {
+				return ResponseEntity.ok("false");
+			}
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de la vérification du médecin dans le réseau.");
 		}
-		activityServices.createActivity(new Date(), "Read", "Consulting Medecin Follower By ID: " + follower_id + " for Connected Medecin Network", globalVariables.getConnectedUser());
-		LOGGER.info("Consulting Medecin Follower by id " + follower_id + " for Medecin Connected, User ID: " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
-		return mapper.map(medecinNetworkService.getMedecinfollewerById(med.getId(), follower_id), MedecinDTO.class);
-	}*/
+	}
 	@GetMapping("/getMedNetWork/{follower_id}")
 	public ResponseEntity<?> getMedecinNetworkbyId(@Valid @PathVariable Long follower_id) throws Exception {
 		// Récupérer le médecin follower à partir de l'ID follower
