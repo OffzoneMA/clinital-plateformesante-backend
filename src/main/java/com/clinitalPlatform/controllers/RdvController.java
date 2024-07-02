@@ -34,9 +34,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.HashSet;
 import java.util.Set;
@@ -60,9 +58,6 @@ public class RdvController {
 	MedecinRepository medRepo;
 
 	@Autowired
-	MedecinServiceImpl medservice;
-
-	@Autowired
 	TypeConsultationRepository typeConsultRepo;
 
 	@Autowired
@@ -70,6 +65,9 @@ public class RdvController {
 
 	@Autowired
 	PatientRepository patientRepo;
+
+	@Autowired
+	MedecinServiceImpl medecinService;
 
 	@Autowired
 	PatientService patientService;
@@ -680,6 +678,46 @@ public class RdvController {
 		return rdv;
 
 	}
+
+//	@GetMapping("/med/{iduser}")
+//	public int getStatistics(@PathVariable("iduser") long iduser) throws Exception {
+//		LOGGER.info("user : "+iduser);
+//		Long idmed = medRepo.getMedecinByUserId(iduser).getId();
+//		LOGGER.info("med : "+idmed);
+//		LocalDate today = LocalDate.now();
+//		return rdvservice.getStatisticsByMed(today, idmed);
+//	}
+
+	@GetMapping("/med")
+	public Map<String, Integer> getStatistics() throws Exception {
+		Long idmed = medRepo.getMedecinByUserId(globalVariables.getConnectedUser().getId()).getId();
+		LocalDate today = LocalDate.now();
+		int dailyCount = rdvservice.getStatisticsByMed(today, idmed);
+		int monthlyCount = rdvservice.getMonthlyStatisticsByMed(today.getYear(), today.getMonthValue(), idmed);
+		int totalPatients = rdvservice.getTotalPatientsByMed(idmed);
+		Map<String, Integer> statistics = new HashMap<>();
+		statistics.put("day", dailyCount);
+		statistics.put("month", monthlyCount);
+		statistics.put("patients", totalPatients);
+		return statistics;
+	}
+
+
+	@GetMapping("/rdvs/medecin")
+	List<Rendezvous> rendezvousForMedecin() throws Exception {
+
+		Long idmed = medRepo.getMedecinByUserId(globalVariables.getConnectedUser().getId()).getId();
+		LOGGER.info("idmed : "+idmed);
+		List<Rendezvous> rdvs=rdvservice.getRendezVousByMed(idmed);
+
+
+//		activityServices.createActivity(new Date(), "Read", "Show Prochain Rdv for Medecin ",
+//				globalVariables.getConnectedUser());
+		LOGGER.info("Show Prochain Rdv for Medecin");
+		return rdvs;
+
+	}
+
 
 }
 
