@@ -703,14 +703,12 @@ public class RdvController {
 	}
 
 
-	@GetMapping("/rdvs/medecin")
-	List<Rendezvous> rendezvousForMedecin() throws Exception {
+	@GetMapping("/rdvs/prochain")
+	List<Rendezvous> prochainRendezvousForMedecin() throws Exception {
 
 		Long idmed = medRepo.getMedecinByUserId(globalVariables.getConnectedUser().getId()).getId();
 		LOGGER.info("idmed : "+idmed);
 		List<Rendezvous> rdvs=rdvservice.getRendezVousByMed(idmed);
-
-
 //		activityServices.createActivity(new Date(), "Read", "Show Prochain Rdv for Medecin ",
 //				globalVariables.getConnectedUser());
 		LOGGER.info("Show Prochain Rdv for Medecin");
