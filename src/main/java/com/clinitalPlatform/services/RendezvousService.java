@@ -618,6 +618,6 @@ public class RendezvousService implements IDao<Rendezvous>  {
 //	}
 
 
-}
+
 }
 
