@@ -675,9 +675,9 @@ public class RdvController {
 //		return rdvservice.getStatisticsByMed(today, idmed);
 //	}
 
-	@GetMapping("/med/{iduser}")
-	public Map<String, Integer> getStatistics(@PathVariable("iduser") long iduser) throws Exception {
-		Long idmed = medRepo.getMedecinByUserId(iduser).getId();
+	@GetMapping("/med")
+	public Map<String, Integer> getStatistics() throws Exception {
+		Long idmed = medRepo.getMedecinByUserId(globalVariables.getConnectedUser().getId()).getId();
 		LocalDate today = LocalDate.now();
 		int dailyCount = rdvservice.getStatisticsByMed(today, idmed);
 		int monthlyCount = rdvservice.getMonthlyStatisticsByMed(today.getYear(), today.getMonthValue(), idmed);
@@ -687,6 +687,22 @@ public class RdvController {
 		statistics.put("month", monthlyCount);
 		statistics.put("patients", totalPatients);
 		return statistics;
+	}
+
+
+	@GetMapping("/rdvs/medecin")
+	List<Rendezvous> rendezvousForMedecin() throws Exception {
+
+		Long idmed = medRepo.getMedecinByUserId(globalVariables.getConnectedUser().getId()).getId();
+		LOGGER.info("idmed : "+idmed);
+		List<Rendezvous> rdvs=rdvservice.getRendezVousByMed(idmed);
+
+
+//		activityServices.createActivity(new Date(), "Read", "Show Prochain Rdv for Medecin ",
+//				globalVariables.getConnectedUser());
+		LOGGER.info("Show Prochain Rdv for Medecin");
+		return rdvs;
+
 	}
 
 

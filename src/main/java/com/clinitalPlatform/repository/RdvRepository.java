@@ -1,6 +1,8 @@
 package com.clinitalPlatform.repository;
 
 
+import com.clinitalPlatform.dto.RendezvousDTO;
+import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.models.Rendezvous;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -172,5 +174,11 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 //	int findPatientsByMedcin(@Param("idmed") long idmed);
 	@Query(value = "SELECT COUNT(DISTINCT dc.patient_id) AS nombre_patients FROM dossier_medecin d JOIN documents dc ON d.dossier_id = dc.id_dossier  WHERE d.medecin_id = :idmed GROUP BY d.medecin_id", nativeQuery = true)
 	int findPatientsByMedcin(@Param("idmed") long idmed);
+
+
+
+	//List<Rendezvous> findByMedecinId(long id);
+
+	List<Rendezvous> findByMedecinIdAndStartAfterOrderByStartAsc(Long medecinId, LocalDateTime date);
 
 }
