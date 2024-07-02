@@ -9,9 +9,11 @@ import com.clinitalPlatform.enums.CiviliteEnum;
 import com.clinitalPlatform.enums.PatientTypeEnum;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Entity
 @Table(name = "patients")
 @Data
@@ -54,7 +56,6 @@ public class Patient {
 
 	@ManyToOne(cascade=CascadeType.MERGE)
 	@JoinColumn(name = "id_ville", nullable = true, referencedColumnName = "id_ville", insertable = true, updatable = true)
-	@JsonIgnore
 	private Ville ville;
 
 	@OneToOne(cascade=CascadeType.ALL)

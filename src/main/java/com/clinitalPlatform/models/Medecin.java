@@ -4,7 +4,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.Date;
 
+import jakarta.persistence.*;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
@@ -12,21 +14,6 @@ import com.clinitalPlatform.enums.CiviliteEnum;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -51,7 +38,15 @@ public class Medecin {
 	private String photo_couverture_med;
 	private Long StepsValidation;
 
+	private Date dateNaissance;//new attribut
+
+
 	@ManyToMany
+	@JoinTable(
+			name = "expertises_medecins",
+			joinColumns = @JoinColumn(name = "medecins_id"),
+			inverseJoinColumns = @JoinColumn(name = "expertises_id")
+	)
 	private List<ExpertisesMedecin> expertises_med;
 
 	@OneToMany(mappedBy = "medecin")
@@ -72,8 +67,16 @@ public class Medecin {
 	@ManyToOne(cascade = CascadeType.ALL)
 	private Specialite specialite;
 
-	@OneToMany
-	@JsonIgnore
+	//@OneToMany
+	//@JsonIgnore
+	//private List<MoyenPaiement> moyenPaiement;
+
+	@ManyToMany
+	@JoinTable(
+			name = "medecins_moyen_paiement",
+			joinColumns = @JoinColumn(name = "medecin_id"),
+			inverseJoinColumns = @JoinColumn(name = "moyen_paiement_id_mp")
+	)
 	private List<MoyenPaiement> moyenPaiement;
 
 	@OneToOne
@@ -101,7 +104,7 @@ public class Medecin {
 
 	// in this we create a Bridge table between Medecin and Cabinet to link them together
 	@OneToMany(mappedBy = "medecin",cascade = CascadeType.ALL,fetch = FetchType.EAGER)
-	@JsonIgnore
+	//@JsonIgnore
 	private List<CabinetMedecinsSpace> cabinets;
 
 	private Boolean isActive;
@@ -122,7 +125,23 @@ public class Medecin {
 	@OneToMany(mappedBy = "medecin")
 	@JsonIgnore
 	private List<Ordonnance> Ordonnance;
+//-------------------------------------------
 
+	//in this we create a Bridge table between Medecin and langue to link them together
+	@ManyToMany(fetch = FetchType.EAGER)
+	@JoinTable(
+			name = "langue_medecin",
+			joinColumns = @JoinColumn(name = "medecin_id", referencedColumnName = "id"),
+			inverseJoinColumns = @JoinColumn(name = "langue_id")
+	)
+	//@JsonIgnore
+	private List<Langue> langues;
+    //Tarifs
+
+	@OneToMany(mappedBy = "medecin", cascade = CascadeType.ALL)
+	//@JsonIgnore
+	private List<Tarif> tarifs;
+//--------------------------------------------------------
 
 	public void removeCabinet(Cabinet cabinet) {
         for (Iterator<CabinetMedecinsSpace> iterator = cabinets.iterator(); 
@@ -142,7 +161,7 @@ public class Medecin {
 				   String photo_med, String photo_couverture_med, List<ExpertisesMedecin> expertises_med, List<DiplomeMedecin> diplome_med,
 				   String description_med, String contact_urgence_med,CiviliteEnum civilite_med,
 				   List<ExperienceMedecin> experience_med, Ville ville, Specialite specialite,
-				   List<MoyenPaiement> moyenPaiement, User user,boolean isActive) {
+				   List<MoyenPaiement> moyenPaiement, User user,boolean isActive,List<Langue>langues, List<Tarif> tarifs) {
 		this.id = id;
 		this.matricule_med = matricule_med;
 		this.inpe = inpe;
@@ -161,6 +180,8 @@ public class Medecin {
 		this.moyenPaiement = moyenPaiement;
 		this.user = user;
 		this.isActive=isActive;
+		this.langues=langues;
+		this.tarifs=tarifs;
 		
 	}
 }

@@ -2,6 +2,7 @@ package com.clinitalPlatform.controllers;
 
 import com.clinitalPlatform.dto.DocumentDTO;
 import com.clinitalPlatform.models.*;
+import com.clinitalPlatform.payload.request.UpdateDocumentRequest;
 import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.payload.response.DocumentResponse;
 import com.clinitalPlatform.payload.response.TypeDocumentResponse;
@@ -80,10 +81,28 @@ public class DocumentController {
         }else {
 
             activityServices.createActivity(new Date(), "Read", "Consulting all Documents", globalVariables.getConnectedUser());
-            LOGGER.info("Conslting All documents By User ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+            LOGGER.info("Consulting All documents By User ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
             return docrepository.findByPatientId(patient.get().getId())
                     .stream().map(document -> mapper.map(document, DocumentResponse.class)).collect(Collectors.toList());
         }
+    }
+
+    @GetMapping(path = "/patientsConcerned")
+    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    Iterable<Patient> getPatientsConcerned() throws Exception {
+
+        Optional<Patient> patient = patientRepo.findById(globalVariables.getConnectedUser().getId());
+
+        if (!patient.isPresent()) {
+            return Collections.emptyList();
+        }else {
+
+            activityServices.createActivity(new Date(), "Read", "Consulting all patients concerned", globalVariables.getConnectedUser());
+            LOGGER.info("Consulting All patients concerned By User ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+            return docrepository.getMeAndMesProches(patient.get().getId())
+                    .stream().collect(Collectors.toList());
+        }
+
     }
 
     // Add a document of a patient
@@ -113,15 +132,16 @@ public class DocumentController {
             // --------------- update saved doc
             Document finalSavedDoc = docrepository.save(savedDoc);
             // ----- add doc info to RDV :
-            Rendezvous rdv= rdvRepository.findById(finalSavedDoc.getRendezvous().getId()).orElseThrow(()->new Exception("NO MATCHING FOUND"));
-            rdv.getDocuments().add(finalSavedDoc);
+            //Rendezvous rdv= rdvRepository.findById(finalSavedDoc.getRendezvous().getId()).orElseThrow(()->new Exception("NO MATCHING FOUND"));
+            //rdv.getDocuments().add(finalSavedDoc);
 
             //update rendez-vous
-            rdvRepository.save(rdv);
+            //rdvRepository.save(rdv);
 
             activityServices.createActivity(new Date(),"Add","Add New document ID:"+finalSavedDoc.getId_doc(),globalVariables.getConnectedUser());
-            LOGGER.info("Add new  documents ID :"+finalSavedDoc.getId_doc()+" By User ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+            LOGGER.info("Add new document with ID "+finalSavedDoc.getId_doc()+" By User with ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
             return ResponseEntity.ok(new ApiResponse(true, "Document created successfully!",finalSavedDoc));
+
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.ok(new ApiResponse(false, "Document not created!"+e.getMessage()));
@@ -129,22 +149,62 @@ public class DocumentController {
         }
     }
 
+    //
+    @PutMapping("/update")
+    @PreAuthorize("hasAnyAuthority('ROLE_PATIENT')")
+    public ResponseEntity<?> updateNameAndTypeDocument(@RequestBody UpdateDocumentRequest data){
+
+        try{
+
+            System.out.println("updatedDoc: "+ data);
+            // Fetch the existing document from the database
+            Optional<Document> existingDocumentOptional = docrepository.findById(data.getId_doc());
+
+            if (existingDocumentOptional.isPresent()) {
+                Document existingDocument = existingDocumentOptional.get();
+                // Update the titre_doc attribute
+                existingDocument.setTitre_doc(data.getTitre_doc());
+
+                // TO DO: Update the fichier_doc attribute based on the new titre_doc
+
+                // Update the typeDoc attribute
+                existingDocument.setTypeDoc(data.getTypeDoc());
+                // Save the updated document
+                Document savedDocument = docrepository.save(existingDocument);
+                activityServices.createActivity(new Date(), "Update", "Update document ID: " + savedDocument.getId_doc(), globalVariables.getConnectedUser());
+                LOGGER.info("Update a document with ID " + savedDocument.getId_doc() + " By User with ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+                return ResponseEntity.ok(new ApiResponse(true, "Document updated successfully", savedDocument));
+
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+
+
+        } catch(Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.ok(new ApiResponse(false, "Document not updated: " + e.getMessage()));
+        }
+    }
+
+
     // Returning a document by id.
     @GetMapping("/docById/{id}")
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
     public ResponseEntity<DocumentResponse> getDocById(@PathVariable long id) throws Exception {
-        Optional<Document> tutorialData = docrepository.findById(id);
+        Optional<Document> doc = docrepository.findById(id);
 
-        if (tutorialData.isPresent()) {
+        if (doc.isPresent()) {
             activityServices.createActivity(new Date(),"Read","Consulting Document with ID : "+id,globalVariables.getConnectedUser());
-            LOGGER.info("Conslting  document ID "+id+" ,By User ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
-            return new ResponseEntity<>(mapper.map(tutorialData.get(), DocumentResponse.class), HttpStatus.OK);
+            LOGGER.info("Consulting  document ID "+id+" ,By User ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+            return new ResponseEntity<>(mapper.map(doc.get(), DocumentResponse.class), HttpStatus.OK);
         } else {
 
             LOGGER.warn("Can't Found Doc ID : "+id+",Consulting By User ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+
+
 
     // Returning a list of documents by Rendez-vous id.
     @GetMapping("/docByIdRdv")
@@ -153,7 +213,7 @@ public class DocumentController {
     public List<DocumentResponse> findDocByIdRdv(@RequestParam Long rdvId) throws Exception {
 
         activityServices.createActivity(new Date(),"Read","Conslting  documents By Rdv  ID :"+rdvId,globalVariables.getConnectedUser());
-        LOGGER.info("Conslting  documents by RDV ID :"+rdvId+" By User ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+        LOGGER.info("Consulting  documents by RDV ID :"+rdvId+" By User ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
         return docrepository.getDocByIdRendezvous(rdvId).stream().map(doc -> mapper.map(doc, DocumentResponse.class))
                 .collect(Collectors.toList());
     }
@@ -191,7 +251,7 @@ public class DocumentController {
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     Iterable<TypeDocumentResponse> getTypeDocuments() throws Exception {
         activityServices.createActivity(new Date(),"Read","Consulting All Type documents",globalVariables.getConnectedUser());
-        LOGGER.info("Consulting All Types  documents By User ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+        LOGGER.info("Consulting All Types documents By User ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
         return typeDocumentRepo.findAll().stream().map(typeDoc -> mapper.map(typeDoc, TypeDocumentResponse.class))
                 .collect(Collectors.toList());
     }
@@ -210,32 +270,13 @@ public class DocumentController {
 
             List<Document> documents = docrepository.getDocByPatientIdAndMedecin(patient.get().getId());
             activityServices.createActivity(new Date(), "Read", "Consulting All documents", globalVariables.getConnectedUser());
-            LOGGER.info("Consulting All Archived  documents by patient ID, User ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+            LOGGER.info("Consulting All shared documents by patient ID, User ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
             return documents.stream().map(doc -> mapper.map(doc, DocumentResponse.class)).collect(Collectors.toList());
 
         }
     }
-    /*
-    @GetMapping("/documents")
-    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
-    @JsonSerialize(using = LocalDateTimeSerializer.class)
-    Iterable<DocumentResponse> documents() throws Exception {
 
-        Optional<Patient> patient = patientRepo.findById(globalVariables.getConnectedUser().getId());
-
-        // Verify if the list of patient is empty
-        if (!patient.isPresent()) {
-            return Collections.emptyList();
-        }else {
-
-            activityServices.createActivity(new Date(), "Read", "Consulting all Documents", globalVariables.getConnectedUser());
-            LOGGER.info("Conslting All documents By User ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
-            return docrepository.findByPatientId(patient.get().getId())
-                    .stream().map(document -> mapper.map(document, DocumentResponse.class)).collect(Collectors.toList());
-        }
-    }
-     */
-    //Get documents of patient with type "PROCH"
+    //Get documents of patient with type "PROCHE"
     @GetMapping("/getdocproch")
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
     @JsonSerialize(using = LocalDateTimeSerializer.class)
@@ -286,7 +327,7 @@ public class DocumentController {
     }
 
     // Archive or unarchive a document specified by its ID
-    @PostMapping(path = "/archiveDoc")
+    @PutMapping(path = "/archiveDoc")
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
     public ResponseEntity<?> archiveDoc(@RequestParam Long docId, @RequestParam boolean archive)
             throws Exception {
@@ -388,5 +429,7 @@ public class DocumentController {
 
         return ResponseEntity.ok(new ApiResponse(true, "Document downloaded successfully!"));
     }
+
+
 
 }

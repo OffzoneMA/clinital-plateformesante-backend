@@ -5,6 +5,7 @@ import java.util.List;
 import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
@@ -44,14 +45,20 @@ public class Cabinet {
 	private List<Secretaire> secretaire;
 
 	@ManyToOne(cascade = CascadeType.ALL)
+	@JsonIgnore
 	private Medecin creator;
 
 	private Boolean state;
+
+	@OneToOne(cascade = CascadeType.ALL)
+	//@JsonIgnore
+	@JsonManagedReference
+	private PaymentInfo paymentInfo;
 	public Cabinet() {
 		super();
 	}
 
-	public Cabinet(@NotNull String nom, @NotNull String adresse, @NotNull String code_post,String phoneNumber, @NotNull Ville ville,Medecin creator,Boolean state
+	public Cabinet(@NotNull String nom, @NotNull String adresse, @NotNull String code_post,String phoneNumber, @NotNull Ville ville,Medecin creator,Boolean state,@NotNull PaymentInfo paymentInfo
 			) {
 		super();
 		this.nom = nom;
@@ -61,6 +68,7 @@ public class Cabinet {
 		this.ville=ville;
 		this.creator=creator;
 		this.state=state;
+		this.paymentInfo=paymentInfo;
 	
 	}
 

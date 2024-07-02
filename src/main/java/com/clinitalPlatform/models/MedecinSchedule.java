@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import com.clinitalPlatform.enums.ConsultationPeriodEnum;
@@ -54,7 +55,8 @@ public class MedecinSchedule {
 
 	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "id_cabinet", nullable = false, referencedColumnName = "id_cabinet", insertable = true, updatable = true)
-	@JsonIgnore
+	//@JsonIgnore
+	@JsonManagedReference
 	private Cabinet cabinet;
 
 	private Boolean isnewpatient;

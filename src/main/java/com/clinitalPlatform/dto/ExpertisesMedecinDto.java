@@ -1,7 +1,10 @@
 package com.clinitalPlatform.dto;
 
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.List;
@@ -9,9 +12,9 @@ import java.util.List;
 @Data
 public class ExpertisesMedecinDto implements Serializable {
 
-    private final Long id;
-    private final String nom_exp;
+    private Long id;
+    private String nom_exp;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    private final List<MedecinDTO> medecins;
+    private List<MedecinDTO> medecins;
 }

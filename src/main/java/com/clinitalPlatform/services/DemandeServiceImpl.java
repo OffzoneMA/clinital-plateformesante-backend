@@ -14,10 +14,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.clinitalPlatform.util.ClinitalModelMapper;
+import com.clinitalPlatform.util.GlobalVariables;
+
+import jakarta.persistence.EntityNotFoundException;
+
 import com.clinitalPlatform.repository.UserRepository;
 import com.clinitalPlatform.enums.DemandeStateEnum;
 import com.clinitalPlatform.enums.ERole;
@@ -49,6 +54,9 @@ public class DemandeServiceImpl implements DemandeService{
 	private PasswordEncoder passwordEncoder;
 	
 	@Autowired
+	GlobalVariables globalVariables;
+	
+	@Autowired
 	UserService userservice;
 
 	public final Logger LOGGER=LoggerFactory.getLogger(this.getClass());
@@ -62,7 +70,6 @@ public class DemandeServiceImpl implements DemandeService{
 
 		Demande d = modelMapper.map(demande,Demande.class);
 		Demande saved = demandeRepository.save(d);
-		emailSenderService.sendMailDemande(saved);
 	
         LOGGER.info("Demande d'inscription cree par un Medecin son email : "+d.getMail());
 		return ResponseEntity.ok(modelMapper.map(saved, Demande.class));
@@ -136,6 +143,9 @@ public class DemandeServiceImpl implements DemandeService{
 				user.setTelephone("0600000000");
 				user.setRole(ERole.ROLE_MEDECIN);
 				userRepository.save(user);
+				demande.setUser(user);
+				demande.setState(1);
+				demandeRepository.save(demande);
 				LOGGER.info("New User is Created, Email : "+demande.getMail());			
 				User registred = userRepository.findById(user.getId()).orElseThrow(()->new Exception("this User is not found !"));
 				userservice.save(registred,demande);
@@ -155,4 +165,30 @@ public class DemandeServiceImpl implements DemandeService{
 		 String code = strings().size(10).types(ALPHA_NUMERIC, HEX).get();
 		 return code;
       }
+	
+	 @Override
+	 public Demande findDemandeByConnectedUser(Long userId) {
+	        User user = userRepository.findById(userId)
+	                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+	        return demandeRepository.findByUser(user)
+	                .orElseThrow(() -> new EntityNotFoundException("Demande not found for the connected user"));
+	    }
+	 
+	@Override
+	public Demande updateDemandeStateByUserId(Long userId, int newState) throws EntityNotFoundException {
+	  // Recherche de l'utilisateur par ID
+	  User user = userRepository.findById(userId)
+	          .orElseThrow(() -> new EntityNotFoundException("User not found"));
+	
+	  // Recherche de la demande associée à l'utilisateur
+	  Demande demande = demandeRepository.findByUser(user)
+	          .orElseThrow(() -> new EntityNotFoundException("Demande not found for the user"));
+	
+	  // Mise à jour de l'état de la demande
+	  demande.setState(newState);
+	
+	  // Enregistrement de la demande mise à jour
+	  return demandeRepository.save(demande);
+	}
 }

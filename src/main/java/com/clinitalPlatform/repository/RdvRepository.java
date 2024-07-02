@@ -162,6 +162,7 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 
 
 
+
 //	List<Rendezvous> findByPatientIdAndMedecinSpecialiteIdAndDay(Long patientId, Long specialtyId, DayOfWeek dayOfWeek);
 
 	@Query(value = "SELECT COUNT(*) FROM rendezvous p WHERE DATE(p.start) = :date AND p.medecin = :idmed", nativeQuery = true)
@@ -181,4 +182,7 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 
 	List<Rendezvous> findByMedecinIdAndStartAfterOrderByStartAsc(Long medecinId, LocalDateTime date);
 
+  //	List<Rendezvous> findByPatientIdAndMedecinSpecialiteIdAndDay(Long patientId, Long specialtyId, DayOfWeek dayOfWeek);
+
 }
+

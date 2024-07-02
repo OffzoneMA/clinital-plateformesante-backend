@@ -25,6 +25,15 @@ public class CabinetRequest {
 	@NotNull
 	private long id_medecin;
 
+	// Payment information fields
+	@NotNull
+	private String intituleCompte;
+
+	@NotNull
+	private String rib;
+
+	@NotNull
+	private String codeSwift;
 
 
 }
