@@ -1148,8 +1148,14 @@ public class MedecinController {
 		return ResponseEntity.ok(medecinsFiltres);
 	}
 
-	/*@GetMapping("/medNetByNameOrSpec")
-	public ResponseEntity<List<MedecinDTO>> findMedecinnetBySpecialiteOrName(@RequestParam String search) throws Exception {
+	/*@GetMapping("/medNetByNameOrSpecAndVille")
+	@ResponseBody
+	public ResponseEntity<List<MedecinDTO>> medNetByNameOrSpecAndVille(@RequestParam String ville,
+																	   @RequestParam String search) throws Exception {
+
+		System.out.println("la ville: " + ville);
+		System.out.println("recherche: " + search);
+
 		// Récupérer le médecin connecté (supposons que cela soit déjà fait)
 		Medecin medecinConnecte = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
 
@@ -1158,42 +1164,85 @@ public class MedecinController {
 				.map(follower -> mapper.map(follower, MedecinDTO.class))
 				.collect(Collectors.toList());
 
-		// Filtrer les followers par spécialité ou nom et par statut actif
+		// Filtrer les médecins par spécialité ou nom et par ville si spécifié
 		List<MedecinDTO> medecinsFiltres = followers.stream()
 				.filter(follower -> {
-					// Vérifier si la spécialité de follower correspond à la recherche
+					// Vérifier si la spécialité ou le nom correspond
 					Optional<SpecialiteDTO> specialiteFollower = Optional.ofNullable(follower.getSpecialite());
-					if (specialiteFollower.isPresent()) {
-						return specialiteFollower.get().getLibelle().equalsIgnoreCase(search);
+					String nomFollower = follower.getNom_med();
+
+					boolean matchesSpecialiteOrName = specialiteFollower.isPresent() && search.contains(specialiteFollower.get().getLibelle())
+							|| nomFollower != null && search.contains(nomFollower);
+
+					// Vérifier si la ville correspond si spécifiée
+					boolean matchesVille = true;
+					if (ville != null && !ville.isEmpty()) {
+						matchesVille = ville.equalsIgnoreCase(Optional.ofNullable(follower.getVille())
+								.map(VilleDTO::getNom_ville)
+								.orElse(""));
 					}
 
-					// Vérifier si le nom de follower correspond à la recherche
-					String nomFollower = follower.getNom_med();
-					return nomFollower != null && nomFollower.equalsIgnoreCase(search);
+					return matchesSpecialiteOrName && matchesVille;
 				})
 				.collect(Collectors.toList());
 
 		// Enregistrer l'activité
-		LOGGER.info("Consult Medecin Network by Speciality or Name for Connected Medecin Network, User ID: " + globalVariables.getConnectedUser().getId());
+		LOGGER.info("Consult Medecin Network by Specialities, Name and City for Connected Medecin Network, User ID: " + globalVariables.getConnectedUser().getId());
 
 		return ResponseEntity.ok(medecinsFiltres);
 	}*/
 
 
 	@GetMapping("/medNetByNameOrSpecAndVille")
-	@ResponseBody
-	public Iterable<Medecin> medNetByNameOrSpecAndVille(@RequestParam String ville,
-													 @RequestParam String search) throws Exception {
+	public ResponseEntity<List<MedecinDTO>> medNetByNameOrSpecAndVille(
+			@RequestParam(name = "ville") List<Long> id_villes,
+			@RequestParam(name = "search") List<String> searchTerms) throws Exception {
 
-		System.out.println("la ville: " + ville);
-		System.out.println("recherche: " + search);
+		// Vérification des paramètres
+		if (id_villes.isEmpty() && searchTerms.isEmpty()) {
+			// Si aucun paramètre n'est spécifié, renvoyer une liste vide ou un message d'erreur approprié
+			return ResponseEntity.badRequest().build();
+		}
 
-		List<Medecin> medecins = medrepository.getMedecinBySpecialiteOrNameOrCabinetAndVille(search, ville).stream()
-				.filter(med -> med.getIsActive() == true)
+		// Récupérer le médecin connecté
+		Medecin medecinConnecte = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+
+		// Récupérer les médecins du réseau (les followers) du médecin connecté
+		List<MedecinDTO> followers = medecinNetworkService.getAllMedecinNetwork(medecinConnecte.getId()).stream()
+				.map(follower -> mapper.map(follower, MedecinDTO.class))
 				.collect(Collectors.toList());
 
-		return medecins;
+		// Filtrer les médecins par spécialité ou nom et par ID de ville spécifié
+		List<MedecinDTO> medecinsFiltres = followers.stream()
+				.filter(follower -> {
+					boolean matchesSpecialiteOrName = false;
+					boolean matchesVilles = false;
+
+					// Vérifier si la spécialité ou le nom correspond
+					Optional<SpecialiteDTO> specialiteFollower = Optional.ofNullable(follower.getSpecialite());
+					String nomFollower = follower.getNom_med();
+
+					if (!searchTerms.isEmpty()) {
+						matchesSpecialiteOrName = specialiteFollower.isPresent() && searchTerms.stream().anyMatch(term -> term.contains(specialiteFollower.get().getLibelle()))
+								|| nomFollower != null && searchTerms.stream().anyMatch(term -> term.contains(nomFollower));
+					}
+
+					// Vérifier si l'ID de la ville correspond si spécifié
+					if (!id_villes.isEmpty()) {
+						matchesVilles = id_villes.contains(follower.getVille().getId_ville());
+					}
+
+					return matchesSpecialiteOrName && matchesVilles;
+				})
+				.collect(Collectors.toList());
+
+		// Enregistrer l'activité
+		LOGGER.info("Consult Medecin Network by Specialities, Name and City ID for Connected Medecin Network, User ID: " + globalVariables.getConnectedUser().getId());
+
+		return ResponseEntity.ok(medecinsFiltres);
 	}
+
+
 //------------------------------------------------------------------------------------------------------------------
 
 }

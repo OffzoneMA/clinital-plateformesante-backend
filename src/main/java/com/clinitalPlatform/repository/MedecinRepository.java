@@ -110,5 +110,13 @@ public interface MedecinRepository extends JpaRepository<Medecin, Long> {
 			+ " m.ville_id_ville = ?1 AND m.is_active = 1", nativeQuery = true)
 	List<Medecin> getMedecinNetworkByVille(Long id_ville);*/
 
+	@Query("SELECT m FROM Medecin m WHERE " +
+			"(m.ville.nom_ville = :ville OR :ville IS NULL) AND " +
+			"((m.nom_med LIKE %:search%) OR " +
+			"(m.specialite.libelle = :search AND m.specialite IS NOT NULL)) AND " +
+			"m.isActive = true")
+	List<Medecin> findByVilleAndSearch(@Param("ville") String ville,
+									   @Param("search") String search);
+
 }
 
