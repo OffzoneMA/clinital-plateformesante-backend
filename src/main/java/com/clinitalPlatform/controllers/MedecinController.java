@@ -82,6 +82,8 @@ public class MedecinController {
 	
 	@Autowired
 	MedecinRepository medrepository;
+	@Autowired
+	PatientRepository patientRepository;
 	
 	@Autowired
 	private CabinetRepository cabrepos;
@@ -544,6 +546,19 @@ public class MedecinController {
 
 		return ResponseEntity.ok(specialiteService.findAll());
 	}
+	@GetMapping("/getallpatients")
+	Iterable <Patient> getallpatients() throws Exception {
+			activityServices.createActivity(new Date(), "Read", "Show All Rdv for Medecin",
+					globalVariables.getConnectedUser());
+			Medecin medecin = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+			List<Patient> l=patientRepository.getallpatientofmed(medecin.getId());
+			LOGGER.info("Show All patients for Medecin, UserID : " + globalVariables.getConnectedUser().getId());
+
+			return l;
+	}
+
+
+
 
 	// Get all medecins ... : %OK%
 

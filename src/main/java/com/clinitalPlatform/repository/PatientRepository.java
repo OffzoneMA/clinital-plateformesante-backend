@@ -49,7 +49,8 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
    // Query for getting all patients of a medecin
    @Query(value = "SELECT p.* FROM patients p , dossiers d, dossier_medecin dm WHERE p.id_dossier=d.id_dossier and d.id_dossier=dm.dossier_id AND dm.medecin_id = :id_med",nativeQuery = true)
    List<Patient> getMedecinPatients(long id_med);
-
+   @Query(value = "SELECT DISTINCT  p.* FROM patients p , rendezvous r WHERE r.medecin=:id_med",nativeQuery = true)
+   List<Patient> getallpatientofmed(long id_med);
    // Query for getting a patient of a medecin
    @Query(value="SELECT p.* FROM patients p , dossiers d, dossier_medecin dm WHERE p.id_dossier=d.id_dossier and d.id_dossier=dm.dossier_id AND dm.medecin_id = :id_med AND p.id = :id_patient",nativeQuery=true)
    Patient getPatient(long id_med, long id_patient);
