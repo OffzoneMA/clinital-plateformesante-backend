@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -585,4 +586,38 @@ public class RendezvousService implements IDao<Rendezvous>  {
 
 	}
 
+
+	public int getStatisticsByMed(LocalDate date, long idmed) throws Exception {
+		return rdvrepo.findRdvByMedcinInDate(date, idmed);
+	}
+	public int getMonthlyStatisticsByMed(int year, int month, long idmed) throws Exception {
+		return rdvrepo.findRdvByMedcinInMonth(year, month, idmed);
+	}
+	public int getTotalPatientsByMed(long idmed) throws Exception {
+		return rdvrepo.findPatientsByMedcin(idmed);
+	}
+
+	public List<Rendezvous> getRendezVousByMed(long idmed){
+	List<Rendezvous> rdvs= rdvrepo.findByMedecinIdAndStartAfterOrderByStartAsc(idmed, LocalDateTime.now());
+
+	return rdvs;
+	}
+//	public List<RendezvousDTO> getRendezVousByMed(long idmed) {
+//		List<Rendezvous> rdvs = rdvrepo.findByMedecinId(idmed);
+//		List<RendezvousDTO> rdvDtos = new ArrayList<>();
+//
+//		for (Rendezvous rdv : rdvs) {
+//			if (rdv != null) {
+//				RendezvousDTO rdto = new RendezvousDTO();
+//				rdvDtos.add(convertToDTO(rdv, rdto));
+//				Patient patient=patientRepo.getById(rdto.getPatientid());
+//			}
+//		}
+//
+//		return rdvDtos;
+//	}
+
+
+
 }
+

@@ -100,13 +100,18 @@ public class WebSecurityConfig {
 
         };
 
-        String[] authenticatedRoutes = {"/api/demandes/**", "/api/med/**", "/api/doc/**",
-                "/api/shares/**","/api/patient/**",
-                "/api/medecinSchedule/**","/api/users/**",
-                "/api/rdv/patient/**", "/api/rdv/**","/api/rdv/today/**",
+
+
+      
+        String[] authenticatedRoutes = {"/api/demandes/**", "/api/med/**", "/api/doc/**", "/api/shares/**","/api/medecinSchedule/**","/api/patient/**",
+                "/api/rdv/patient/**","/api/rdv/today/**","/api/rdv/med/**", "/api/rdv/rdvs/medecin","/api/users/**", "/api/rdv/**",
+
                 "/api/med/agenda/**", "/api/medecinSchedule/fromCreno/**",
                 "/api/rdv/rdvs/patient","/api/rdv/patient/rdvbyday"
+                                        
+
         };
+
 
 
         return http.csrf().disable()
