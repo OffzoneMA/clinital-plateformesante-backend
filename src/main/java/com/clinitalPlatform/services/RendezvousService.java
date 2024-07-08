@@ -617,7 +617,15 @@ public class RendezvousService implements IDao<Rendezvous>  {
 //		return rdvDtos;
 //	}
 
+////////////CHART
+	@Autowired
+	private ChartRepository chartRepository;
 
+	public List<Object[]> getRendezvousCountByMode() {
+		return chartRepository.countRendezvousByMode();
+	}
+
+////////////////
 
 }
 

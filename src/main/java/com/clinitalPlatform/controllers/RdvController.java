@@ -1,6 +1,8 @@
 package com.clinitalPlatform.controllers;
 
+import com.clinitalPlatform.dto.ModeCountDTO;
 import com.clinitalPlatform.dto.RendezvousDTO;
+import com.clinitalPlatform.enums.ModeConsultationEnum;
 import com.clinitalPlatform.enums.RdvStatutEnum;
 import com.clinitalPlatform.exception.BadRequestException;
 import com.clinitalPlatform.models.Medecin;
@@ -716,6 +718,21 @@ public class RdvController {
 
 	}
 
+	////////////CHART
+	@GetMapping("/count-by-mode")
+	public ResponseEntity<List<ModeCountDTO>> countRendezvousByMode() {
+		List<Object[]> results = rdvservice.getRendezvousCountByMode();
+		List<ModeCountDTO> dtos = new ArrayList<>();
+
+		for (Object[] result : results) {
+			ModeConsultationEnum mode = (ModeConsultationEnum) result[0];
+			Long count = (Long) result[1];
+			dtos.add(new ModeCountDTO(mode, count));
+		}
+
+		return ResponseEntity.ok(dtos);
+	}
+	/////////////
 
 }
 
