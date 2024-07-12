@@ -1,6 +1,8 @@
 package com.clinitalPlatform.controllers;
 
+import com.clinitalPlatform.dto.ModeCountDTO;
 import com.clinitalPlatform.dto.RendezvousDTO;
+import com.clinitalPlatform.enums.ModeConsultationEnum;
 import com.clinitalPlatform.enums.RdvStatutEnum;
 import com.clinitalPlatform.exception.BadRequestException;
 import com.clinitalPlatform.models.Medecin;
@@ -716,6 +718,51 @@ public class RdvController {
 
 	}
 
+	////////////CHART
+	/*@GetMapping("/count-by-mode")
+	@PreAuthorize("hasAuthority('ROLE_MEDECIN')")
+	public ResponseEntity<List<ModeCountDTO>> countRendezvousByMode() {
+		List<Object[]> results = rdvservice.getRendezvousCountByModeAndMonthYear();
+		List<ModeCountDTO> dtos = new ArrayList<>();
+
+		for (Object[] result : results) {
+			ModeConsultationEnum mode = (ModeConsultationEnum) result[0];
+			int year = (Integer) result[1];
+			int month = (Integer) result[2];
+			Long count = (Long) result[3];
+			dtos.add(new ModeCountDTO(mode, year, month, count));
+		}
+
+		return ResponseEntity.ok(dtos);
+	}*/
+
+	@GetMapping("/count-by-mode")
+	@PreAuthorize("hasAuthority('ROLE_MEDECIN')")
+	public ResponseEntity<List<ModeCountDTO>> countRendezvousByMode(
+			@RequestParam(value = "year", required = false) Integer year,
+			@RequestParam(value = "month", required = false) Integer month
+	) {
+		List<Object[]> results;
+		if (year != null && month != null) {
+			//to fetch data for actual month & year
+			results = rdvservice.getRendezvousCountByModeAndMonthYear(year, month);
+		} else {
+			results = rdvservice.getRendezvousCountByModeAndMonthYear();
+		}
+
+		List<ModeCountDTO> dtos = new ArrayList<>();
+
+		for (Object[] result : results) {
+			ModeConsultationEnum mode = (ModeConsultationEnum) result[0];
+			int resultYear = (Integer) result[1];
+			int resultMonth = (Integer) result[2];
+			Long count = (Long) result[3];
+			dtos.add(new ModeCountDTO(mode, resultYear, resultMonth, count));
+		}
+
+		return ResponseEntity.ok(dtos);
+	}
+	/////////////
 
 }
 
