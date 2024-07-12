@@ -719,15 +719,45 @@ public class RdvController {
 	}
 
 	////////////CHART
-	@GetMapping("/count-by-mode")
+	/*@GetMapping("/count-by-mode")
+	@PreAuthorize("hasAuthority('ROLE_MEDECIN')")
 	public ResponseEntity<List<ModeCountDTO>> countRendezvousByMode() {
-		List<Object[]> results = rdvservice.getRendezvousCountByMode();
+		List<Object[]> results = rdvservice.getRendezvousCountByModeAndMonthYear();
 		List<ModeCountDTO> dtos = new ArrayList<>();
 
 		for (Object[] result : results) {
 			ModeConsultationEnum mode = (ModeConsultationEnum) result[0];
-			Long count = (Long) result[1];
-			dtos.add(new ModeCountDTO(mode, count));
+			int year = (Integer) result[1];
+			int month = (Integer) result[2];
+			Long count = (Long) result[3];
+			dtos.add(new ModeCountDTO(mode, year, month, count));
+		}
+
+		return ResponseEntity.ok(dtos);
+	}*/
+
+	@GetMapping("/count-by-mode")
+	@PreAuthorize("hasAuthority('ROLE_MEDECIN')")
+	public ResponseEntity<List<ModeCountDTO>> countRendezvousByMode(
+			@RequestParam(value = "year", required = false) Integer year,
+			@RequestParam(value = "month", required = false) Integer month
+	) {
+		List<Object[]> results;
+		if (year != null && month != null) {
+			//to fetch data for actual month & year
+			results = rdvservice.getRendezvousCountByModeAndMonthYear(year, month);
+		} else {
+			results = rdvservice.getRendezvousCountByModeAndMonthYear();
+		}
+
+		List<ModeCountDTO> dtos = new ArrayList<>();
+
+		for (Object[] result : results) {
+			ModeConsultationEnum mode = (ModeConsultationEnum) result[0];
+			int resultYear = (Integer) result[1];
+			int resultMonth = (Integer) result[2];
+			Long count = (Long) result[3];
+			dtos.add(new ModeCountDTO(mode, resultYear, resultMonth, count));
 		}
 
 		return ResponseEntity.ok(dtos);
