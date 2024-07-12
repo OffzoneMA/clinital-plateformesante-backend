@@ -3,8 +3,10 @@ package com.clinitalPlatform.repository;
 import java.util.List;
 
 import com.clinitalPlatform.models.Langue;
+import com.clinitalPlatform.models.MedecinNetwork;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -23,7 +25,7 @@ public interface MedecinRepository extends JpaRepository<Medecin, Long> {
 	
 	@Query(value = "SELECT m.* FROM medecins m where m.nom_med = ?1 AND is_active = 1", nativeQuery = true)
 	List<Medecin> getMedecinByName(String nom_med);
-	
+
 	@Query(value = "SELECT m.* FROM medecins m, villes v WHERE m.ville_id_ville = v.id_ville AND"
 			+ " m.ville_id_ville = ?1 AND m.is_active = 1", nativeQuery = true)
 	List<Medecin> getMedecinByVille(Long id_ville);
@@ -80,5 +82,41 @@ public interface MedecinRepository extends JpaRepository<Medecin, Long> {
 	public List<Medecin> getAllMedecinsByCabinetName(String nomCabinet);
 
 	List<Medecin> findMedecinsByLangues_Name(String langueName);
+
+//-----------------------------------------------NETWORK------------------
+	@Query(value = "SELECT m.* FROM medecins m where id= ?1 AND is_active = 1", nativeQuery = true)
+	Medecin getMedecinById(Long id);
+
+
+	//	query to retrive all network
+	@Query(value = "SELECT m.* FROM medecins m INNER JOIN medecin_network on m.id = medecin_network.id_follower WHERE medecin_network.id_medecin = ?1", nativeQuery = true)
+	List<Medecin> getAllMedecinNetwork(long id_medecin) throws Exception;
+
+	// query to retrive a network
+	@Query(value = "SELECT m.* FROM medecins m INNER JOIN medecin_network on m.id = medecin_network.id_follower WHERE  medecin_network.id_medecin = :id_medecin AND medecin_network.id_follower= :id_follower", nativeQuery = true)
+	Medecin getMedecinsFollowerByID(@Param("id_medecin")Long id_medecin,@Param("id_follower") Long id_follower) throws Exception;
+
+
+
+	@Query(value = "SELECT m.* " +
+			"FROM medecins m " +
+			"INNER JOIN medecin_network mn ON m.id = mn.id_follower " +
+			"WHERE mn.id_medecin = :id_medecin AND mn.id_follower = :followerId",
+			nativeQuery = true)
+	Medecin findFollowerInNetwork(@Param("id_medecin") Long idMedecin, @Param("followerId") Long followerId);
+//-------------------------NETWORK FILTER--------------------------------
+
+	/*@Query(value = "SELECT m.* FROM medecins m, villes v WHERE m.ville_id_ville = v.id_ville AND"
+			+ " m.ville_id_ville = ?1 AND m.is_active = 1", nativeQuery = true)
+	List<Medecin> getMedecinNetworkByVille(Long id_ville);*/
+
+	@Query("SELECT m FROM Medecin m WHERE " +
+			"(m.ville.nom_ville = :ville OR :ville IS NULL) AND " +
+			"((m.nom_med LIKE %:search%) OR " +
+			"(m.specialite.libelle = :search AND m.specialite IS NOT NULL)) AND " +
+			"m.isActive = true")
+	List<Medecin> findByVilleAndSearch(@Param("ville") String ville,
+									   @Param("search") String search);
+
 }
 
