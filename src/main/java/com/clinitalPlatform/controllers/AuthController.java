@@ -200,10 +200,10 @@ public class AuthController {
             autService.updateLastLoginDate(userDetails.getId());
             activityServices.createActivity(new Date(), "Login", "Authentication reussi", user);
             LOGGER.info("Authentication reussi");
-            /*if(userDetails.getRole().equals(ERole.ROLE_MEDECIN)) {
+            if(userDetails.getRole().equals(ERole.ROLE_MEDECIN)) {
                 Demande demande = demandeService.findDemandeByConnectedUser(userDetails.getId());
                 return ResponseEntity.ok(new JwtResponse(accessToken, userDetails.getId(), userDetails.getEmail(), userDetails.getTelephone(), userDetails.getRole(),refreshToken,demande.getState()));	
-            }*/
+            }
             // Retourner la réponse avec le token JWT et les détails de l'utilisateur
             return ResponseEntity.ok(new JwtResponse(accessToken, userDetails.getId(), userDetails.getEmail(), userDetails.getTelephone(), userDetails.getRole(), refreshToken));
         } catch (UsernameNotFoundException e) {
