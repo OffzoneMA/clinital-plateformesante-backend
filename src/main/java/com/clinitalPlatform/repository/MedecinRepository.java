@@ -3,6 +3,7 @@ package com.clinitalPlatform.repository;
 import java.util.List;
 
 import com.clinitalPlatform.models.Langue;
+import com.clinitalPlatform.models.Patient;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import org.springframework.data.jpa.repository.Query;
@@ -78,6 +79,11 @@ public interface MedecinRepository extends JpaRepository<Medecin, Long> {
 
 	@Query(value = "SELECT m.* FROM medecins m INNER JOIN cabinet_medecins cm ON m.id = cm.medecin_id INNER JOIN cabinet c ON cm.cabinet_id = c.id_cabinet WHERE c.nom = ?1", nativeQuery = true)
 	public List<Medecin> getAllMedecinsByCabinetName(String nomCabinet);
+
+	@Query(value = "SELECT DISTINCT dc.patient_id FROM dossier_medecin d " +
+			"JOIN documents dc ON d.dossier_id = dc.id_dossier " +
+			"WHERE d.medecin_id = :idmed", nativeQuery = true)
+	List<Long> findPatientIdsByMedecinId(@Param("idmed") long idmed);
 
 	List<Medecin> findMedecinsByLangues_Name(String langueName);
 }

@@ -551,10 +551,14 @@ public class MedecinController {
 			activityServices.createActivity(new Date(), "Read", "Show All Rdv for Medecin",
 					globalVariables.getConnectedUser());
 			Medecin medecin = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
-			List<Patient> l=patientRepository.getallpatientofmed(medecin.getId());
+			List<Long> l=medrepository.findPatientIdsByMedecinId(medecin.getId());
+			List<Patient> patients = new ArrayList<>();
+			for (Long id : l) {
+			patientRepository.findById(id).ifPresent(patients::add);
+		}
 			LOGGER.info("Show All patients for Medecin, UserID : " + globalVariables.getConnectedUser().getId());
 
-			return l;
+			return patients;
 	}
 
 
