@@ -4,49 +4,39 @@ import com.clinitalPlatform.enums.ModeConsultationEnum;
 
 public class ModeCountDTO {
 
-    private ModeConsultationEnum mode;
-    private int year;
-    private int month;
-    private Long count;
+    private Long cabinetCount;
+    private Long videoCount;
+    private Long domicileCount;
 
-    // Constructor, getters, and setters
-    public ModeCountDTO(ModeConsultationEnum mode, int year, int month, Long count) {
-        this.mode = mode;
-        this.year = year;
-        this.month = month;
-        this.count = count;
+    public ModeCountDTO(Long cabinetCount, Long videoCount, Long domicileCount) {
+        this.cabinetCount = cabinetCount;
+        this.videoCount = videoCount;
+        this.domicileCount = domicileCount;
     }
 
-    public ModeConsultationEnum getMode() {
-        return mode;
+    public Long getCabinetCount() {
+        return cabinetCount;
+    }
+    public void setCabinetCount(Long cabinetCount) {
+        this.cabinetCount = cabinetCount;
     }
 
-    public void setMode(ModeConsultationEnum mode) {
-        this.mode = mode;
+
+
+    public Long getVideoCount() {
+        return videoCount;
     }
 
-    public int getYear() {
-        return year;
+    public void setVideoCount(Long videoCount) {
+        this.videoCount = videoCount;
     }
 
-    public void setYear(int year) {
-        this.year = year;
+    public Long getDomicileCount() {
+        return domicileCount;
     }
 
-    public int getMonth() {
-        return month;
-    }
-
-    public void setMonth(int month) {
-        this.month = month;
-    }
-
-    public Long getCount() {
-        return count;
-    }
-
-    public void setCount(Long count) {
-        this.count = count;
+    public void setDomicileCount(Long enfantCount) {
+        this.domicileCount = enfantCount;
     }
 }
 
