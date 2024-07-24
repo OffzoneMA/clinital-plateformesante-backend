@@ -1,6 +1,9 @@
 package com.clinitalPlatform.controllers;
 
+import com.clinitalPlatform.dto.ModeCountDTO;
+import com.clinitalPlatform.dto.PatientCountsDTO;
 import com.clinitalPlatform.dto.RendezvousDTO;
+import com.clinitalPlatform.enums.ModeConsultationEnum;
 import com.clinitalPlatform.enums.RdvStatutEnum;
 import com.clinitalPlatform.exception.BadRequestException;
 import com.clinitalPlatform.models.Medecin;
@@ -32,6 +35,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -718,6 +722,148 @@ public class RdvController {
 
 	}
 
+	////////////CHART
+	/*@GetMapping("/count-by-mode")
+	@PreAuthorize("hasAuthority('ROLE_MEDECIN')")
+	public ResponseEntity<List<ModeCountDTO>> countRendezvousByMode() {
+		List<Object[]> results = rdvservice.getRendezvousCountByModeAndMonthYear();
+		List<ModeCountDTO> dtos = new ArrayList<>();
+
+		for (Object[] result : results) {
+			ModeConsultationEnum mode = (ModeConsultationEnum) result[0];
+			int year = (Integer) result[1];
+			int month = (Integer) result[2];
+			Long count = (Long) result[3];
+			dtos.add(new ModeCountDTO(mode, year, month, count));
+		}
+
+		return ResponseEntity.ok(dtos);
+	}*/
+
+	/*@GetMapping("/count-by-mode")
+	@PreAuthorize("hasAuthority('ROLE_MEDECIN')")
+	public ResponseEntity<List<ModeCountDTO>> countRendezvousByMode(
+			@RequestParam(value = "year", required = false) Integer year,
+			@RequestParam(value = "month", required = false) Integer month
+	) {
+		List<Object[]> results;
+		if (year != null && month != null) {
+			//to fetch data for actual month & year
+			results = rdvservice.getRendezvousCountByModeAndMonthYear(year, month);
+		} else {
+			results = rdvservice.getRendezvousCountByModeAndMonthYear();
+		}
+
+		List<ModeCountDTO> dtos = new ArrayList<>();
+
+		for (Object[] result : results) {
+			ModeConsultationEnum mode = (ModeConsultationEnum) result[0];
+			int resultYear = (Integer) result[1];
+			int resultMonth = (Integer) result[2];
+			Long count = (Long) result[3];
+			dtos.add(new ModeCountDTO(mode, resultYear, resultMonth, count));
+		}
+		return ResponseEntity.ok(dtos);
+	}*/
+
+	/*@GetMapping("/count-by-mode")
+	@PreAuthorize("hasAuthority('ROLE_MEDECIN')")
+	public ResponseEntity<List<ModeCountDTO>> countRendezvousByMode(
+			@RequestParam(value = "year") int year,
+			@RequestParam(value = "month") int month
+	) {
+		List<Object[]> results = rdvservice.getRendezvousCountByModeAndMonthYear(year, month);
+
+		List<ModeCountDTO> dtos = new ArrayList<>();
+
+		if (!results.isEmpty()) {
+			for (Object[] result : results) {
+				ModeConsultationEnum mode = (ModeConsultationEnum) result[0];
+				Long count = 0L;
+
+				if (result[3] != null) {
+					count = (Long) result[3];
+				}
+
+				dtos.add(new ModeCountDTO(mode, resultYear, resultMonth, count));
+			}
+		} else {
+			// Si aucun résultat, ajouter des valeurs par défaut pour chaque mode de consultation
+			for (ModeConsultationEnum mode : ModeConsultationEnum.values()) {
+				dtos.add(new ModeCountDTO(mode, year, month, 0L));
+			}
+		}
+
+		return ResponseEntity.ok(dtos);
+	}*/
+
+	@GetMapping("/count-by-mode")
+	@PreAuthorize("hasAuthority('ROLE_MEDECIN')")
+	public ResponseEntity<ModeCountDTO> countRendezvousByMode(@RequestParam int month, @RequestParam int year) {
+		List<Object[]> results = rdvservice.getRendezvousCountByModeAndMonthYear(year, month);
+		Long cabinetCount = 0L;
+		Long videoCount = 0L;
+		Long domicileCount = 0L;
+
+		if (!results.isEmpty()) {
+			Object[] counts = results.get(0);
+
+			if (counts[0] != null) {
+				cabinetCount = ((BigDecimal) counts[0]).longValue();
+			}
+			if (counts[1] != null) {
+				videoCount = ((BigDecimal) counts[1]).longValue();
+			}
+			if (counts[2] != null) {
+				domicileCount = ((BigDecimal) counts[2]).longValue();
+			}
+		}
+
+		ModeCountDTO patientCounts = new ModeCountDTO(cabinetCount, videoCount, domicileCount);
+		return ResponseEntity.ok(patientCounts);
+	}
+
+	@GetMapping("/patientCounts")
+	@PreAuthorize("hasAuthority('ROLE_MEDECIN')")
+	public ResponseEntity<PatientCountsDTO> getPatientCounts(@RequestParam int month, @RequestParam int year) {
+		List<Object[]> results = rdvservice.countsByCiviliteAndAge(month, year);
+		Long femmeCount = 0L;
+		Long hommeCount = 0L;
+		Long enfantCount = 0L;
+
+		if (!results.isEmpty()) {
+			Object[] counts = results.get(0);
+
+			if (counts[0] != null) {
+				femmeCount = ((BigDecimal) counts[0]).longValue();
+			}
+			if (counts[1] != null) {
+				hommeCount = ((BigDecimal) counts[1]).longValue();
+			}
+			if (counts[2] != null) {
+				enfantCount = ((BigDecimal) counts[2]).longValue();
+			}
+		}
+
+		PatientCountsDTO patientCounts = new PatientCountsDTO(femmeCount, hommeCount, enfantCount);
+		return ResponseEntity.ok(patientCounts);
+	}
+	/*public ResponseEntity<PatientCountsDTO> getPatientCounts() {
+
+		List<Object[]> results = rdvservice.countsByCiviliteAndAge();
+		PatientCountsDTO patientCounts = null;
+
+		if (!results.isEmpty()) {
+			Object[] counts = results.get(0);
+			Long femmeCount = ((BigDecimal) counts[0]).longValue();
+			Long hommeCount = ((BigDecimal) counts[1]).longValue();
+			Long enfantCount = ((BigDecimal) counts[2]).longValue();
+			patientCounts = new PatientCountsDTO(femmeCount, hommeCount, enfantCount);
+		}
+
+		return ResponseEntity.ok(patientCounts);
+	}*/
+	/////////////
 
 }
 

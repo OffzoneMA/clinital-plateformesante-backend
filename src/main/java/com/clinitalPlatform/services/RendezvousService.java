@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -617,7 +618,26 @@ public class RendezvousService implements IDao<Rendezvous>  {
 //		return rdvDtos;
 //	}
 
+////////////CHART
+	@Autowired
+	private ChartRepository chartRepository;
 
+	public List<Object[]> getRendezvousCountByModeAndMonthYear() {
+		return chartRepository.countRendezvousByModeAndMonthYear();
+	}
+
+	public List<Object[]> getRendezvousCountByModeAndMonthYear(int year, int month) {
+		return chartRepository.countRendezvousByModeAndMonthYear(year, month);
+	}
+
+	/*public List<Object[]> countsByCiviliteAndAge() {
+		return chartRepository.getCountsByCiviliteAndAge();
+	}*/
+	public List<Object[]> countsByCiviliteAndAge(int month, int year) {
+		return chartRepository.getCountsByCiviliteAndAge(month, year);
+	}
+
+////////////////
 
 }
 
