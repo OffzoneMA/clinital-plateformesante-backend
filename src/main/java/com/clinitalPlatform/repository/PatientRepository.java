@@ -5,9 +5,11 @@ import java.util.Optional;
 
 import com.clinitalPlatform.enums.PatientTypeEnum;
 import com.clinitalPlatform.models.Patient;
+import com.clinitalPlatform.models.Rendezvous;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -51,6 +53,8 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
    List<Patient> getMedecinPatients(long id_med);
    @Query(value = "SELECT DISTINCT  p.* FROM patients p , rendezvous r WHERE r.medecin=:id_med",nativeQuery = true)
    List<Patient> getallpatientofmed(long id_med);
+
+
    // Query for getting a patient of a medecin
    @Query(value="SELECT p.* FROM patients p , dossiers d, dossier_medecin dm WHERE p.id_dossier=d.id_dossier and d.id_dossier=dm.dossier_id AND dm.medecin_id = :id_med AND p.id = :id_patient",nativeQuery=true)
    Patient getPatient(long id_med, long id_patient);

@@ -69,7 +69,10 @@ public class MedecinServiceImpl implements MedecinService {
 
 
     private final Logger LOGGER=LoggerFactory.getLogger(getClass());
-@Override
+    @Autowired
+    private RdvRepository rdvRepository;
+
+    @Override
 public Medecin findById(Long id) throws Exception {
 
         Medecin med = medecinRepository.findById(id).orElseThrow(() -> new Exception("Medecin not found"));
@@ -264,6 +267,34 @@ LOGGER.info(med.toString());
     }
 
 
+    public List<Patient> findPatientsByMedecinId(Long medecinId) {
+        List<Long> l=medecinRepository.findPatientIdsByMedecinId(medecinId);
+        List<Patient> patients = new ArrayList<>();
+        for (Long id : l) {
+            patientRepository.findById(id).ifPresent(patients::add);
+        }
+
+        return patients ;
+    }
+    public List<Rendezvous> getAllRdvsforpatient() throws Exception {
+
+        Medecin medecin = medecinRepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+        List<Long> patientIds = medecinRepository.findPatientIdsByMedecinId(medecin.getId());
+
+        List<Rendezvous> rdvs = new ArrayList<>();
+        if (!patientIds.isEmpty()) {
+            List<Long> rdvIds = medecinRepository.findRdvIdsByPatientIds(patientIds);
+            rdvs = rdvRepository.findAllById(rdvIds);
+        }
+
+        LOGGER.info("Show All Rdvs for Medecin, UserID : " + globalVariables.getConnectedUser().getId());
+
+        return rdvs;
+    }
+
+    public Long getDistinctMedecinsCountByPatientId(Long patientId) {
+        return medecinRepository.NumberMedecinsByPatientId(patientId);
+    }
 
 
 }

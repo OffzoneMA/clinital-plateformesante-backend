@@ -103,6 +103,10 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 	@Query(value = "SELECT r.* FROM rendezvous r , patients p WHERE r.patient= p.id and p.nom_pat=?1 and p.user_id=?2", nativeQuery = true)
 	List<Rendezvous> getRdvByNomPatient(String nom_pat, long IdUser);
 
+
+	@Query(value = "SELECT r.* FROM rendezvous r  WHERE r.patient= :id ", nativeQuery = true)
+	List<Rendezvous> getRdvByIdPatient(@Param("id") long id);
+
 	// get RDV by Patient Name : ROLE Medecin
 	@Query(value = "SELECT r.* FROM rendezvous r , patients p WHERE r.patient= p.id and p.nom_pat=?1 and r.medecin=?2", nativeQuery = true)
 	List<Rendezvous> getRdvByNomPatientByMedecin(String nom_pat, long IdMed);
@@ -175,6 +179,11 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 //	int findPatientsByMedcin(@Param("idmed") long idmed);
 	@Query(value = "SELECT COUNT(DISTINCT dc.patient_id) AS nombre_patients FROM dossier_medecin d JOIN documents dc ON d.dossier_id = dc.id_dossier  WHERE d.medecin_id = :idmed GROUP BY d.medecin_id", nativeQuery = true)
 	int findPatientsByMedcin(@Param("idmed") long idmed);
+
+
+	@Query(value = "SELECT * FROM rendezvous r WHERE r.patient = :patientId AND r.medecin = :medecinId", nativeQuery = true)
+	List<Rendezvous> findRdvByPatientAndMedecin(@Param("patientId") long patientId, @Param("medecinId") long medecinId);
+
 
 
 

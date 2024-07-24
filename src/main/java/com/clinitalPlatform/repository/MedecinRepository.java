@@ -85,6 +85,14 @@ public interface MedecinRepository extends JpaRepository<Medecin, Long> {
 			"WHERE d.medecin_id = :idmed", nativeQuery = true)
 	List<Long> findPatientIdsByMedecinId(@Param("idmed") long idmed);
 
+	@Query(value = "SELECT DISTINCT dc.rdv_id FROM documents dc WHERE dc.patient_id IN :patientIds", nativeQuery = true)
+	List<Long> findRdvIdsByPatientIds(@Param("patientIds") List<Long> patientIds);
+
 	List<Medecin> findMedecinsByLangues_Name(String langueName);
+
+
+
+	@Query("SELECT COUNT(DISTINCT r.medecin) FROM Rendezvous r WHERE r.patient.id = :patientId")
+	Long NumberMedecinsByPatientId(@Param("patientId") Long patientId);
 }
 

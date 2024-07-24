@@ -22,6 +22,7 @@ import com.clinitalPlatform.util.GlobalVariables;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 
 import org.slf4j.Logger;
@@ -79,7 +80,10 @@ public class MedecinController {
 	
 	@Autowired
 	private MedecinServiceImpl medecinService;
-	
+
+	@Autowired
+	private RdvRepository rdvRepository;
+
 	@Autowired
 	MedecinRepository medrepository;
 	@Autowired
@@ -551,16 +555,65 @@ public class MedecinController {
 			activityServices.createActivity(new Date(), "Read", "Show All Rdv for Medecin",
 					globalVariables.getConnectedUser());
 			Medecin medecin = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
-			List<Long> l=medrepository.findPatientIdsByMedecinId(medecin.getId());
-			List<Patient> patients = new ArrayList<>();
-			for (Long id : l) {
-			patientRepository.findById(id).ifPresent(patients::add);
-		}
+			List<Patient> patients = medecinService.findPatientsByMedecinId(medecin.getId());
 			LOGGER.info("Show All patients for Medecin, UserID : " + globalVariables.getConnectedUser().getId());
 
 			return patients;
 	}
+	@GetMapping("/getallpatientsbyrdv")
+	Iterable <Patient> getallpatientsByRdv() throws Exception {
+		activityServices.createActivity(new Date(), "Read", "Show All Rdv for Medecin",
+				globalVariables.getConnectedUser());
+		Medecin medecin = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+		List<Patient> l=patientRepository.getallpatientofmed(medecin.getId());
 
+
+		LOGGER.info("Show All patients for Medecin, UserID : " + globalVariables.getConnectedUser().getId());
+
+		return l;
+	}
+
+	@GetMapping("/getallrdvbypat")
+	public List<Rendezvous> getAllRdvsForMedecin() throws Exception {
+		return medecinService.getAllRdvsforpatient();
+	}
+	@GetMapping("/getPatient/{id}")
+	public Patient getPatient(@Valid @PathVariable Long id) throws Exception {
+		return patientRepository.getById(id);
+	}
+
+
+	@GetMapping("patient/rdvByIdPatient/{idpat}")
+	@ResponseBody
+	@PreAuthorize("hasAuthority('ROLE_MEDECIN')")
+
+	public List<Rendezvous> findRdvByIdPatient(@PathVariable(value = "idpat") @NotNull long idpat) throws Exception {
+		// UserDetailsImpl userDetails = (UserDetailsImpl)
+		// SecurityContextHolder.getContext().getAuthentication()
+		// .getPrincipal();
+		activityServices.createActivity(new Date(), "Read",
+				"Consulting rdv for Patient by Patient id : " + idpat, globalVariables.getConnectedUser());
+		LOGGER.info("Consulting Rdv for Patient by Patient id : " + idpat );
+		return rdvRepository.getRdvByIdPatient(idpat);
+	}
+
+
+
+
+	@GetMapping("/patients/getnumberofMedecin/{patientId}")
+	@PreAuthorize("hasAuthority('ROLE_MEDECIN')")
+	public ResponseEntity<Map<String, Long>> getDistinctMedecinsCount(@PathVariable(value = "patientId") @NotNull long patientId) throws Exception {
+
+		long numberofdoc = medecinService.getDistinctMedecinsCountByPatientId(patientId);
+		LOGGER.info("Consulting numbers of doc : " + patientId + " is " + numberofdoc);
+
+		// Create a response map
+		Map<String, Long> response = new HashMap<>();
+		response.put("numberOfDoctors", numberofdoc);
+
+		// Return the response wrapped in a ResponseEntity
+		return ResponseEntity.ok(response);
+	}
 
 
 
@@ -973,6 +1026,7 @@ public class MedecinController {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
 		}
 	}
+
 
 
 }
