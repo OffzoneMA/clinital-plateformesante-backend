@@ -604,5 +604,18 @@ public class AuthController {
 
         }
     }
-
+	@PostMapping("/checkPassword")
+	@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_PATIENT')")
+	public ResponseEntity<?> checkPassword(@Valid @RequestBody String password)throws Exception {
+		User user = userRepository.getById(globalVariables.getConnectedUser().getId());
+	    
+	    // Vérifier si le mot de passe fourni correspond au mot de passe de l'utilisateur connecté
+	    boolean passwordMatch = encoder.matches(password, user.getPassword());
+	    
+	    if (passwordMatch) {
+	        return ResponseEntity.ok(new ApiResponse(true, "Password matches"));
+	    } else {
+	        return ResponseEntity.ok(new ApiResponse(false, "Password does not match"));
+	    }
+	}
 }

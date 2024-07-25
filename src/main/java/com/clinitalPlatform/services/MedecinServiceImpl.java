@@ -81,7 +81,7 @@ public Medecin findById(Long id) throws Exception {
 public Medecin getMedecinByUserId(long id) throws Exception {
 
         Medecin med = medecinRepository.getMedecinByUserId(id);
-LOGGER.info(med.toString());
+
         return clinitalModelMapper.map(med, Medecin.class);
         }
 
