@@ -556,9 +556,10 @@ public class RendezvousService implements IDao<Rendezvous>  {
 
 
 	// Checking if a patient has a rendezvous with a doctor today.
-	public Boolean isHasRdvToday(Long spec,LocalDate date) throws Exception{
+	public Boolean isHasRdvToday(Long spec,LocalDate date,Long idpat) throws Exception{
 		try {
-			List<Rendezvous> rdv= rdvrepo.findRdvBySpecInDate(spec, date);
+			List<Rendezvous> rdv= rdvrepo.findRdvByPatientandSpecInDate(idpat,spec, date);
+			System.out.println(mapper.map(rdv, Rendezvous.class));
 
 			if(rdv.isEmpty()){
 				return false;
