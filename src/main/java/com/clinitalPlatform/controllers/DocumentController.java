@@ -73,16 +73,18 @@ public class DocumentController {
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     Iterable<DocumentResponse> documents() throws Exception {
 
-        Optional<Patient> patient = patientRepo.findById(globalVariables.getConnectedUser().getId());
+
+        Optional<Patient> patient = patientRepo.findByUserIdAndPatientType(globalVariables.getConnectedUser().getId());
+
 
         // Verify if the list of patient is empty
         if (!patient.isPresent()) {
             return Collections.emptyList();
-        }else {
+        } else {
 
             activityServices.createActivity(new Date(), "Read", "Consulting all Documents", globalVariables.getConnectedUser());
             LOGGER.info("Consulting All documents By User ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
-            return docrepository.findByPatientId(patient.get().getId())
+            return docrepository.getMyDocs(globalVariables.getConnectedUser().getId())
                     .stream().map(document -> mapper.map(document, DocumentResponse.class)).collect(Collectors.toList());
         }
     }
@@ -285,13 +287,13 @@ public class DocumentController {
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     Iterable<DocumentResponse> getDocProchPatientId() throws Exception {
 
-        Optional<Patient> patient = patientRepo.findById(globalVariables.getConnectedUser().getId());
+        Optional<Patient> patient = patientRepo.findByUserIdAndPatientType(globalVariables.getConnectedUser().getId());
 
         if (!patient.isPresent()) {
             return Collections.emptyList();
         }else {
 
-            List<Document> documents = docrepository.getDocPatientPROCH(patient.get().getId());
+            List<Document> documents = docrepository.getDocPatientPROCH(globalVariables.getConnectedUser().getId());
 
             if(documents.isEmpty()){
                 return Collections.emptyList();
