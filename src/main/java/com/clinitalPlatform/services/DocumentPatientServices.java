@@ -36,7 +36,7 @@ public class DocumentPatientServices {
         try {
 
             ObjectMapper om = new ObjectMapper();
-			 
+			
             DocumentRequest documentReq = om.readValue(document, DocumentRequest.class);
             Patient patient = patientRepo.findById(documentReq.getPatientId()).orElseThrow(()->new Exception("No Matching Patient found"));
             //Rendezvous rendezvous =  rdvRepository.findById(documentReq.getRdvId()).orElseThrow(()->new Exception("No Matching RDV found"));

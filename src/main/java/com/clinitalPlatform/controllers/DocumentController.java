@@ -351,12 +351,12 @@ public class DocumentController {
                 return ResponseEntity.ok(new ApiResponse(true, "Unarchive"));
 
             } else if(!document.get().getArchived() && archive) { //to archive document
-                    document.get().setArchived(archive);
-                    docrepository.save(document.get());
-                    activityServices.createActivity(new Date(), "Update", "Archive document with ID: " + docId, globalVariables.getConnectedUser());
-                    LOGGER.info("Archive document with ID :" + docId + " by User with ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
-                    return ResponseEntity.ok(new ApiResponse(true, "Archive"));
-                }
+                document.get().setArchived(archive);
+                docrepository.save(document.get());
+                activityServices.createActivity(new Date(), "Update", "Archive document with ID: " + docId, globalVariables.getConnectedUser());
+                LOGGER.info("Archive document with ID :" + docId + " by User with ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+                return ResponseEntity.ok(new ApiResponse(true, "Archive"));
+            }
 
 
             LOGGER.info("Archive / Unarchive a document failed by User with ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));

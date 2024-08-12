@@ -3,6 +3,7 @@ package com.clinitalPlatform.services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
@@ -20,6 +21,8 @@ public class EmailSenderService {
 	private JavaMailSender javaMailSender;
 
 	private final Logger LOGGER=LoggerFactory.getLogger(getClass());
+	@Value("${front.url}")
+	private String frontUrl;
 
 
 
@@ -157,7 +160,7 @@ public class EmailSenderService {
 	public void sendResetPasswordMail(String userEmail, String resetToken) {
 		try {
 			SimpleMailMessage mailMessage = new SimpleMailMessage();
-			String resetPasswordUrl = "http://localhost:3000/login/reinitialize-password?reset=" + resetToken;
+			String resetPasswordUrl =frontUrl+ "/login/reinitialize-password?reset=" + resetToken;
 
 			mailMessage.setTo(userEmail);
 			mailMessage.setFrom("clinitalcontact@gmail.com");

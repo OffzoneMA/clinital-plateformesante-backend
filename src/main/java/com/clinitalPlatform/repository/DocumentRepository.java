@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 @Repository
@@ -40,9 +41,6 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 	@Query(value = "SELECT d FROM Document d JOIN FETCH d.patient p WHERE p.patient_type = 'PROCHE' AND p.user.id = ?1")
 	List<Document> getDocPatientPROCH(Long userId);
 
-	@Query(value = "SELECT d FROM Document d JOIN FETCH d.patient p WHERE p.patient_type = 'MOI' AND p.user.id = ?1")
-	List<Document> getMyDocs(Long userId);
-
 	@Query(value = "SELECT d.* FROM documents d, patients p WHERE d.patient_id=p.id AND p.patient_type='MOI' AND d.patient_id= ?1", nativeQuery = true)
 	List<Document> getDocPatientMOI(Long patientId);
 
@@ -53,4 +51,6 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 	List<Patient> getMeAndMesProches(@Param("userId") Long userId);
 
 
+	@Query(value = "SELECT d FROM Document d JOIN FETCH d.patient p WHERE p.patient_type = 'MOI' AND p.user.id = ?1")
+	List<Document> getMyDocs(Long userId);
 }

@@ -617,9 +617,11 @@ public class RdvController {
 	Iterable<Rendezvous> rendezvousForMedecin() throws Exception {
 		activityServices.createActivity(new Date(), "Read", "Show All Rdv for Medecin",
 				globalVariables.getConnectedUser());
-		LOGGER.info("Show All Rdv for Medecin, UserID : " + globalVariables.getConnectedUser().getId());
 		Medecin medecin = medRepo.getMedecinByUserId(globalVariables.getConnectedUser().getId());
-		return rdvrepository.findByAllRdvByMedecin(medecin.getId());
+		List<Rendezvous> l=rdvrepository.findByAllRdvByMedecin(medecin.getId());
+		LOGGER.info("Show All Rdv for Medecin, UserID : " + globalVariables.getConnectedUser().getId());
+
+		return l;
 	}
 
 //	@PostMapping(path = "/uploadDocRdv")

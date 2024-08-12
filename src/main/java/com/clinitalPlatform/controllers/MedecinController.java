@@ -70,6 +70,8 @@ public class MedecinController {
 	
 	@Autowired
 	MedecinRepository medrepository;
+	@Autowired
+	PatientRepository patientRepository;
 	
 	@Autowired
 	private CabinetRepository cabrepos;
@@ -142,7 +144,28 @@ public class MedecinController {
 		return medrepository.findAll().stream().filter(med->med.getIsActive()==true).collect(Collectors.toList());
 
 	}
-	
+
+//Recuperer touts les medecins de la plateforme en priorisant ceux de Casablanca
+	@GetMapping("/allmedecins")
+	@JsonSerialize(using = LocalDateTimeSerializer.class)
+	public Iterable<Medecin> allmedecins() throws Exception {
+		return medrepository.findAll().stream()
+				.filter(Medecin::getIsActive)  // Filtrer seulement les médecins actifs
+				.sorted((med1, med2) -> {
+					// Trier par priorité à Casablanca
+					String ville1 = med1.getVille().getNom_ville();
+					String ville2 = med2.getVille().getNom_ville();
+					if (ville1.equalsIgnoreCase("Casablanca") && !ville2.equalsIgnoreCase("Casablanca")) {
+						return -1; // med1 est avant med2
+					} else if (!ville1.equalsIgnoreCase("Casablanca") && ville2.equalsIgnoreCase("Casablanca")) {
+						return 1;  // med2 est avant med1
+					} else {
+						return 0;  // ils sont égaux en priorité
+					}
+				})
+				.collect(Collectors.toList());
+	}
+
 	// Get Medecin By Id : %OK%
 	/*@GetMapping("/medById/{id}")
 	public ResponseEntity<Medecin> getMedecinById(@PathVariable(value="id") Long id) throws Exception {
@@ -534,6 +557,23 @@ public class MedecinController {
 
 		return ResponseEntity.ok(specialiteService.findAll());
 	}
+	@GetMapping("/getallpatients")
+	Iterable <Patient> getallpatients() throws Exception {
+			activityServices.createActivity(new Date(), "Read", "Show All Rdv for Medecin",
+					globalVariables.getConnectedUser());
+			Medecin medecin = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+			List<Long> l=medrepository.findPatientIdsByMedecinId(medecin.getId());
+			List<Patient> patients = new ArrayList<>();
+			for (Long id : l) {
+			patientRepository.findById(id).ifPresent(patients::add);
+		}
+			LOGGER.info("Show All patients for Medecin, UserID : " + globalVariables.getConnectedUser().getId());
+
+			return patients;
+	}
+
+
+
 
 	// Get all medecins ... : %OK%
 
