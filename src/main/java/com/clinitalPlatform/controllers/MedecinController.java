@@ -144,7 +144,28 @@ public class MedecinController {
 		return medrepository.findAll().stream().filter(med->med.getIsActive()==true).collect(Collectors.toList());
 
 	}
-	
+
+//Recuperer touts les medecins de la plateforme en priorisant ceux de Casablanca
+	@GetMapping("/allmedecins")
+	@JsonSerialize(using = LocalDateTimeSerializer.class)
+	public Iterable<Medecin> allmedecins() throws Exception {
+		return medrepository.findAll().stream()
+				.filter(Medecin::getIsActive)  // Filtrer seulement les médecins actifs
+				.sorted((med1, med2) -> {
+					// Trier par priorité à Casablanca
+					String ville1 = med1.getVille().getNom_ville();
+					String ville2 = med2.getVille().getNom_ville();
+					if (ville1.equalsIgnoreCase("Casablanca") && !ville2.equalsIgnoreCase("Casablanca")) {
+						return -1; // med1 est avant med2
+					} else if (!ville1.equalsIgnoreCase("Casablanca") && ville2.equalsIgnoreCase("Casablanca")) {
+						return 1;  // med2 est avant med1
+					} else {
+						return 0;  // ils sont égaux en priorité
+					}
+				})
+				.collect(Collectors.toList());
+	}
+
 	// Get Medecin By Id : %OK%
 	/*@GetMapping("/medById/{id}")
 	public ResponseEntity<Medecin> getMedecinById(@PathVariable(value="id") Long id) throws Exception {
