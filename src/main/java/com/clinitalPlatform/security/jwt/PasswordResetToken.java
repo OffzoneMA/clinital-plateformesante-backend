@@ -38,7 +38,7 @@ public class PasswordResetToken {
     public PasswordResetToken(User user) {
         this.user = user;
         createdDate = new Date();
-        expiryDate = calculateExpiryDate(20); // 10 minutes expiry, adjust as needed
+        expiryDate = calculateExpiryDate(10); // 10 minutes expiry, adjust as needed
         resetToken = UUID.randomUUID().toString();
     }
 
