@@ -126,5 +126,8 @@ public interface MedecinRepository extends JpaRepository<Medecin, Long> {
 	List<Medecin> findByVilleAndSearch(@Param("ville") String ville,
 									   @Param("search") String search);
 
+	@Query("SELECT m FROM Medecin m WHERE UPPER(m.nom_med) LIKE CONCAT(:lettre, '%')")
+	List<Medecin> getMedecinByNameStartingWith(@Param("lettre") String lettre);
+
 }
 

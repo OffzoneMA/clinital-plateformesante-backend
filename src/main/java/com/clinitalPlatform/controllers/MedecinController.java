@@ -1284,5 +1284,29 @@ public class MedecinController {
 
 
 //------------------------------------------------------------------------------------------------------------------
+@GetMapping("/medByLetter")
+@ResponseBody
+public ResponseEntity<List<Medecin>> findMedByLetter(@RequestParam String lettre) throws Exception {
+	// Valider la lettre
+	if (lettre == null || lettre.length() != 1) {
+		return ResponseEntity.badRequest().body(null);
+	}
+
+	// Récupérer les médecins dont le nom commence par la lettre spécifiée
+	List<Medecin> medecins = medrepository.getMedecinByNameStartingWith(lettre.toUpperCase())
+			.stream()
+			.filter(Medecin::getIsActive) // Filtrer uniquement les médecins actifs
+			.collect(Collectors.toList());
+
+	// Pour chaque médecin trouvé, récupérer les langues et tarifs associés
+	for (Medecin medecin : medecins) {
+		List<Langue> langues = medecinService.getLanguesByMedecinName(medecin.getNom_med());
+		medecin.setLangues(langues);
+		List<Tarif> tarifs = medecinService.getTarifByMedecinName(medecin.getNom_med());
+		medecin.setTarifs(tarifs);
+	}
+
+	return ResponseEntity.ok(medecins);
+}
 
 }
