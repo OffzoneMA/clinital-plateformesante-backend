@@ -84,6 +84,7 @@ public class WebSecurityConfig {
                 "/api/med/medecins/schedules/filter",
                 "/api/med/byLangue/**",
                 "/api/med/allmedecins/**",
+                "/api/med/medByLetter/**",
     			"/api/ville/**",
     			"/api/specialites/**",
                 "/api/langues/**",
