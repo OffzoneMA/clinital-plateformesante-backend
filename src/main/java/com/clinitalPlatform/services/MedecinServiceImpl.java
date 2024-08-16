@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 
+import com.clinitalPlatform.enums.MotifConsultationEnum;
 import com.clinitalPlatform.enums.RdvStatutEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +65,8 @@ public class MedecinServiceImpl implements MedecinService {
 
     @Autowired
     MedecinScheduleRepository medecinScheduleRepository;
-
+    @Autowired
+    MotifConsultationRepository motifConsultationRepository;
 
 
 
@@ -263,6 +265,28 @@ LOGGER.info(med.toString());
         return filteredMedecins;
     }
 
+//RECHERCHE DE MEDECIN PAR MOTIF
+
+    public List<Medecin> getMedecinsByMotif(List<String> libelles, List<Long> medecinIds) {
+        // Récupérer les IDs des motifs à partir des libellés
+        List<Long> motifIds = motifConsultationRepository.findIdsByLibelles(libelles);
+
+        // Trouver les médecins dont les schedules ont les IDs de motifs recherchés
+        List<MedecinSchedule> schedules = medecinScheduleRepository.findByMotifConsultationIdIn(motifIds);
+
+        // Extraire les IDs des médecins à partir des schedules
+        Set<Long> filteredMedecinIds = schedules.stream()
+                .map(schedule -> schedule.getMedecin().getId())
+                .collect(Collectors.toSet());
+
+        // Filtrer les médecins par les IDs donnés
+        Set<Long> finalMedecinIds = filteredMedecinIds.stream()
+                .filter(medecinIds::contains)
+                .collect(Collectors.toSet());
+
+        // Récupérer les médecins par leurs IDs filtrés
+        return medecinRepository.findAllById(finalMedecinIds);
+    }
 
 
 

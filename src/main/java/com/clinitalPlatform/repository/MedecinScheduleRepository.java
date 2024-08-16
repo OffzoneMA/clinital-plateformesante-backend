@@ -1,5 +1,6 @@
 package com.clinitalPlatform.repository;
 
+import com.clinitalPlatform.enums.MotifConsultationEnum;
 import com.clinitalPlatform.models.MedecinSchedule;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -60,4 +61,9 @@ public interface MedecinScheduleRepository extends JpaRepository<MedecinSchedule
 
     @Query(value = "SELECT * FROM medecin_schedule WHERE medecin_id = :medecinId AND DAYOFWEEK(day) = :dayOfWeek", nativeQuery = true)
     List<MedecinSchedule> findSchedulesForWeekday(@Param("medecinId") Long medecinId, @Param("dayOfWeek") int dayOfWeek);
+
+//Recherche medecin par motif de consultation
+    List<MedecinSchedule> findByMotifConsultation_Motif(MotifConsultationEnum motif);
+    @Query("SELECT ms FROM MedecinSchedule ms JOIN ms.motifConsultation mc WHERE mc.id IN :idsMotifs")
+    List<MedecinSchedule> findByMotifConsultationIdIn(@Param("idsMotifs") List<Long> idsMotifs);
 }
