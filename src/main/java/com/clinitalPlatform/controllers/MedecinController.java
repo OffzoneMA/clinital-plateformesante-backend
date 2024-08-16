@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import javax.validation.Valid;
 
 import com.clinitalPlatform.dto.*;
+import com.clinitalPlatform.enums.MotifConsultationEnum;
 import com.clinitalPlatform.exception.BadRequestException;
 import com.clinitalPlatform.models.*;
 import com.clinitalPlatform.payload.request.*;
@@ -1308,5 +1309,28 @@ public ResponseEntity<List<Medecin>> findMedByLetter(@RequestParam String lettre
 
 	return ResponseEntity.ok(medecins);
 }
+
+//RECHERCHE DE MEDECIN PAR MOTIF
+
+	@PostMapping("/by_motif_consultation")
+	public ResponseEntity<List<Medecin>> getMedecinsByMotif(@RequestBody MotifRequest motifRequest) {
+		try {
+			List<String> libellesMotifs = motifRequest.getLibellesMotifs();
+			List<Long> medecinIds = motifRequest.getMedecinIds(); //recuperation des iDS DES MEDECINS
+
+			// Appeler le service pour obtenir les médecins filtrés par motifs
+			List<Medecin> medecins = medecinService.getMedecinsByMotif(libellesMotifs, medecinIds);
+
+			// Vérifiez si des médecins ont été trouvés
+			if (medecins.isEmpty()) {
+				return ResponseEntity.ok(new ArrayList<Medecin>());
+			}
+
+			return ResponseEntity.ok(medecins);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+		}
+	}
+
 
 }
