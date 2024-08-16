@@ -339,22 +339,29 @@ public class RdvController {
 	// Get Rdv For connected Patient : %OK%
 	@GetMapping("/rdvs/patient")
 	List<Rendezvous> rendezvousForPatient() throws Exception {
-		// UserDetailsImpl userDetails = (UserDetailsImpl)
-		// SecurityContextHolder.getContext().getAuthentication()
-		// .getPrincipal();
+		// Retrieve the list of patients by user ID
 		List<Patient> patients = patientRepo.getPatientByUserId(globalVariables.getConnectedUser().getId());
-		List<Rendezvous> rdvpatient = null;
-		for (Patient pat : patients) {
 
-			rdvpatient = rdvrepository.findAllRdvByPatient(pat.getId()).stream()
-					.map(rdv -> mapper.map(rdv, Rendezvous.class))
-					.collect(Collectors.toList());
+		if (patients.isEmpty()) {
+			throw new Exception("No patients found for user ID: " + globalVariables.getConnectedUser().getId());
 		}
-		activityServices.createActivity(new Date(), "Read", "Show All Rdv for Patients",
-				globalVariables.getConnectedUser());
-		LOGGER.info("Show All Rdv for Patients, UserID : " + globalVariables.getConnectedUser().getId());
-		return rdvpatient;
 
+		List<Rendezvous> allRdv = new ArrayList<>();
+
+		// Iterate over each patient and collect their appointments
+		for (Patient patient : patients) {
+			Long patientId = patient.getId();
+			List<Rendezvous> rdvpatient = rdvrepository.findAllRdvByPatient(patientId).stream()
+					.map(rdv -> mapper.map(rdv, Rendezvous.class)) // Assuming 'mapper' converts RendezvousEntity to Rendezvous
+					.collect(Collectors.toList());
+			allRdv.addAll(rdvpatient);
+		}
+
+		// Log activity
+		activityServices.createActivity(new Date(), "Read", "Show All Rdv for Patients", globalVariables.getConnectedUser());
+		LOGGER.info("Show All Rdv for Patients, UserID: " + globalVariables.getConnectedUser().getId());
+
+		return allRdv;
 	}
 
 	/*

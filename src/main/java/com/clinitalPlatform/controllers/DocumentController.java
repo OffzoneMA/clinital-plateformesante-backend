@@ -73,16 +73,18 @@ public class DocumentController {
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     Iterable<DocumentResponse> documents() throws Exception {
 
-        Optional<Patient> patient = patientRepo.findById(globalVariables.getConnectedUser().getId());
+
+        Optional<Patient> patient = patientRepo.findByUserIdAndPatientType(globalVariables.getConnectedUser().getId());
+
 
         // Verify if the list of patient is empty
         if (!patient.isPresent()) {
             return Collections.emptyList();
-        }else {
+        } else {
 
             activityServices.createActivity(new Date(), "Read", "Consulting all Documents", globalVariables.getConnectedUser());
             LOGGER.info("Consulting All documents By User ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
-            return docrepository.findByPatientId(patient.get().getId())
+            return docrepository.getMyDocs(globalVariables.getConnectedUser().getId())
                     .stream().map(document -> mapper.map(document, DocumentResponse.class)).collect(Collectors.toList());
         }
     }
@@ -285,13 +287,13 @@ public class DocumentController {
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     Iterable<DocumentResponse> getDocProchPatientId() throws Exception {
 
-        Optional<Patient> patient = patientRepo.findById(globalVariables.getConnectedUser().getId());
+        Optional<Patient> patient = patientRepo.findByUserIdAndPatientType(globalVariables.getConnectedUser().getId());
 
         if (!patient.isPresent()) {
             return Collections.emptyList();
         }else {
 
-            List<Document> documents = docrepository.getDocPatientPROCH(patient.get().getId());
+            List<Document> documents = docrepository.getDocPatientPROCH(globalVariables.getConnectedUser().getId());
 
             if(documents.isEmpty()){
                 return Collections.emptyList();
@@ -349,12 +351,12 @@ public class DocumentController {
                 return ResponseEntity.ok(new ApiResponse(true, "Unarchive"));
 
             } else if(!document.get().getArchived() && archive) { //to archive document
-                    document.get().setArchived(archive);
-                    docrepository.save(document.get());
-                    activityServices.createActivity(new Date(), "Update", "Archive document with ID: " + docId, globalVariables.getConnectedUser());
-                    LOGGER.info("Archive document with ID :" + docId + " by User with ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
-                    return ResponseEntity.ok(new ApiResponse(true, "Archive"));
-                }
+                document.get().setArchived(archive);
+                docrepository.save(document.get());
+                activityServices.createActivity(new Date(), "Update", "Archive document with ID: " + docId, globalVariables.getConnectedUser());
+                LOGGER.info("Archive document with ID :" + docId + " by User with ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+                return ResponseEntity.ok(new ApiResponse(true, "Archive"));
+            }
 
 
             LOGGER.info("Archive / Unarchive a document failed by User with ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
