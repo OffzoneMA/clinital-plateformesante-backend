@@ -339,7 +339,7 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
 
     //FILTRE DE CRENEAU PAR  DISPONIBILITÉ DES MEDECINS------------------------
 
-    public List<Medecin> filterMedecinsByAvailability(List<Long> medecinIds, String filter) {
+   /* public List<Medecin> filterMedecinsByAvailability(List<Long> medecinIds, String filter) {
         // Récupérez les plannings filtrés
         Map<Long, List<MedecinSchedule>> filteredSchedules = filterSchedulesByAvailability(medecinIds, filter);
 
@@ -360,15 +360,40 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
 
         // Retournez la liste des médecins filtrés
         return filteredMedecins;
-    }
-//FILTRE SELON LE MOTIF DE CONSULTATION
-
-    //Filtrer les crennaux selon la disponibilité
-   /* private List<MedecinSchedule> filterSchedulesByMotif(List<MedecinSchedule> schedules, String motif) {
-        return schedules.stream()
-                .filter(schedule -> schedule.getMotifConsultation().equals(motif))
-                .collect(Collectors.toList());
     }*/
+
+    public List<Medecin> filterMedecinsByAvailability(List<Long> medecinIds, List<String> filters) {
+        // Récupérez les plannings filtrés pour chaque filtre
+        Map<Long, List<MedecinSchedule>> filteredSchedules = new HashMap<>();
+
+        for (String filter : filters) {
+            Map<Long, List<MedecinSchedule>> schedulesForFilter = filterSchedulesByAvailability(medecinIds, filter);
+            schedulesForFilter.forEach((key, value) ->
+                    filteredSchedules.merge(key, value, (existing, newSchedules) -> {
+                        existing.addAll(newSchedules);
+                        return existing;
+                    })
+            );
+        }
+
+        // Initialisez une liste pour stocker les médecins filtrés
+        List<Medecin> filteredMedecins = new ArrayList<>();
+
+        // Parcourez chaque liste de plannings dans la carte filtrée
+        for (List<MedecinSchedule> schedules : filteredSchedules.values()) {
+            // Parcourez chaque planning dans la liste
+            for (MedecinSchedule schedule : schedules) {
+                // Vérifiez si le médecin associé n'est pas déjà présent dans la liste
+                if (!filteredMedecins.contains(schedule.getMedecin())) {
+                    // Ajoutez le médecin à la liste filtrée
+                    filteredMedecins.add(schedule.getMedecin());
+                }
+            }
+        }
+
+        // Retournez la liste des médecins filtrés
+        return filteredMedecins;
+    }
 
 
 

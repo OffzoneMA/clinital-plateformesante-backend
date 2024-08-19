@@ -126,6 +126,9 @@ public class MedecinController {
 	private MedecinNetworkService medecinNetworkService;
 	private final Logger LOGGER=LoggerFactory.getLogger(getClass());
 
+	@Autowired
+	private MedecinFilterService medecinFilterService;
+
 //start zakia
 	@Autowired
 	RendezvousService rendezvousService;
@@ -928,7 +931,7 @@ public class MedecinController {
 
 	//FILTRE DE MEDECIN SELON LA DISPONIBILITÉ-------------------------------------------
 
-	@PostMapping("/medecins/schedules/filter")
+	/*@PostMapping("/medecins/schedules/filter")
 	public ResponseEntity<?> filterMedecinSchedulesByAvailability(
 			@RequestBody FilterRequest filterRequest
 	) {
@@ -950,7 +953,29 @@ public class MedecinController {
 		System.out.println("Medecins trouvés"+filteredMedecins.size());
 		return ResponseEntity.ok(filteredMedecins);
 
+	}*/
+	@PostMapping("/medecins/schedules/filter")
+	public ResponseEntity<?> filterMedecinSchedulesByAvailability(
+			@RequestBody FilterRequest filterRequest
+	) {
+		List<Long> medecinIds = filterRequest.getMedecinIds();
+		List<String> filters = filterRequest.getFilters(); // Récupérez la liste de filtres
+		System.out.println("filtres:" + filters);
+		System.out.println("Les ids de medecins: " + medecinIds);
+
+		// Utilisation de medecinIds et filters pour filtrer les médecins
+		List<Medecin> filteredMedecins = medecinScheduleService.filterMedecinsByAvailability(medecinIds, filters);
+
+		// Vérifiez si des médecins ont été trouvés
+		if (filteredMedecins.isEmpty()) {
+			System.out.println("Aucun médecin trouvé avec ces créneaux.");
+			return ResponseEntity.ok(new ApiResponse(false, "Aucun médecin trouvé avec ces créneaux."));
+		}
+
+		System.out.println("Médecins trouvés: " + filteredMedecins.size());
+		return ResponseEntity.ok(filteredMedecins);
 	}
+
 
 	//FILTRE LE MEDECIN PAR LANGUE test
 	/*@GetMapping("/byLangue/{langueName}")
@@ -964,7 +989,7 @@ public class MedecinController {
 	}*/
 
 	// FILTRE LE MEDECIN PAR LANGUE OK
-	@PostMapping("/byLangue")
+/*	@PostMapping("/byLangue")
 	public ResponseEntity<?> getMedecinsByLangue(@RequestBody FilterRequest filterRequest) {
 		try {
 			List<Long> medecinIds = filterRequest.getMedecinIds();
@@ -984,9 +1009,34 @@ public class MedecinController {
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
 		}
+	}*/
+	@PostMapping("/byLangue")
+	public ResponseEntity<?> getMedecinsByLangue(@RequestBody FilterRequest filterRequest) {
+		try {
+			List<Long> medecinIds = filterRequest.getMedecinIds();
+			List<String> filters = filterRequest.getFilters(); // Récupérez la liste de langues
+
+			System.out.println("Filtres (langues) : " + filters);
+			System.out.println("Les IDs de médecins : " + medecinIds);
+
+			// Utilisez le service pour filtrer les médecins par langues
+			List<Medecin> medecins = medecinService.filterMedecinsByLangue(medecinIds, filters);
+
+			// Vérifiez si des médecins ont été trouvés
+			if (medecins.isEmpty()) {
+				System.out.println("Aucun médecin trouvé parlant ces langues.");
+				return ResponseEntity.ok(new ApiResponse(false, "Aucun médecin trouvé parlant ces langues."));
+			}
+
+			System.out.println("Médecins trouvés : " + medecins.size());
+			return ResponseEntity.ok(medecins);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+		}
 	}
 
-//-----------------------------------------------NETWORK---------------------------------------------------
+
+	//-----------------------------------------------NETWORK---------------------------------------------------
 	// Add a New Doctor to the Network : %OK%
 	@PostMapping("/addNewNetwork")
 	public ResponseEntity<?> addNewNetwork(@Valid @RequestBody networkRequest network) throws Exception {
@@ -1331,6 +1381,43 @@ public ResponseEntity<List<Medecin>> findMedByLetter(@RequestParam String lettre
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
 		}
 	}
+
+//FILTRE COMBINE------------------------------------
+
+	@PostMapping("/combinedfilter")
+	public ResponseEntity<List<Medecin>> filterMedecinsCombined(
+			@RequestBody MedecinFilterRequest filterRequest) {
+		try {
+			LOGGER.info("Received filter request: {}", filterRequest);
+			// Filtrer les médecins en utilisant le service approprié
+			// Affichage des filtres choisis
+			LOGGER.info("Selected availability filters: {}", filterRequest.getAvailabilityFilters());
+			LOGGER.info("Selected language filters: {}", filterRequest.getLangueFilters());
+			LOGGER.info("Selected motives filters: {}", filterRequest.getMotifs());
+
+			List<Medecin> filteredMedecins = medecinFilterService.filterMedecins(
+					filterRequest.getMedecinIds(),
+					filterRequest.getLangueFilters(),
+					filterRequest.getMotifs(),
+					filterRequest.getAvailabilityFilters()
+			);
+			LOGGER.info("Number of filtered doctors: {}", filteredMedecins.size());
+			// Vérifiez si des médecins ont été trouvés
+			if (filteredMedecins.isEmpty()) {
+				LOGGER.info("No doctors found matching the filters.");
+				// Retourne une réponse avec une liste vide si aucun médecin n'est trouvé
+				return ResponseEntity.ok(new ArrayList<Medecin>());
+			}
+
+			// Retourne la liste des médecins filtrés
+			return ResponseEntity.ok(filteredMedecins);
+
+		} catch (Exception e) {
+			// Retourne une réponse avec un code d'erreur interne du serveur en cas d'exception
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+		}
+	}
+
 
 
 }

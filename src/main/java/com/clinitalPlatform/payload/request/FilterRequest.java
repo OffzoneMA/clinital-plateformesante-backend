@@ -7,5 +7,5 @@ import java.util.List;
 @Data
 public class FilterRequest {
     private List<Long> medecinIds;
-    private String filter;
+    private List<String> filters;
 }
