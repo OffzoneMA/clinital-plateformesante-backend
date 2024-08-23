@@ -130,6 +130,11 @@ public class MedecinController {
 
 	@Autowired
 	private TarifRepository tarifRepository;
+	@Autowired
+	private SecretaireServiceImpl secretaireService;
+
+	@Autowired
+	private AssistantServiceImpl assistantService;
 
 	private final Logger LOGGER=LoggerFactory.getLogger(getClass());
 
@@ -955,5 +960,23 @@ public class MedecinController {
 		}
 	}
 
+	@GetMapping("/equipe")
+	public EquipeDTO equipeForMedecin() throws Exception {
+		Medecin medecin = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+		Long idcab = medecin.getFirstCabinetId();
+
+		List<Medecin> medecins = medrepository.getAllMedecinsByCabinetId(idcab);
+		List<Secretaire> secretaires = secretaireService.findByIdCabinet(idcab);
+		List<Assistant> assistants = assistantService.findByIdCabinet(idcab);
+		EquipeDTO equipe = new EquipeDTO();
+		equipe.setMedecins(medecins);
+		equipe.setSecretaires(secretaires);
+		equipe.setAssistants(assistants);
+
+//    activityServices.createActivity(new Date(), "Read", "Show Equipe for Medecin ",
+//            globalVariables.getConnectedUser());
+	    LOGGER.info("Show equipe medecin");
+		return equipe;
+	}
 
 }

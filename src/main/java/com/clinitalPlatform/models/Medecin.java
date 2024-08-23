@@ -184,4 +184,11 @@ public class Medecin {
 		this.tarifs=tarifs;
 		
 	}
+
+	public Long getFirstCabinetId() {
+		if (cabinets != null && !cabinets.isEmpty()) {
+			return cabinets.get(0).getCabinet().getId_cabinet();
+		}
+		return null;
+	}
 }
