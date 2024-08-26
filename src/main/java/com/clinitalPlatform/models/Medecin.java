@@ -52,7 +52,8 @@ public class Medecin {
 
 	@OneToMany(mappedBy = "medecin")
 	private List<DiplomeMedecin> diplome_med;
-
+	@Lob
+	@Column(name = "description_med", columnDefinition = "TEXT")
 	private String description_med;
 	private String contact_urgence_med;
 	
