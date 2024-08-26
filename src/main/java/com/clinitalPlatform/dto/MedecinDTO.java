@@ -35,6 +35,7 @@ public class MedecinDTO {
 	private List<TarifDTO> tarifs;
 	
 	private String description_med;
+	private String contact_urgence_med;
 	private CiviliteEnum civilite_med;
 	
 	//@JsonProperty(access = Access.WRITE_ONLY)
