@@ -8,6 +8,7 @@ import com.clinitalPlatform.models.Patient;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -49,7 +50,8 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
    // Query for getting all patients of a medecin
    @Query(value = "SELECT p.* FROM patients p , dossiers d, dossier_medecin dm WHERE p.id_dossier=d.id_dossier and d.id_dossier=dm.dossier_id AND dm.medecin_id = :id_med",nativeQuery = true)
    List<Patient> getMedecinPatients(long id_med);
-
+   @Query(value = "SELECT DISTINCT  p.* FROM patients p , rendezvous r WHERE r.medecin=:id_med",nativeQuery = true)
+   List<Patient> getallpatientofmed(long id_med);
    // Query for getting a patient of a medecin
    @Query(value="SELECT p.* FROM patients p , dossiers d, dossier_medecin dm WHERE p.id_dossier=d.id_dossier and d.id_dossier=dm.dossier_id AND dm.medecin_id = :id_med AND p.id = :id_patient",nativeQuery=true)
    Patient getPatient(long id_med, long id_patient);
@@ -69,7 +71,11 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
 
 
        Optional<Patient> findByPatientEmail(String patientEmail);
-    }
+
+    @Query(value = "SELECT p.* FROM patients p WHERE p.user_id = :id AND p.patient_type = 'MOI'", nativeQuery = true)
+    Optional<Patient> findByUserIdAndPatientType(@Param("id") Long id);
+
+}
 
 
 

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -110,12 +111,22 @@ public class Medecin {
 	private Boolean isActive;
 
 
-	@OneToMany(cascade = CascadeType.ALL, mappedBy = "follower")
+	/*@OneToMany(cascade = CascadeType.ALL, mappedBy = "follower")
 	@Fetch(FetchMode.JOIN)
+	@JsonManagedReference
 	private Set<MedecinNetwork> followers = new HashSet<>();
 
 	@OneToMany(cascade = CascadeType.ALL, mappedBy = "medecin")
 	@Fetch(FetchMode.SELECT)
+	@JsonManagedReference
+	private Set<MedecinNetwork> following = new HashSet<>();*/
+
+	@OneToMany(mappedBy = "medecin", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	@JsonManagedReference
+	private Set<MedecinNetwork> followers = new HashSet<>();
+
+	@OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	@JsonManagedReference
 	private Set<MedecinNetwork> following = new HashSet<>();
 
 	@OneToMany(mappedBy = "medecin")

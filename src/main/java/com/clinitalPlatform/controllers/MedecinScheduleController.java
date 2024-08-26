@@ -191,7 +191,7 @@ public class MedecinScheduleController {
         return new ResponseEntity<>(filteredSchedules, HttpStatus.OK);
     }*/
 
-    @PostMapping("/medecins/schedules/filter")
+   /* @PostMapping("/medecins/schedules/filter")
     public ResponseEntity<Map<Long, List<MedecinSchedule>>> filterMedecinSchedulesByAvailability(
             @RequestBody FilterRequest filterRequest
     ) {
@@ -207,7 +207,25 @@ public class MedecinScheduleController {
         System.out.println("OKOKOKOKOK");
 
         return new ResponseEntity<>(filteredSchedules, HttpStatus.OK);
+    }*/
+
+    @PostMapping("/medecins/schedules/filter")
+    public ResponseEntity<List<Medecin>> filterMedecinSchedulesByAvailability(
+            @RequestBody FilterRequest filterRequest
+    ) {
+        List<Long> medecinIds = filterRequest.getMedecinIds();
+        List<String> filters = filterRequest.getFilters(); // Liste de filtres
+
+        System.out.println("Liste des filtres : " + filters);
+        System.out.println("IDs des médecins : " + medecinIds);
+
+        // Utilisez medecinIds et filters pour filtrer les plannings des médecins
+        List<Medecin> filteredMedecins = medecinScheduleService.filterMedecinsByAvailability(medecinIds, filters);
+
+        // Retournez la réponse avec les médecins filtrés
+        return new ResponseEntity<>(filteredMedecins, HttpStatus.OK);
     }
+
 
 
 

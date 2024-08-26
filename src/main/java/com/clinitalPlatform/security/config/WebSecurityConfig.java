@@ -83,7 +83,10 @@ public class WebSecurityConfig {
                 "/api/med/medByCabinetName",
                 "/api/med/medecins/schedules/filter",
                 "/api/med/byLangue/**",
-                "/api/med/byLangue/**",
+                "/api/med/allmedecins/**",
+                "/api/med/medByLetter/**",
+                "/api/med/by_motif_consultation/**",
+                "/api/med/combinedfilter",
     			"/api/ville/**",
     			"/api/specialites/**",
                 "/api/langues/**",
@@ -93,7 +96,7 @@ public class WebSecurityConfig {
                 "/api/rdv/patient/rdvbyday",
                 "/api/cabinet/medecin/**",
                 "/api/medecinSchedule/shedulebyMed/**",
-                "/api/med/schedulesofMed/**",
+                "/api/med/schedulesofMed/**"
 
 
 
@@ -101,13 +104,16 @@ public class WebSecurityConfig {
         };
 
 
+
       
         String[] authenticatedRoutes = {"/api/demandes/**", "/api/med/**", "/api/doc/**", "/api/shares/**","/api/medecinSchedule/**","/api/patient/**",
                 "/api/rdv/patient/**","/api/rdv/today/**","/api/rdv/med/**", "/api/rdv/rdvs/medecin","/api/users/**", "/api/rdv/**",
+
                 "/api/med/agenda/**", "/api/medecinSchedule/fromCreno/**",
-                "/api/rdv/rdvs/patient","/api/rdv/patient/rdvbyday", "/api/med/equipe"
+
+                "/api/rdv/rdvs/patient","/api/rdv/patient/rdvbyday", "/api/med/equipe","api/med/getAllPatients"
                                         
-//               
+
         };
 
 

@@ -1,11 +1,16 @@
 package com.clinitalPlatform.payload.request;
 
+import com.clinitalPlatform.enums.MotifConsultationEnum;
 import lombok.Data;
 
 import java.util.List;
 
 @Data
-public class FilterRequest {
+public class MotifRequest {
+
     private List<Long> medecinIds;
-    private List<String> filters;
+    private List<String> libellesMotifs;
+
 }
+
+

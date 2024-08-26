@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -375,54 +376,49 @@ public class RendezvousService implements IDao<Rendezvous>  {
 	public ResponseEntity<?> AddnewRdv(User user,RendezvousDTO c,Medecin medecin,Patient patient) throws Exception{
 
 		try {
-			// DayOfWeek day = DayOfWeek.valueOf(c.getDay());
-			MotifConsultation motif = mRepository.findById(c.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a Motif"));
-			ModeConsultation mode =moderespo.findById(c.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a Mode consultation"));
-			Cabinet cabinet=cabrepo.findById(c.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a cabinet"));
-			Boolean isReserved = false,ModeMedecin=false;
-			isReserved=	this.isHasRdvToday( medecin.getSpecialite().getId_spec(), c.getStart().toLocalDate());
-			RendezvousDTO rdvReserved=this.getRdvToday( medecin.getSpecialite().getId_spec(), c.getStart().toLocalDate());
+		// DayOfWeek day = DayOfWeek.valueOf(c.getDay());
+	MotifConsultation motif = mRepository.findById(c.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a Motif"));
+	ModeConsultation mode =moderespo.findById(c.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a Mode consultation"));
+	Cabinet cabinet=cabrepo.findById(c.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a cabinet"));
+	Boolean isReserved = false,ModeMedecin=false;isReserved= this.isHasRdvToday( medecin.getSpecialite().getId_spec(), c.getStart().toLocalDate(),patient.getId());
+	if (!isReserved||ModeMedecin) {
 
-			ModeMedecin=isReserved?false:true;
-
-			if (!isReserved||ModeMedecin) {
-
-				// DayOfWeek day = DayOfWeek.valueOf(c.getDay());
-				Rendezvous rendezvous = new Rendezvous();
+		// DayOfWeek day = DayOfWeek.valueOf(c.getDay());
+		Rendezvous rendezvous = new Rendezvous();
 //		rendezvous.setId(c.getId());
-				rendezvous.setMedecin(medecin);
-				rendezvous.setMotifConsultation(motif);
-				rendezvous.setPatient(patient);
-				rendezvous.setDay(c.getDay());
-				rendezvous.setStart(c.getStart());
-				rendezvous.setEnd(c.getEnd());
-				rendezvous.setStatut(c.getStatut());
-				rendezvous.setCanceledAt(c.getCanceledat());
-				rendezvous.setModeConsultation(mode);
-				rendezvous.setISnewPatient(c.getIsnewpatient());
-				if (user != null && rendezvous != null) {
-					ERole userRole = user.getRole();
-					if (userRole == ERole.ROLE_MEDECIN && c != null && c.getCommantaire() != null) {
-						rendezvous.setCommantaire(c.getCommantaire());
-					}
-				}
-				rendezvous.setLinkVideoCall(urlVideoCallGenerator.joinConference());
-				rendezvous.setCabinet(cabinet);
-				LOGGER.info("id="+ rendezvous.getId());
-				//rdvrepo.save(rendezvous);
-				entityManger.persist(rendezvous);
-				ActivityServices.createActivity(new Date(),"Add","Add New Rdv ",user);
-				LOGGER.info("Add new Rdv, UserID : "+user.getId());
-				return ResponseEntity.ok(mapper.map(rendezvous, Rendezvous.class));
+		rendezvous.setMedecin(medecin);
+		rendezvous.setMotifConsultation(motif);
+		rendezvous.setPatient(patient);
+		rendezvous.setDay(c.getDay());
+		rendezvous.setStart(c.getStart());
+		rendezvous.setEnd(c.getEnd());
+		rendezvous.setStatut(c.getStatut());
+		rendezvous.setCanceledAt(c.getCanceledat());
+		rendezvous.setModeConsultation(mode);
+		rendezvous.setISnewPatient(c.getIsnewpatient());
+		if (user != null && rendezvous != null) {
+			ERole userRole = user.getRole();
+			if (userRole == ERole.ROLE_MEDECIN && c != null && c.getCommantaire() != null) {
+				rendezvous.setCommantaire(c.getCommantaire());
+			}
+		}
+		rendezvous.setLinkVideoCall(urlVideoCallGenerator.joinConference());
+		rendezvous.setCabinet(cabinet);
+		LOGGER.info("id="+ rendezvous.getId());
+		//rdvrepo.save(rendezvous);
+		entityManger.persist(rendezvous);
+		ActivityServices.createActivity(new Date(),"Add","Add New Rdv ",user);
+		LOGGER.info("Add new Rdv, UserID : "+user.getId());
+		return ResponseEntity.ok(mapper.map(rendezvous, Rendezvous.class));
 
-			} else
-				return ResponseEntity.ok(new ApiResponse(false, "You have already an other RDV ",rdvReserved));
+	} else
+		return ResponseEntity.ok(new ApiResponse(false, "You have already an other RDV "));
 
 		} catch (Exception e) {
 			// TODO: handle exception
 			throw new Exception(e.getMessage());
 		}
-	}
+	 }
 	public Rendezvous updateerdv(long rdvId,RendezvousDTO rdvDTO, Medecin medecin, Patient patient) throws Exception{
 		Rendezvous rdv = rdvrepo.findById(rdvId).orElseThrow(() -> new Exception("RDV not found"));
 
@@ -555,9 +551,10 @@ public class RendezvousService implements IDao<Rendezvous>  {
 
 
 	// Checking if a patient has a rendezvous with a doctor today.
-	public Boolean isHasRdvToday(Long spec,LocalDate date) throws Exception{
+	public Boolean isHasRdvToday(Long spec,LocalDate date,Long idpat) throws Exception{
 		try {
-			List<Rendezvous> rdv= rdvrepo.findRdvBySpecInDate(spec, date);
+			List<Rendezvous> rdv= rdvrepo.findRdvByPatientandSpecInDate(idpat,spec, date);
+			System.out.println(mapper.map(rdv, Rendezvous.class));
 
 			if(rdv.isEmpty()){
 				return false;
@@ -617,7 +614,26 @@ public class RendezvousService implements IDao<Rendezvous>  {
 //		return rdvDtos;
 //	}
 
+////////////CHART
+	@Autowired
+	private ChartRepository chartRepository;
 
+	public List<Object[]> getRendezvousCountByModeAndMonthYear() {
+		return chartRepository.countRendezvousByModeAndMonthYear();
+	}
+
+	public List<Object[]> getRendezvousCountByModeAndMonthYear(int year, int month) {
+		return chartRepository.countRendezvousByModeAndMonthYear(year, month);
+	}
+
+	/*public List<Object[]> countsByCiviliteAndAge() {
+		return chartRepository.getCountsByCiviliteAndAge();
+	}*/
+	public List<Object[]> countsByCiviliteAndAge(int month, int year) {
+		return chartRepository.getCountsByCiviliteAndAge(month, year);
+	}
+
+////////////////
 
 }
 
