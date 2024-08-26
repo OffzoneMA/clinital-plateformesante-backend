@@ -91,6 +91,16 @@ public interface MedecinRepository extends JpaRepository<Medecin, Long> {
 
 	List<Medecin> findMedecinsByLangues_Name(String langueName);
 
+	@Query(value = "SELECT m.*, u.email FROM medecins m INNER JOIN cabinet_medecins cm ON m.id = cm.medecin_id INNER JOIN users u ON m.user_id = u.id WHERE cm.cabinet_id = ?1", nativeQuery = true)
+	public List<Medecin> getAllMedecinsByCabinetId(Long cabinetId);
+
+//	@Query("SELECT m FROM Medecin m " +
+//			"JOIN FETCH m.user u " +
+//			"JOIN cabinet_medecins cm ON m.id = cm.medecin.id " +
+//			"WHERE cm.cabinet.id = :cabinetId")
+//	public List<Medecin> getAllMedecinsByCabinetId(@Param("cabinetId") Long cabinetId);
+
+
 //-----------------------------------------------NETWORK------------------
 	@Query(value = "SELECT m.* FROM medecins m where id= ?1 AND is_active = 1", nativeQuery = true)
 	Medecin getMedecinById(Long id);

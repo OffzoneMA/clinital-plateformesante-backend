@@ -66,4 +66,6 @@ public class SecretaireController {
 	public ResponseEntity<Secretaire> findById(@PathVariable Long id) throws Exception{
 		return ResponseEntity.ok(secretaireService.findById(id));
 	}
+
+
 }
