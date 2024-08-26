@@ -1,21 +1,20 @@
 package com.clinitalPlatform.models;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import jakarta.persistence.*;
+import lombok.Data;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-
-import jakarta.persistence.*;
-import lombok.Data;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 @Entity
-@Table(name = "secretaires")
+@Table(name = "assistants")
 @Data
-public class Secretaire{
+public class Assistant {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,10 +24,11 @@ public class Secretaire{
 	private Date dateNaissance;
 	private String adresse;
 	private String service;
-	// in this we create a Bridge table between Cabinet and Secretaire to link them together
+
+	// in this we create a Bridge table between Cabinet and Assistant to link them together
 	@ManyToMany(fetch = FetchType.LAZY)
-	@JoinTable(name = "SecretaireCabinet",
-		joinColumns = @JoinColumn(name = "secrt_id",referencedColumnName = "id"),
+	@JoinTable(name = "AssistantCabinet",
+		joinColumns = @JoinColumn(name = "assist_id",referencedColumnName = "id"),
 		inverseJoinColumns = @JoinColumn(name = "cabinet_id",referencedColumnName = "id_cabinet"))
 		private List<Cabinet> cabinet= new ArrayList<>();
 
@@ -36,19 +36,19 @@ public class Secretaire{
 	@JoinColumn(name = "user_id", referencedColumnName= "id")
 	private User user;
 
-	public Secretaire() {
+	public Assistant() {
 		super();
 	}
 
-	public Secretaire(@NotBlank @Size(max = 50) @Email String email, @NotNull String telephone,
-			@NotBlank @Size(max = 120) String password, String nom, String prenom, Date dateNaissance,String service, String adresse,User user)
+	public Assistant(@NotBlank @Size(max = 50) @Email String email, @NotNull String telephone,
+                     @NotBlank @Size(max = 120) String password, String nom, String prenom, Date dateNaissance, String adresse,String service, User user)
 			 {
 		super();
 		this.nom = nom;
 		this.prenom = prenom;
 		this.dateNaissance = dateNaissance;
 		this.adresse = adresse;
-		this.service=service;
+		this.service = service;
 		this.user = user;
 	}
 

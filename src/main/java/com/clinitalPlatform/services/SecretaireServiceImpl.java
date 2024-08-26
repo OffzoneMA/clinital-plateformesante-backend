@@ -157,6 +157,21 @@ return null;
 			return secri;
 
 	}
+
+
+	public List<Secretaire> findByIdCabinet(Long id) {
+		try {
+			return secretaireRepository
+					.findSecretairesByCabinetId(id)
+					.stream()
+					.map(secretaire->clinitalModelMapper.map(secretaire, Secretaire.class))
+					.collect(Collectors.toList());}
+		catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
 	
 	
 }
