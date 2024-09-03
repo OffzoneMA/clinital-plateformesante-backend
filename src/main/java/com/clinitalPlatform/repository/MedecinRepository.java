@@ -25,7 +25,7 @@ public interface MedecinRepository extends JpaRepository<Medecin, Long> {
 	
 	@Query(value = "SELECT m.* FROM medecins m WHERE m.user_id= :id",nativeQuery = true)
 	public Medecin getMedecinByUserId(@Param("id")long id);
-	
+
 	@Query(value = "SELECT m.* FROM medecins m where m.nom_med = ?1 AND is_active = 1", nativeQuery = true)
 	List<Medecin> getMedecinByName(String nom_med);
 
@@ -138,6 +138,8 @@ public interface MedecinRepository extends JpaRepository<Medecin, Long> {
 
 	@Query("SELECT m FROM Medecin m WHERE UPPER(m.nom_med) LIKE CONCAT(:lettre, '%')")
 	List<Medecin> getMedecinByNameStartingWith(@Param("lettre") String lettre);
+
+	List<Medecin> findByUserIsNotNull();
 
 }
 

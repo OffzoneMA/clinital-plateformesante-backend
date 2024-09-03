@@ -757,7 +757,7 @@ public class MedecinController {
 
 	}*/
 
-	@GetMapping("/agenda/{idmed}/{weeks}/{startDate}")
+	/*@GetMapping("/agenda/{idmed}/{weeks}/{startDate}")
 	@JsonSerialize(using = LocalDateSerializer.class)
 	public List<AgendaResponse> GetCreno(@Validated @PathVariable long idmed, @PathVariable long weeks,
 										 @PathVariable(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)  LocalDate startDate)
@@ -895,7 +895,110 @@ public class MedecinController {
 			throw new BadRequestException("error :" + e);
 		}
 
+	}*/
+
+	//recuperation
+	@GetMapping("/agenda/{idmed}/{weeks}/{startDate}")
+	@JsonSerialize(using = LocalDateSerializer.class)
+	public ResponseEntity<?> GetCreno(
+			@Validated @PathVariable long idmed,
+			@PathVariable long weeks,
+			@PathVariable(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate)
+			throws Exception {
+
+		try {
+			// Vérifier si le médecin existe
+			Medecin medecin = medrepository.findById(idmed)
+					.orElseThrow(() -> new BadRequestException("Médecin avec l'ID spécifié n'existe pas."));
+
+			// Vérifier si le médecin a un compte utilisateur
+			if (medecin.getUser() == null) {
+				return ResponseEntity.ok(Collections.singletonMap("message", "Ce médecin n'est pas encore disponible sur Clinital"));
+			}
+
+			List<AgendaResponse> agendaResponseList = new ArrayList<>();
+			List<MedecinSchedule> schedules = medScheduleRepo.findByMedIdOrderByAvailability(idmed)
+					.stream()
+					.map(item -> mapper.map(item, MedecinSchedule.class))
+					.collect(Collectors.toList());
+
+			int days = medecinService.getDaysInMonth(startDate.atStartOfDay());
+
+			for (int j = 1; j <= weeks; j++) {
+				for (int i = 1; i <= 7; i++) {
+					boolean checkday = false;
+
+					if (!schedules.isEmpty()) {
+						for (MedecinSchedule medsch : schedules) {
+							if (medsch.getDay().getValue() == startDate.getDayOfWeek().getValue()) {
+								checkday = true;
+								AgendaResponse agenda = null;
+
+								for (AgendaResponse ag : agendaResponseList) {
+									if (ag.getDay().getValue() == medsch.getDay().getValue() && ag.getWeek() == j) {
+										agenda = ag;
+										break;
+									}
+								}
+
+								if (agenda != null) {
+									agenda = medecinService.CreateCreno(medsch, agenda, idmed, j, startDate.atStartOfDay());
+									agendaResponseList.set(agendaResponseList.indexOf(agenda), agenda);
+								} else {
+									agenda = new AgendaResponse();
+									agenda.setDay(startDate.getDayOfWeek());
+									agenda.setWorkingDate(startDate.atStartOfDay());
+									agenda = medecinService.CreateCreno(medsch, agenda, idmed, j, startDate.atStartOfDay());
+									agendaResponseList.add(agenda);
+								}
+
+								long hours = ChronoUnit.HOURS.between(medsch.getAvailabilityStart(), medsch.getAvailabilityEnd());
+								agenda.getMedecinTimeTable().add(new GeneralResponse("startTime", medsch.getAvailabilityStart()));
+								agenda.getMedecinTimeTable().add(new GeneralResponse("endTime", medsch.getAvailabilityStart().plusHours(hours)));
+								String startTime = medsch.getAvailabilityStart().getHour() + ":" + medsch.getAvailabilityStart().getMinute();
+								String endTime = medsch.getAvailabilityEnd().getHour() + ":" + medsch.getAvailabilityEnd().getMinute();
+								agenda.getWorkingHours().add(new HorairesResponse(startTime, endTime));
+
+								continue;
+							}
+						}
+					}
+
+					if (!checkday) {
+						AgendaResponse agenda = new AgendaResponse();
+						agenda.setDay(startDate.getDayOfWeek());
+						agenda.setWorkingDate(startDate.atStartOfDay());
+						agendaResponseList.add(agenda);
+					}
+					startDate = startDate.plusDays(1);
+				}
+			}
+
+			// Supprimer les doublons
+			Set<AgendaResponse> set = new LinkedHashSet<>(agendaResponseList);
+			agendaResponseList = new ArrayList<>(set);
+
+			// Vérifier si la liste des créneaux est vide
+			if (agendaResponseList.stream().allMatch(agenda -> agenda.getAvailableSlot().isEmpty())) {
+				return ResponseEntity.ok(Collections.singletonMap("message", "Aucune disponibilité en ligne."));
+			}
+			// Logging user activity
+			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+			if (!(authentication instanceof AnonymousAuthenticationToken)) {
+				User connectedUser = globalVariables.getConnectedUser();
+				if (connectedUser != null) {
+					activityServices.createActivity(new Date(), "Read", "Consult Medecin Agenda by his ID : " + idmed, connectedUser);
+					LOGGER.info("Consult Medecin Agenda By his ID : " + idmed + " by User : " + (connectedUser instanceof User ? connectedUser.getId() : ""));
+				}
+			}
+
+			return ResponseEntity.ok(agendaResponseList);
+
+		} catch (Exception e) {
+			throw new BadRequestException("error :" + e);
+		}
 	}
+
 
 
 
