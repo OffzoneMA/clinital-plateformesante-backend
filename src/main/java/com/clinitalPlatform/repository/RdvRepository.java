@@ -21,57 +21,62 @@ import java.util.Optional;
 public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 	@Query("SELECT r FROM Rendezvous r WHERE r.day = :day AND r.medecin.specialite.id_spec = :specialty")
 	List<Rendezvous> findByDayAndMedecinSpecialty(@Param("day") LocalDate day, @Param("spec") Long specialty);
+
 	@Query(value = "SELECT p.* from rendezvous p , medecins m where p.medecin=m.id AND p.patient = :idpat and m.specialite_id_spec=:spec and DATE(p.start)=:date", nativeQuery = true)
-	List<Rendezvous> findRdvByPatientandSpecInDate(@Param(value = "idpat")Long idpat,@Param(value = "spec")Long spec,@Param(value = "date")LocalDate date) throws Exception;
+	List<Rendezvous> findRdvByPatientandSpecInDate(@Param(value = "idpat") Long idpat, @Param(value = "spec") Long spec, @Param(value = "date") LocalDate date) throws Exception;
 
 	@Query(value = "SELECT p.* from rendezvous p , medecins m where p.medecin=m.id and m.specialite_id_spec=:spec and DATE(p.start)=:date", nativeQuery = true)
-	List<Rendezvous> findRdvBySpecInDate(@Param(value = "spec")Long spec,@Param(value = "date")LocalDate date) throws Exception;
+	List<Rendezvous> findRdvBySpecInDate(@Param(value = "spec") Long spec, @Param(value = "date") LocalDate date) throws Exception;
 
 
 	// get Rdv By Day :
-	@Query(value = "SELECT r.* FROM Rendezvous r , patients p where r.patient=p.id   and  DATE(r.start)= ?1 and p.user_id=?2",nativeQuery = true)
-	List<Rendezvous> getRdvByDate(LocalDate day,long user_id);
+	@Query(value = "SELECT r.* FROM Rendezvous r , patients p where r.patient=p.id   and  DATE(r.start)= ?1 and p.user_id=?2", nativeQuery = true)
+	List<Rendezvous> getRdvByDate(LocalDate day, long user_id);
 
 	// @Query("from Rendezvous r where r.motif= ?1")
 	// List<Rendezvous> getRdvByMotif(String motif);
-	@Query(value ="SELECT * FROM rendezvous WHERE id = :id",nativeQuery = true)
+	@Query(value = "SELECT * FROM rendezvous WHERE id = :id", nativeQuery = true)
 	Rendezvous getById(Long id);
-	
 
-//RDV BY DATE (DAR,WEEK,MONTH,YEAR) For A DOCTOR :
+
+	//RDV BY DATE (DAR,WEEK,MONTH,YEAR) For A DOCTOR :
 	// // A method that returns a list of Rendezvous objects for a given day.
 	@Query(value = "SELECT * FROM rendezvous WHERE day(start)=:day and medecin=:id", nativeQuery = true)
-	List<Rendezvous> getRendezvousMedByDay(@Param(value = "day")long day, @Param(value = "id")long id);
+	List<Rendezvous> getRendezvousMedByDay(@Param(value = "day") long day, @Param(value = "id") long id);
+
 	// A method that returns a list of Rendezvous objects for a given week.
 	@Query(value = "SELECT * FROM rendezvous WHERE week(start)=:week and medecin=:id", nativeQuery = true)
-	List<Rendezvous> getRendezvousMedByWeek(@Param(value = "week")long week, @Param(value = "id")long id);
+	List<Rendezvous> getRendezvousMedByWeek(@Param(value = "week") long week, @Param(value = "id") long id);
+
 	// A method that returns a list of Rendezvous objects for a given month.
 	@Query(value = "SELECT * FROM rendezvous WHERE month(start)=:month and medecin=:id", nativeQuery = true)
-	List<Rendezvous> getRendezvousMedByMonth(@Param(value = "month")long day, @Param(value = "id")long id);
+	List<Rendezvous> getRendezvousMedByMonth(@Param(value = "month") long day, @Param(value = "id") long id);
+
 	// A method that returns a list of Rendezvous objects for a given year.
 	@Query(value = "SELECT * FROM rendezvous WHERE year(start)=:year and medecin=:id", nativeQuery = true)
-	List<Rendezvous> getRendezvousMedByYear(@Param(value = "year")long day, @Param(value = "id")long id);
+	List<Rendezvous> getRendezvousMedByYear(@Param(value = "year") long day, @Param(value = "id") long id);
 
-	
-//RDV BY DATE (DAR,WEEK,MONTH,YEAR) For A Patient :
+
+	//RDV BY DATE (DAR,WEEK,MONTH,YEAR) For A Patient :
 	// Get Rdv By day :
 	@Query(value = "SELECT * FROM rendezvous WHERE day=:day and patient= :id", nativeQuery = true)
-	List<Rendezvous> getRendezvousPatientByDayofweek(@Param(value = "day")long day, @Param(value = "id")long id);
+	List<Rendezvous> getRendezvousPatientByDayofweek(@Param(value = "day") long day, @Param(value = "id") long id);
+
 	// Get Rdv By day :
 	@Query(value = "SELECT * FROM rendezvous WHERE day(start)=:day and patient= :id", nativeQuery = true)
-	List<Rendezvous> getRendezvousPatientByDay(@Param(value = "day")long day, @Param(value = "id")long id);
+	List<Rendezvous> getRendezvousPatientByDay(@Param(value = "day") long day, @Param(value = "id") long id);
+
 	@Query(value = "SELECT * FROM rendezvous WHERE day(start)=:day ", nativeQuery = true)
 	List<Rendezvous> getRendezvousByDay(@Param(value = "day") long day);
 
 	@Query(value = "SELECT * FROM rendezvous WHERE week(start)=:week and patient= :id", nativeQuery = true)
-	List<Rendezvous> getRendezvousPatientByWeek(@Param(value = "week")long week, @Param(value = "id")long id);
+	List<Rendezvous> getRendezvousPatientByWeek(@Param(value = "week") long week, @Param(value = "id") long id);
 
 	@Query(value = "SELECT * FROM rendezvous WHERE month(start)=:month and patient= :id", nativeQuery = true)
-	List<Rendezvous> getRendezvousPatientByMonth(@Param(value = "month")long week, @Param(value = "id")long id);
+	List<Rendezvous> getRendezvousPatientByMonth(@Param(value = "month") long week, @Param(value = "id") long id);
 
 	@Query(value = "SELECT * FROM rendezvous WHERE year(start)=:year and patient= :id", nativeQuery = true)
-	List<Rendezvous> getRendezvousPatientByYear(@Param(value = "year")long week, @Param(value = "id")long id);
-
+	List<Rendezvous> getRendezvousPatientByYear(@Param(value = "year") long week, @Param(value = "id") long id);
 
 
 	// get RDV by ID :
@@ -89,15 +94,18 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 	// get RDV by Id and id Medecin :
 	@Query(value = "select * from rendezvous  where id = :id and medecin= :idmed", nativeQuery = true)
 	Optional<Rendezvous> findRdvByIdandMedecin(Long id, long idmed);
+
 	// get RDV by Id and id Patient :
 	@Query(value = "select * from rendezvous  where id = :id and patient= :idpat", nativeQuery = true)
 	Optional<Rendezvous> findRdvByIdandPatient(Long id, long idpat);
+
 	// get RDV By id patient :
 	@Query(value = "select * from rendezvous  where patient = ?1", nativeQuery = true)
 	List<Rendezvous> getRdvByIdPatient(Long id);
+
 	// get RDV By id Medecin :
 	@Query(value = "select r.* from `rendezvous` r, `patients` p  where r.patient=p.id AND p.user_id=?2 AND r.medecin =?1", nativeQuery = true)
-	List<Rendezvous> getRdvByIdMedecin(Long idmed,Long iduser);
+	List<Rendezvous> getRdvByIdMedecin(Long idmed, Long iduser);
 
 	// get RDV by Id Patient Name : ROLE Patient
 	@Query(value = "SELECT r.* FROM rendezvous r , patients p WHERE r.patient= p.id and p.nom_pat=?1 and p.user_id=?2", nativeQuery = true)
@@ -116,11 +124,11 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 	@Query("select r from Rendezvous r where r.statut = 'CONFIRME' and r.patient.nom_pat =?1")
 	List<Rendezvous> findConfirmedBypatientId(@Param("nom_pat") String nom_pat);
 
-	@Query(value ="SELECT * FROM `rendezvous` WHERE DATE(start)<=?1 AND DATE(end)>=?1 AND medecin=?2",nativeQuery=true)
-	List<Rendezvous>   findByDateAndMedecin(LocalDate dayfrom, Long id);
+	@Query(value = "SELECT * FROM `rendezvous` WHERE DATE(start)<=?1 AND DATE(end)>=?1 AND medecin=?2", nativeQuery = true)
+	List<Rendezvous> findByDateAndMedecin(LocalDate dayfrom, Long id);
 
 	@Query(value = "select * from rendezvous where start =?1 AND patient =?2", nativeQuery = true)
-	List<Rendezvous>   findByDateAndPatient(LocalDateTime dayFrom, Long id);
+	List<Rendezvous> findByDateAndPatient(LocalDateTime dayFrom, Long id);
 
 	@Query("from Rendezvous r where r.patient.id= ?1")
 	public List<Rendezvous> findAll(Long id);
@@ -139,28 +147,27 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 
 	@Modifying
 	@Query(value = "UPDATE rendezvous SET day = :#{#day_of_week.getValue()-1}, start = :start , statut = :statut, medecin = :medecinId, patient = :patientId, motif = :motif , end=:end,mode_consultation=:idmode WHERE id = :id", nativeQuery = true)
-	void UpdateRdvByIdProfile(@Param("day_of_week")DayOfWeek day_of_week,@Param("start") LocalDateTime start,@Param("statut") String statut,@Param("medecinId") Long medecinId,
-	
-	@Param("patientId")Long patientId,@Param("motif") String motif,@Param("end") LocalDateTime end,@Param("id") long Id,@Param("idmode")long idmode) throws Exception;
+	void UpdateRdvByIdProfile(@Param("day_of_week") DayOfWeek day_of_week, @Param("start") LocalDateTime start, @Param("statut") String statut, @Param("medecinId") Long medecinId,
+
+							  @Param("patientId") Long patientId, @Param("motif") String motif, @Param("end") LocalDateTime end, @Param("id") long Id, @Param("idmode") long idmode) throws Exception;
 	// get RDV by Id and id speciate in a date :
 
 
 	// get RDV by Id and id Medecin :
 	@Query(value = "select p.* from rendezvous p , medecins m where p.medecin=m.id AND  m.specialite_id_spec=:spec and DATE(start)=:date AND p.medecin=:idmed", nativeQuery = true)
-	Rendezvous findRdvByMedcinandSpecInDate(@Param(value = "spec")long spec,@Param(value = "date")LocalDate date) throws Exception;
+	Rendezvous findRdvByMedcinandSpecInDate(@Param(value = "spec") long spec, @Param(value = "date") LocalDate date) throws Exception;
 
 	@Query(value = "SELECT * from rendezvous WHERE start<=STR_TO_DATE(:datestart, '%Y-%m-%d %H:%i:%s') and end>STR_TO_DATE(:datestart, '%Y-%m-%d %H:%i:%s') AND day=:day AND medecin=:idmed", nativeQuery = true)
-	Optional<Rendezvous> IsRdvinDateStart(@Param("datestart") LocalDateTime datestart ,@Param("day") int day,@Param("idmed") Long idmed) throws Exception;
+	Optional<Rendezvous> IsRdvinDateStart(@Param("datestart") LocalDateTime datestart, @Param("day") int day, @Param("idmed") Long idmed) throws Exception;
 
 
 	@Modifying
 	@Query(value = "UPDATE rendezvous SET day = :#{#day.getValue()-1}, start = :start , end=:end WHERE id = :Idrdv", nativeQuery = true)
-	void UpdateRdvdatestart(@Param("day")DayOfWeek day,@Param("start")LocalDateTime start,@Param("end")LocalDateTime end, @Param("Idrdv")long Idrdv) throws Exception;
+	void UpdateRdvdatestart(@Param("day") DayOfWeek day, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end, @Param("Idrdv") long Idrdv) throws Exception;
+
 	// Get rdv of the given med and pat from today and next comming
 	@Query(value = "select * from rendezvous  where medecin=?1 and patient =?2 and DATE(start)>=curdate()", nativeQuery = true)
-	List<Rendezvous> getRdvByIdMedecinandIdPatientandDate(Long idmed,Long patient);
-
-
+	List<Rendezvous> getRdvByIdMedecinandIdPatientandDate(Long idmed, Long patient);
 
 
 //	List<Rendezvous> findByPatientIdAndMedecinSpecialiteIdAndDay(Long patientId, Long specialtyId, DayOfWeek dayOfWeek);
@@ -171,18 +178,17 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 	@Query(value = "SELECT COUNT(*) FROM rendezvous p WHERE YEAR(p.start) = :year AND MONTH(p.start) = :month AND p.medecin = :idmed", nativeQuery = true)
 	int findRdvByMedcinInMonth(@Param("year") int year, @Param("month") int month, @Param("idmed") long idmed) throws Exception;
 
-//	@Query(value = "SELECT COUNT(DISTINCT patient) FROM rendezvous WHERE medecin = :idmed", nativeQuery = true)
+	//	@Query(value = "SELECT COUNT(DISTINCT patient) FROM rendezvous WHERE medecin = :idmed", nativeQuery = true)
 //	int findPatientsByMedcin(@Param("idmed") long idmed);
 	@Query(value = "SELECT COUNT(DISTINCT dc.patient_id) AS nombre_patients FROM dossier_medecin d JOIN documents dc ON d.dossier_id = dc.id_dossier  WHERE d.medecin_id = :idmed GROUP BY d.medecin_id", nativeQuery = true)
 	int findPatientsByMedcin(@Param("idmed") long idmed);
-
 
 
 	//List<Rendezvous> findByMedecinId(long id);
 
 	List<Rendezvous> findByMedecinIdAndStartAfterOrderByStartAsc(Long medecinId, LocalDateTime date);
 
-  //	List<Rendezvous> findByPatientIdAndMedecinSpecialiteIdAndDay(Long patientId, Long specialtyId, DayOfWeek dayOfWeek);
+	//	List<Rendezvous> findByPatientIdAndMedecinSpecialiteIdAndDay(Long patientId, Long specialtyId, DayOfWeek dayOfWeek);
 
 }
 

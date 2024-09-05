@@ -1124,6 +1124,7 @@ public class MedecinController {
 					// Display message for future weeks only
 					String formattedDateTime = nextAvailableDateTime.format(DateTimeFormatter.ofPattern("dd MM yyyy "));
 					return ResponseEntity.ok(Collections.singletonMap("message", "Prochain RDV le " + formattedDateTime));
+
 				}
 			}
 
@@ -1145,10 +1146,80 @@ public class MedecinController {
 		}
 	}
 
+	//-------
+	/* @GetMapping("/next-available-slot-details/{idmed}")
+	@JsonSerialize(using = LocalDateSerializer.class)
+	public ResponseEntity<?> GetNextAvailableSlotDetails(@PathVariable long idmed) {
+		try {
+			// Vérifier si le médecin existe
+			Medecin medecin = medrepository.findById(idmed)
+					.orElseThrow(() -> new BadRequestException("Médecin avec l'ID spécifié n'existe pas."));
+
+			// Vérifier si le médecin a un compte utilisateur
+			if (medecin.getUser() == null) {
+				return ResponseEntity.ok(Collections.singletonMap("message", "Ce médecin n'est pas encore disponible sur Clinital"));
+			}
+
+			// Fetch all future appointments for this doctor
+			List<Rendezvous> futureAppointments = rdvRepository.findByMedecinIdAndStartAfterOrderByStartAsc(idmed, LocalDateTime.now());
+
+			// Get schedules
+			List<MedecinSchedule> schedules = medScheduleRepo.findByMedIdOrderByAvailability(idmed)
+					.stream()
+					.map(item -> mapper.map(item, MedecinSchedule.class))
+					.collect(Collectors.toList());
+
+			// Find the next available slot considering both schedules and existing appointments
+			Optional<LocalDateTime> nextAvailableSlot = schedules.stream()
+					.flatMap(schedule -> {
+						LocalDate currentDate = LocalDate.now();
+						List<LocalDateTime> slots = new ArrayList<>();
+
+						while (slots.size() < 10) { // Look for the next 10 potential slots
+							if (schedule.getDay() == currentDate.getDayOfWeek()) {
+								LocalDateTime slotStart = currentDate.atTime(LocalTime.from(schedule.getAvailabilityStart()));
+								if (slotStart.isAfter(LocalDateTime.now())) {
+									slots.add(slotStart);
+								}
+							}
+							currentDate = currentDate.plusDays(1);
+						}
+						return slots.stream();
+					})
+					.filter(slotStart -> {
+						// Check if the slot doesn't conflict with existing appointments
+						return futureAppointments.stream().noneMatch(appointment ->
+								(slotStart.isEqual(appointment.getStart()) || slotStart.isAfter(appointment.getStart()))
+										&& slotStart.isBefore(appointment.getEnd())
+						);
+					})
+					.min(Comparator.naturalOrder());
+
+			// Préparez la réponse pour le prochain rendez-vous
+			if (nextAvailableSlot.isPresent()) {
+				LocalDateTime nextAvailableDateTime = nextAvailableSlot.get();
+				if (nextAvailableDateTime.toLocalDate().isAfter(LocalDate.now().plusWeeks(1))) {
+					// Renvoyez uniquement les détails du créneau du prochain rendez-vous
+					Map<String, Object> response = new HashMap<>();
+					response.put("nextAvailableDateTime", nextAvailableDateTime);
+					response.put("nextAvailableDate", nextAvailableDateTime.format(DateTimeFormatter.ofPattern("dd MM yyyy ")));
+					return ResponseEntity.ok(response);
+				}
+			}
+
+			// Si aucun créneau futur n'est trouvé
+			return ResponseEntity.ok(Collections.singletonMap("message", "Aucun créneau disponible pour le moment."));
+
+		} catch (Exception e) {
+			throw new BadRequestException("error :" + e);
+		}
+	}*/
 
 
 
-	private boolean isConflicting(AgendaResponse existingAgenda, MedecinSchedule newSchedule) {
+
+
+		private boolean isConflicting(AgendaResponse existingAgenda, MedecinSchedule newSchedule) {
 	LocalTime existingStart = existingAgenda.getWorkingDate().toLocalTime();
 	LocalTime existingEnd = existingAgenda.getWorkingDate().plusDays(1).toLocalTime(); // Fin de la journée de travail
 
