@@ -12,4 +12,7 @@ public class HorairesResponse {
 	private String startTime;
 	private String endTime;
 
+
+
+
 }
