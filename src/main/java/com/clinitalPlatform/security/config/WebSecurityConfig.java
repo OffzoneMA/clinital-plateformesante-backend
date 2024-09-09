@@ -96,7 +96,8 @@ public class WebSecurityConfig {
                 "/api/rdv/patient/rdvbyday",
                 "/api/cabinet/medecin/**",
                 "/api/medecinSchedule/shedulebyMed/**",
-                "/api/med/schedulesofMed/**"
+                "/api/med/schedulesofMed/**",
+                "/api/med/creneaux/**"
 
 
 

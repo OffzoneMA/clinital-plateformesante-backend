@@ -1,7 +1,7 @@
 package com.clinitalPlatform.controllers;
 
 
-import java.time.DayOfWeek;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
@@ -57,9 +57,6 @@ import com.clinitalPlatform.models.User;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.validation.annotation.Validated;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 @Slf4j
@@ -761,147 +758,8 @@ public class MedecinController {
 
 	}*/
 
-	/*@GetMapping("/agenda/{idmed}/{weeks}/{startDate}")
-	@JsonSerialize(using = LocalDateSerializer.class)
-	public List<AgendaResponse> GetCreno(@Validated @PathVariable long idmed, @PathVariable long weeks,
-										 @PathVariable(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)  LocalDate startDate)
-			throws Exception {
 
-		try {
-
-			List<AgendaResponse> agendaResponseList = new ArrayList<AgendaResponse>();
-			//afficher les schedules by week (availability start>= +week*7 and availability_end <=week*7)
-			List<MedecinSchedule> schedules = medScheduleRepo
-					//.findByMedIdAndStartDateAndWeeksOrderByAvailability(idmed,startDate,weeks)
-					.findByMedIdOrderByAvailability(idmed)
-					//.findByMedId(idmed)
-					.stream()
-					.map(item -> mapper.map(item, MedecinSchedule.class))
-					.collect(Collectors.toList());
-
-			int days = medecinService.getDaysInMonth(startDate.atStartOfDay());
-			//parcours le nbre de semaine en parametre
-			for (int j = 1; j <= weeks; j++) {
-				//parcours des jours
-				for (int i = 1; i <= 7; i++) {
-					checkday = false;  // si un jour contient des schedules
-					if (!schedules.isEmpty()) { // si la liste des creno de ce medecin pas vide
-						for (MedecinSchedule medsch : schedules) { //parcour les creno
-							//normalement on doit comparer la date avec la date pas le jour
-							if (medsch.getDay().getValue() == startDate.getDayOfWeek().getValue())
-							//medsch.getAvailabilityStart().toLocalDate().isAfter(startDate)) // a retirer
-							{
-								checkday = true;
-								AgendaResponse agenda = null;
-								// Rechercher une AgendaResponse correspondante dans agendaResponseList
-								for (AgendaResponse ag : agendaResponseList) {
-									if (ag.getDay().getValue() == medsch.getDay().getValue() && ag.getWeek() == j) {
-										agenda = ag;
-										break;
-									}
-								}
-
-								// Si une AgendaResponse correspondante est trouvée, la mettre à jour
-								if (agenda != null) {
-									agenda = medecinService.CreateCreno(medsch, agenda, idmed, j, startDate.atStartOfDay());
-									agendaResponseList.set(agendaResponseList.indexOf(agenda), agenda);
-								} else {
-									// Sinon, créer une nouvelle AgendaResponse
-									agenda = new AgendaResponse();
-									agenda.setDay(startDate.getDayOfWeek());
-									agenda.setWorkingDate(startDate.atStartOfDay());
-									agenda = medecinService.CreateCreno(medsch, agenda, idmed, j, startDate.atStartOfDay());
-									agendaResponseList.add(agenda);
-								}
-								//here
-
-
-//                      for (AgendaResponse ag : agendaResponseList) {
-//                         if (ag.getDay().getValue() == medsch.getDay().getValue() && ag.getWeek() == j) {
-//                            int index = agendaResponseList.indexOf(ag);
-//                            agenda = agendaResponseList.get(index);
-//                            agenda = medecinService.CreateCreno(medsch, agenda, idmed, j,
-//                                  startDate.atStartOfDay());
-//                            agendaResponseList.set(index, agenda);
-//
-//                         }
-//                      }
-
-								//agenda = medecinService.CreateCreno(medsch, agenda, idmed, j, startDate.atStartOfDay());
-
-								// diffrance hours :
-								long Hours = ChronoUnit.HOURS.between(medsch.getAvailabilityStart(),
-										medsch.getAvailabilityEnd());
-								agenda.getMedecinTimeTable().add(new GeneralResponse("startTime",
-										medsch.getAvailabilityStart()));
-								agenda.getMedecinTimeTable().add(new GeneralResponse("endTime",
-										medsch.getAvailabilityStart().plusHours(Hours)));
-								String startTime = medsch.getAvailabilityStart().getHour() + ":"
-										+ medsch.getAvailabilityStart().getMinute();
-
-								String endTime = medsch.getAvailabilityEnd().getHour() + ":"
-										+ medsch.getAvailabilityEnd().getMinute();
-
-								agenda.getWorkingHours().add(new HorairesResponse(startTime,
-										endTime));
-
-								agendaResponseList.add(agenda);
-
-								continue;
-
-							}
-
-						}
-					}
-					if (!checkday) {
-
-						AgendaResponse agenda = new AgendaResponse();
-						agenda.setDay(startDate.getDayOfWeek());
-						agenda.setWorkingDate(startDate.atStartOfDay());
-						agendaResponseList.add(agenda);
-					}
-					startDate = startDate.plusDays(1);//
-
-				}
-
-			}
-			// Create a new LinkedHashSet
-			Set<AgendaResponse> set = new LinkedHashSet<>();
-
-			// Add the elements to set
-			set.addAll(agendaResponseList);
-
-			// Clear the list
-			agendaResponseList.clear();
-
-			// add the elements of set
-			// with no duplicates to the list
-			agendaResponseList.addAll(set);
-
-
-			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-			if (!(authentication instanceof AnonymousAuthenticationToken)) {
-				// L'utilisateur est authentifié, créez l'activité
-				User connectedUser = globalVariables.getConnectedUser();
-				if (connectedUser != null) {
-					activityServices.createActivity(new Date(),"Read","Consult Medecin Agenda by his ID : "+idmed, connectedUser);
-					LOGGER.info("Consult Medecin Agenda By his ID : "+idmed+" by User : "+(connectedUser instanceof User ? connectedUser.getId():""));
-				}
-			}
-//       if(globalVariables != null && globalVariables.getConnectedUser()!=null){
-//          activityServices.createActivity(new Date(),"Read","Consult Medecin Agenda by his ID : "+idmed,globalVariables.getConnectedUser());
-//          LOGGER.info("Consult Medecin Agenda By his ID : "+idmed+" by User : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
-//       }
-
-			return agendaResponseList;
-
-		} catch (Exception e) {
-			throw new BadRequestException("error :" + e);
-		}
-
-	}*/
-
-	//Recuperation********************************************
+	//Recuperation de l'agenda********************************************
 
 	//AFFICHAGE DE L'AGENDA
 	@GetMapping("/agenda/{idmed}/{weeks}/{startDate}")
@@ -1072,74 +930,150 @@ public class MedecinController {
 	}
 
 	//-------FIN
-	/* @GetMapping("/next-available-slot-details/{idmed}")
+
+
+
+	@GetMapping("/creneaux/{idmed}/{weeks}/{startDate}")
 	@JsonSerialize(using = LocalDateSerializer.class)
-	public ResponseEntity<?> GetNextAvailableSlotDetails(@PathVariable long idmed) {
+	public List<AgendaResponse> GetCreneau(@Validated @PathVariable long idmed, @PathVariable long weeks,
+										   @PathVariable(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)  LocalDate startDate)
+			throws Exception {
+
 		try {
-			// Vérifier si le médecin existe
-			Medecin medecin = medrepository.findById(idmed)
-					.orElseThrow(() -> new BadRequestException("Médecin avec l'ID spécifié n'existe pas."));
 
-			// Vérifier si le médecin a un compte utilisateur
-			if (medecin.getUser() == null) {
-				return ResponseEntity.ok(Collections.singletonMap("message", "Ce médecin n'est pas encore disponible sur Clinital"));
-			}
-
-			// Fetch all future appointments for this doctor
-			List<Rendezvous> futureAppointments = rdvRepository.findByMedecinIdAndStartAfterOrderByStartAsc(idmed, LocalDateTime.now());
-
-			// Get schedules
-			List<MedecinSchedule> schedules = medScheduleRepo.findByMedIdOrderByAvailability(idmed)
+			List<AgendaResponse> agendaResponseList = new ArrayList<AgendaResponse>();
+			//afficher les schedules by week (availability start>= +week*7 and availability_end <=week*7)
+			List<MedecinSchedule> schedules = medScheduleRepo
+					//.findByMedIdAndStartDateAndWeeksOrderByAvailability(idmed,startDate,weeks)
+					.findByMedIdOrderByAvailability(idmed)
+					//.findByMedId(idmed)
 					.stream()
 					.map(item -> mapper.map(item, MedecinSchedule.class))
 					.collect(Collectors.toList());
 
-			// Find the next available slot considering both schedules and existing appointments
-			Optional<LocalDateTime> nextAvailableSlot = schedules.stream()
-					.flatMap(schedule -> {
-						LocalDate currentDate = LocalDate.now();
-						List<LocalDateTime> slots = new ArrayList<>();
-
-						while (slots.size() < 10) { // Look for the next 10 potential slots
-							if (schedule.getDay() == currentDate.getDayOfWeek()) {
-								LocalDateTime slotStart = currentDate.atTime(LocalTime.from(schedule.getAvailabilityStart()));
-								if (slotStart.isAfter(LocalDateTime.now())) {
-									slots.add(slotStart);
+			int days = medecinService.getDaysInMonth(startDate.atStartOfDay());
+			//parcours le nbre de semaine en parametre
+			for (int j = 1; j <= weeks; j++) {
+				//parcours des jours
+				for (int i = 1; i <= 7; i++) {
+					checkday = false;  // si un jour contient des schedules
+					if (!schedules.isEmpty()) { // si la liste des creno de ce medecin pas vide
+						for (MedecinSchedule medsch : schedules) { //parcour les creno
+							//normalement on doit comparer la date avec la date pas le jour
+							if (medsch.getDay().getValue() == startDate.getDayOfWeek().getValue())
+							//medsch.getAvailabilityStart().toLocalDate().isAfter(startDate)) // a retirer
+							{
+								checkday = true;
+								AgendaResponse agenda = null;
+								// Rechercher une AgendaResponse correspondante dans agendaResponseList
+								for (AgendaResponse ag : agendaResponseList) {
+									if (ag.getDay().getValue() == medsch.getDay().getValue() && ag.getWeek() == j) {
+										agenda = ag;
+										break;
+									}
 								}
-							}
-							currentDate = currentDate.plusDays(1);
-						}
-						return slots.stream();
-					})
-					.filter(slotStart -> {
-						// Check if the slot doesn't conflict with existing appointments
-						return futureAppointments.stream().noneMatch(appointment ->
-								(slotStart.isEqual(appointment.getStart()) || slotStart.isAfter(appointment.getStart()))
-										&& slotStart.isBefore(appointment.getEnd())
-						);
-					})
-					.min(Comparator.naturalOrder());
 
-			// Préparez la réponse pour le prochain rendez-vous
-			if (nextAvailableSlot.isPresent()) {
-				LocalDateTime nextAvailableDateTime = nextAvailableSlot.get();
-				if (nextAvailableDateTime.toLocalDate().isAfter(LocalDate.now().plusWeeks(1))) {
-					// Renvoyez uniquement les détails du créneau du prochain rendez-vous
-					Map<String, Object> response = new HashMap<>();
-					response.put("nextAvailableDateTime", nextAvailableDateTime);
-					response.put("nextAvailableDate", nextAvailableDateTime.format(DateTimeFormatter.ofPattern("dd MM yyyy ")));
-					return ResponseEntity.ok(response);
+								// Si une AgendaResponse correspondante est trouvée, la mettre à jour
+								if (agenda != null) {
+									agenda = medecinService.CreateCreno(medsch, agenda, idmed, j, startDate.atStartOfDay());
+									agendaResponseList.set(agendaResponseList.indexOf(agenda), agenda);
+								} else {
+									// Sinon, créer une nouvelle AgendaResponse
+									agenda = new AgendaResponse();
+									agenda.setDay(startDate.getDayOfWeek());
+									agenda.setWorkingDate(startDate.atStartOfDay());
+									agenda = medecinService.CreateCreno(medsch, agenda, idmed, j, startDate.atStartOfDay());
+									agendaResponseList.add(agenda);
+								}
+								//here
+
+
+//                      for (AgendaResponse ag : agendaResponseList) {
+//                         if (ag.getDay().getValue() == medsch.getDay().getValue() && ag.getWeek() == j) {
+//                            int index = agendaResponseList.indexOf(ag);
+//                            agenda = agendaResponseList.get(index);
+//                            agenda = medecinService.CreateCreno(medsch, agenda, idmed, j,
+//                                  startDate.atStartOfDay());
+//                            agendaResponseList.set(index, agenda);
+//
+//                         }
+//                      }
+
+								//agenda = medecinService.CreateCreno(medsch, agenda, idmed, j, startDate.atStartOfDay());
+
+								// diffrance hours :
+								long Hours = ChronoUnit.HOURS.between(medsch.getAvailabilityStart(),
+										medsch.getAvailabilityEnd());
+								agenda.getMedecinTimeTable().add(new GeneralResponse("startTime",
+										medsch.getAvailabilityStart()));
+								agenda.getMedecinTimeTable().add(new GeneralResponse("endTime",
+										medsch.getAvailabilityStart().plusHours(Hours)));
+								String startTime = medsch.getAvailabilityStart().getHour() + ":"
+										+ medsch.getAvailabilityStart().getMinute();
+
+								String endTime = medsch.getAvailabilityEnd().getHour() + ":"
+										+ medsch.getAvailabilityEnd().getMinute();
+
+								agenda.getWorkingHours().add(new HorairesResponse(startTime,
+										endTime));
+
+								agendaResponseList.add(agenda);
+
+								continue;
+
+							}
+
+						}
+					}
+					if (!checkday) {
+
+						AgendaResponse agenda = new AgendaResponse();
+						agenda.setDay(startDate.getDayOfWeek());
+						agenda.setWorkingDate(startDate.atStartOfDay());
+						agendaResponseList.add(agenda);
+					}
+					startDate = startDate.plusDays(1);//
+
+				}
+
+			}
+			// Create a new LinkedHashSet
+			Set<AgendaResponse> set = new LinkedHashSet<>();
+
+			// Add the elements to set
+			set.addAll(agendaResponseList);
+
+			// Clear the list
+			agendaResponseList.clear();
+
+			// add the elements of set
+			// with no duplicates to the list
+			agendaResponseList.addAll(set);
+
+
+			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+			if (!(authentication instanceof AnonymousAuthenticationToken)) {
+				// L'utilisateur est authentifié, créez l'activité
+				User connectedUser = globalVariables.getConnectedUser();
+				if (connectedUser != null) {
+					activityServices.createActivity(new Date(),"Read","Consult Medecin Agenda by his ID : "+idmed, connectedUser);
+					LOGGER.info("Consult Medecin Agenda By his ID : "+idmed+" by User : "+(connectedUser instanceof User ? connectedUser.getId():""));
 				}
 			}
+//       if(globalVariables != null && globalVariables.getConnectedUser()!=null){
+//          activityServices.createActivity(new Date(),"Read","Consult Medecin Agenda by his ID : "+idmed,globalVariables.getConnectedUser());
+//          LOGGER.info("Consult Medecin Agenda By his ID : "+idmed+" by User : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+//       }
 
-			// Si aucun créneau futur n'est trouvé
-			return ResponseEntity.ok(Collections.singletonMap("message", "Aucun créneau disponible pour le moment."));
+			return agendaResponseList;
 
 		} catch (Exception e) {
 			throw new BadRequestException("error :" + e);
 		}
-	}*/
 
+	}
+
+//****************
 
 
 
