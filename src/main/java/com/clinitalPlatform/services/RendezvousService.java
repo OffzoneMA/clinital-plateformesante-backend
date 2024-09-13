@@ -5,6 +5,7 @@ import com.clinitalPlatform.dto.RendezvousDTO;
 import com.clinitalPlatform.enums.ERole;
 import com.clinitalPlatform.models.*;
 import com.clinitalPlatform.payload.response.ApiResponse;
+import com.clinitalPlatform.payload.response.RendezvousResponseother;
 import com.clinitalPlatform.repository.*;
 import com.clinitalPlatform.security.config.VideoCall.UrlVideoCallGenerator;
 import com.clinitalPlatform.util.ApiError;
@@ -373,7 +374,7 @@ public class RendezvousService implements IDao<Rendezvous>  {
 
 
 	//Add RDV :
-	public ResponseEntity<?> AddnewRdv(User user,RendezvousDTO c,Medecin medecin,Patient patient) throws Exception{
+	/*public ResponseEntity<?> AddnewRdv(User user,RendezvousDTO c,Medecin medecin,Patient patient) throws Exception{
 
 		try {
 		// DayOfWeek day = DayOfWeek.valueOf(c.getDay());
@@ -418,7 +419,108 @@ public class RendezvousService implements IDao<Rendezvous>  {
 			// TODO: handle exception
 			throw new Exception(e.getMessage());
 		}
-	 }
+	 }*/
+
+	//mapping RENDEZ-VOUS RESPONSE AFIN D'AVOIR LE BON FORMAT POUR RDV2
+
+
+	public RendezvousResponseother mapToRendezvousResponseother(Rendezvous rendezvous) {
+		if (rendezvous == null) {
+			return null;
+		}
+
+		RendezvousResponseother response = new RendezvousResponseother();
+		response.setId(rendezvous.getId());
+		response.setCanceledat(rendezvous.getCanceledAt());
+		response.setDay(rendezvous.getDay() != null ? rendezvous.getDay().toString() : null); // Assurez-vous que DayOfWeek est converti en String
+		response.setStart(rendezvous.getStart());
+		response.setEnd(rendezvous.getEnd());
+		response.setMedecinid(rendezvous.getMedecin() != null ? rendezvous.getMedecin().getId() : null);
+		response.setPatientid(rendezvous.getPatient() != null ? rendezvous.getPatient().getId() : null);
+		response.setStatut(rendezvous.getStatut());
+		// Extraire les IDs des objets ModeConsultation et MotifConsultation
+		response.setModeconsultationId(rendezvous.getModeConsultation() != null ? rendezvous.getModeConsultation().getId_mode() : null);
+		response.setIsnewpatient(rendezvous.getIsnewPatient());
+		response.setCommantaire(rendezvous.getCommantaire());
+		MotifConsultation motifConsultation = rendezvous.getMotifConsultation();
+		response.setMotifId(rendezvous.getMotifConsultation() != null ? rendezvous.getMotifConsultation().getId_motif() : null);
+		response.setLinkVideoCall(rendezvous.getLinkVideoCall());
+		response.setCabinet(rendezvous.getCabinet() != null ? rendezvous.getCabinet().getId_cabinet() : null); // Assurez-vous que Cabinet a un ID
+
+		return response;
+	}
+
+
+
+	public ResponseEntity<?> AddnewRdv(User user, RendezvousDTO c, Medecin medecin, Patient patient) throws Exception {
+
+		try {
+			// Récupération des entités nécessaires
+			MotifConsultation motif = mRepository.findById(c.getCabinet())
+					.orElseThrow(() -> new Exception("No such Id exist for a Motif"));
+			ModeConsultation mode = moderespo.findById(c.getCabinet())
+					.orElseThrow(() -> new Exception("No such Id exist for a Mode consultation"));
+			Cabinet cabinet = cabrepo.findById(c.getCabinet())
+					.orElseThrow(() -> new Exception("No such Id exist for a cabinet"));
+
+			// Vérification de la réservation
+			//Boolean isReserved = this.isHasRdvToday(medecin.getSpecialite().getId_spec(), c.getStart().toLocalDate(), patient.getId());
+			Boolean isReserved = false,ModeMedecin=false;isReserved= this.isHasRdvToday( medecin.getSpecialite().getId_spec(), c.getStart().toLocalDate(),patient.getId());
+
+			if (!isReserved ||ModeMedecin) {
+
+				// Création du nouveau rendez-vous
+				Rendezvous rendezvous = new Rendezvous();
+				rendezvous.setMedecin(medecin);
+				rendezvous.setMotifConsultation(motif);
+				rendezvous.setPatient(patient);
+				rendezvous.setDay(c.getDay());
+				rendezvous.setStart(c.getStart());
+				rendezvous.setEnd(c.getEnd());
+				rendezvous.setStatut(c.getStatut());
+				rendezvous.setCanceledAt(c.getCanceledat());
+				rendezvous.setModeConsultation(mode);
+				rendezvous.setISnewPatient(c.getIsnewpatient());
+				if (user != null && rendezvous != null) {
+					ERole userRole = user.getRole();
+					if (userRole == ERole.ROLE_MEDECIN && c != null && c.getCommantaire() != null) {
+						rendezvous.setCommantaire(c.getCommantaire());
+					}
+				}
+				rendezvous.setLinkVideoCall(urlVideoCallGenerator.joinConference());
+				rendezvous.setCabinet(cabinet);
+				LOGGER.info("id=" + rendezvous.getId());
+
+				entityManger.persist(rendezvous);
+				ActivityServices.createActivity(new Date(), "Add", "Add New Rdv ", user);
+				LOGGER.info("Add new Rdv, UserID : " + user.getId());
+				return ResponseEntity.ok(mapper.map(rendezvous, Rendezvous.class));
+
+			} else {
+				// Récupérer les détails du rendez-vous existant
+				Rendezvous existingRdv = rdvrepo.findRdvByPatientandSpecInDate(patient.getId(), medecin.getSpecialite().getId_spec(), c.getStart().toLocalDate())
+						.stream()
+						.findFirst()
+						.orElse(null);
+
+				// Convertir en RendezvousResponse
+				RendezvousResponseother response = existingRdv != null ? mapToRendezvousResponseother(existingRdv) : null;
+
+				return ResponseEntity.ok(new ApiResponse(false, "You have already an other RDV ", response));
+				/*Rendezvous existingRdv = rdvrepo.findRdvByPatientandSpecInDate(patient.getId(), medecin.getSpecialite().getId_spec(), c.getStart().toLocalDate())
+						.stream()
+						.findFirst()
+						.orElse(null);
+
+
+				return ResponseEntity.ok(new ApiResponse(false, "You have already an other RDV ", existingRdv));*/
+			}
+
+		} catch (Exception e) {
+			throw new Exception(e.getMessage());
+		}
+	}
+
 	public Rendezvous updateerdv(long rdvId,RendezvousDTO rdvDTO, Medecin medecin, Patient patient) throws Exception{
 		Rendezvous rdv = rdvrepo.findById(rdvId).orElseThrow(() -> new Exception("RDV not found"));
 
