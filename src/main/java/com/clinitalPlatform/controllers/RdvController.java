@@ -7,6 +7,7 @@ import com.clinitalPlatform.enums.ModeConsultationEnum;
 import com.clinitalPlatform.enums.RdvStatutEnum;
 import com.clinitalPlatform.exception.BadRequestException;
 import com.clinitalPlatform.models.Medecin;
+import com.clinitalPlatform.models.ModeConsultation;
 import com.clinitalPlatform.models.Patient;
 import com.clinitalPlatform.models.Rendezvous;
 import com.clinitalPlatform.payload.request.RendezvousRequest;
@@ -871,6 +872,8 @@ public class RdvController {
 		return ResponseEntity.ok(patientCounts);
 	}*/
 	/////////////
+
+
 
 }
 
