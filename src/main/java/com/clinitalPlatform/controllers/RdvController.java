@@ -4,6 +4,7 @@ import com.clinitalPlatform.dto.ModeCountDTO;
 import com.clinitalPlatform.dto.PatientCountsDTO;
 import com.clinitalPlatform.dto.RendezvousDTO;
 import com.clinitalPlatform.enums.ModeConsultationEnum;
+import com.clinitalPlatform.enums.MotifConsultationEnum;
 import com.clinitalPlatform.enums.RdvStatutEnum;
 import com.clinitalPlatform.exception.BadRequestException;
 import com.clinitalPlatform.models.Medecin;
@@ -152,7 +153,57 @@ public class RdvController {
 	}
 
 	// Get Rdv By Id and Id patient : %OK%
+	public RendezvousResponse mapToRendezvousResponse(Rendezvous rdv) {
+		RendezvousResponse response = new RendezvousResponse();
+		response.setId(rdv.getId());
+		response.setDay(rdv.getDay() != null ? rdv.getDay().name() : null); // Convertit DayOfWeek en chaîne
+		response.setStart(rdv.getStart());
+		response.setEnd(rdv.getEnd());
+		response.setCanceledat(rdv.getCanceledAt());
+		response.setStatut(rdv.getStatut());
+		response.setModeconsultation(rdv.getModeConsultation()); // Conserve l'objet complet ou convertissez-le si nécessaire
+		response.setMedecinid(rdv.getMedecin() != null ? rdv.getMedecin().getId() : null);
+		response.setPatientid(rdv.getPatient() != null ? rdv.getPatient().getId() : null);
+		response.setLinkVideoCall(rdv.getLinkVideoCall());
+
+		// Conversion de motif
+		if (rdv.getMotifConsultation() != null) {
+			response.setMotif(rdv.getMotifConsultation().getMotif()); // Utilisation directe de l'énumération
+		} else {
+			response.setMotif(null); // ou une valeur par défaut si souhaité
+		}
+
+		return response;
+	}
+
 	@GetMapping("patient/rdvById/{id}")
+	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	public ResponseEntity<?> getRdvByIdBypatient(@PathVariable Long id) throws Exception {
+		Patient pat = patientService.getPatientMoiByUserId(globalVariables.getConnectedUser().getId());
+		try {
+			Optional<Rendezvous> isRdv = rdvrepository.findRdvByIdandPatient(id, pat.getId());
+			if (isRdv.isPresent()) {
+				Rendezvous rdv = isRdv.get();
+				RendezvousResponse rdvResponse = mapToRendezvousResponse(rdv); // Utiliser la méthode de mappage
+				activityServices.createActivity(new Date(), "Read", "Show rdv ID : " + id, globalVariables.getConnectedUser());
+				LOGGER.info("Show rdv ID : " + id + ", UserID : " + globalVariables.getConnectedUser().getId());
+				return ResponseEntity.ok(rdvResponse); // Retourner le DTO
+			} else {
+				activityServices.createActivity(new Date(), "Warning", "Cannot find Rdv By ID : " + id, globalVariables.getConnectedUser());
+				LOGGER.warn("Cannot find Rdv By ID : " + id + ", UserID : " + globalVariables.getConnectedUser().getId());
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse(false, "RDV Not Found " + id));
+			}
+		} catch (Exception e) {
+			LOGGER.error("Error fetching RDV by ID", e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+		}
+	}
+
+
+
+
+
+	/*@GetMapping("patient/rdvById/{id}")
 	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
 	public ResponseEntity<?> getRdvByIdBypatient(@PathVariable Long id) throws Exception {
 		Patient pat = patientService.getPatientMoiByUserId(globalVariables.getConnectedUser().getId());
@@ -177,7 +228,7 @@ public class RdvController {
 			return ResponseEntity.ok(null);
 
         }
-    }
+    }*/
 
 	@GetMapping("/patient/rdvByIdMedecin")
 	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
