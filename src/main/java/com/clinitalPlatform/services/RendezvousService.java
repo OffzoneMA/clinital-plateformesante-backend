@@ -456,10 +456,12 @@ public class RendezvousService implements IDao<Rendezvous>  {
 
 		try {
 			// Récupération des entités nécessaires
-			MotifConsultation motif = mRepository.findById(c.getCabinet())
-					.orElseThrow(() -> new Exception("No such Id exist for a Motif"));
-			ModeConsultation mode = moderespo.findById(c.getCabinet())
-					.orElseThrow(() -> new Exception("No such Id exist for a Mode consultation"));
+
+			MotifConsultation motif = mRepository.findById(c.getMotif())
+					.orElseThrow(() -> new Exception("No such Id exists for MotifConsultation"));
+
+			ModeConsultation mode = moderespo.findById(c.getModeconsultation())
+					.orElseThrow(() -> new Exception("No such Id exists for ModeConsultation"));
 			Cabinet cabinet = cabrepo.findById(c.getCabinet())
 					.orElseThrow(() -> new Exception("No such Id exist for a cabinet"));
 
