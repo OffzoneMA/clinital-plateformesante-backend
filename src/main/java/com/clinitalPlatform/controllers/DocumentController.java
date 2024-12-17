@@ -436,5 +436,57 @@ public class DocumentController {
     }
 
 
+    @PostMapping("/share-documents-to-medecin")
+    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    @ResponseBody
+    public ResponseEntity<?> shareDocumentsWithMedecin(
+            @RequestParam Long medecinId,
+            @RequestBody List<Long> documentIds) {
+
+        // Validation des entrées
+        if (medecinId == null) {
+            return ResponseEntity.badRequest().body("Medecin ID is required");
+        }
+        if (documentIds == null || documentIds.isEmpty()) {
+            return ResponseEntity.badRequest().body("Document IDs list is required and cannot be empty");
+        }
+
+        try {
+            // Appeler le service pour partager les documents
+            Medecin medecin = docservices.shareDocumentsWithMedecin(medecinId, documentIds);
+
+            // Retourner une réponse descriptive
+            return ResponseEntity.ok(new ApiResponse(true, "Documents shared successfully!"));
+        } catch (IllegalArgumentException e) {
+            // Gérer les erreurs causées par des IDs invalides
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            // Gérer les erreurs inattendues
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + e.getMessage());
+        }
+    }
+
+
+    // Endpoint to share a single document with multiple medecins
+    @PostMapping("/share-document-to-medecins")
+    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    @ResponseBody
+    public ResponseEntity<?> shareDocumentWithMedecins(
+            @RequestParam Long documentId,
+            @RequestBody List<Long> medecinIds) {
+        try {
+            Document document = docservices.shareDocumentWithMedecins(documentId, medecinIds);
+
+            // Retournez une réponse explicite avec un message ou l'objet partagé
+            return ResponseEntity.ok(new ApiResponse(true, "Document shared successfully!", document));
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            // Retournez une réponse explicite en cas d'erreur
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "Error sharing document: " + e.getMessage(), null));
+        }
+    }
+
 
 }

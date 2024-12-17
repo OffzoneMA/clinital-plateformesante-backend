@@ -1,10 +1,6 @@
 package com.clinitalPlatform.models;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.Date;
+import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
@@ -87,14 +83,17 @@ public class Medecin {
 	private User user;
 
 	// in this we create a Bridge table between Medecin and Document to link them together
-	@ManyToMany
-	@JoinTable(name = "DocumentMedecin",
-	 	joinColumns = @JoinColumn(name = "medecin_id"),
-		inverseJoinColumns = @JoinColumn(name = "document_id"))
+	@ManyToMany(cascade = {CascadeType.MERGE, CascadeType.PERSIST}, fetch = FetchType.LAZY)
+	@JoinTable(
+			name = "DocumentMedecin",
+			joinColumns = @JoinColumn(name = "medecin_id"),
+			inverseJoinColumns = @JoinColumn(name = "document_id")
+	)
 	@JsonIgnore
-	private List<Document> Meddoc;
+	private List<Document> Meddoc = new ArrayList<>();
 
-	
+
+
 	// in this we create a Bridge table between Medecin and DossierMedical to link them together
 	@ManyToMany
 	@JoinTable(name = "DossierMedecin",
