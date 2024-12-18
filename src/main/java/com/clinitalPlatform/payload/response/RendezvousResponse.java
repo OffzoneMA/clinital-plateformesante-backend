@@ -23,6 +23,7 @@ public class RendezvousResponse {
 	private Long medecinid;
 	private Long patientid;
 	private String LinkVideoCall;
+	private PatientResponse patient;
 
 
 }

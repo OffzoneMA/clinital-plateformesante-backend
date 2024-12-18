@@ -13,6 +13,7 @@ import com.clinitalPlatform.models.Patient;
 import com.clinitalPlatform.models.Rendezvous;
 import com.clinitalPlatform.payload.request.RendezvousRequest;
 import com.clinitalPlatform.payload.response.ApiResponse;
+import com.clinitalPlatform.payload.response.PatientResponse;
 import com.clinitalPlatform.payload.response.RendezvousResponse;
 import com.clinitalPlatform.repository.*;
 import com.clinitalPlatform.services.ActivityServices;
@@ -173,18 +174,28 @@ public class RdvController {
 			response.setMotif(null); // ou une valeur par défaut si souhaité
 		}
 
+		if(rdv.getPatient() != null) {
+			response.setPatient(mapper.map(rdv.getPatient(), PatientResponse.class));
+		}
+
 		return response;
 	}
 
 	@GetMapping("patient/rdvById/{id}")
 	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
 	public ResponseEntity<?> getRdvByIdBypatient(@PathVariable Long id) throws Exception {
-		Patient pat = patientService.getPatientMoiByUserId(globalVariables.getConnectedUser().getId());
 		try {
-			Optional<Rendezvous> isRdv = rdvrepository.findRdvByIdandPatient(id, pat.getId());
-			if (isRdv.isPresent()) {
-				Rendezvous rdv = isRdv.get();
-				RendezvousResponse rdvResponse = mapToRendezvousResponse(rdv); // Utiliser la méthode de mappage
+			Patient pat = patientService.getPatientMoiByUserId(globalVariables.getConnectedUser().getId());
+			if (pat == null) {
+				LOGGER.warn("No patient found for connected user with ID: " + globalVariables.getConnectedUser().getId());
+				return ResponseEntity.status(HttpStatus.NOT_FOUND)
+						.body(new ApiResponse(false, "Patient not found for the connected user"));
+			}
+
+			Rendezvous isRdv = rdvrepository.findRdvByIdUserandId(globalVariables.getConnectedUser().getId() , id);
+
+			if (isRdv != null) {
+				RendezvousResponse rdvResponse = mapToRendezvousResponse(isRdv); // Utiliser la méthode de mappage
 				activityServices.createActivity(new Date(), "Read", "Show rdv ID : " + id, globalVariables.getConnectedUser());
 				LOGGER.info("Show rdv ID : " + id + ", UserID : " + globalVariables.getConnectedUser().getId());
 				return ResponseEntity.ok(rdvResponse); // Retourner le DTO
