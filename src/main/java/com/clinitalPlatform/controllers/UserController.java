@@ -126,6 +126,15 @@ public class UserController {
 			// Vérification si l'email a changé
 			boolean emailChanged = !currentUser.getEmail().equals(request.getEmail());
 
+			// Si l'email a changé, vérifier qu'il n'est pas déjà utilisé
+			if (emailChanged) {
+				boolean emailExists = userRepository.existsByEmail(request.getEmail());
+				if (emailExists) {
+					return ResponseEntity.status(HttpStatus.CONFLICT)
+							.body(new ApiResponse(false, "L'adresse email est déjà utilisée par un autre utilisateur"));
+				}
+			}
+
 			// Mise à jour des informations
 			currentUser.setEmail(request.getEmail());
 			currentUser.setTelephone(request.getTelephone());
@@ -163,5 +172,51 @@ public class UserController {
 		return ResponseEntity.ok(response);
 	}
 
+	@GetMapping("/by-email")
+	public ResponseEntity<?> getUsersByEmail(@RequestParam String email) {
+		try {
+			List<User> users = userRepository.findAllByEmail(email);
+			if (users.isEmpty()) {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND)
+						.body(new ApiResponse(false, "Aucun utilisateur trouvé avec cet email"));
+			}
+			return ResponseEntity.ok(users);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new ApiResponse(false, "Erreur lors de la récupération des utilisateurs par email"));
+		}
+	}
 
+	@PutMapping("/updateMail/{id}")
+	public ResponseEntity<?> updateUserById(@PathVariable Long id, @Valid @RequestBody UserUpdateRequest request) {
+		try {
+			// Récupérer l'utilisateur par ID
+			User user = userRepository.findById(id)
+					.orElseThrow(() -> new BadRequestException("Utilisateur introuvable"));
+
+			// Vérifier si l'email a changé et vérifier les doublons
+			if (!user.getEmail().equals(request.getEmail())) {
+				boolean emailExists = userRepository.existsByEmail(request.getEmail());
+				if (emailExists) {
+					return ResponseEntity.status(HttpStatus.CONFLICT)
+							.body(new ApiResponse(false, "L'adresse email est déjà utilisée par un autre utilisateur"));
+				}
+			}
+
+			// Mise à jour des champs (ajuster en fonction de vos besoins)
+			user.setEmail(request.getEmail());
+			user.setTelephone(request.getTelephone());
+
+
+			// Sauvegarder les modifications
+			userRepository.save(user);
+
+			return ResponseEntity.ok(new ApiResponse(true, "Utilisateur mis à jour avec succès"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new ApiResponse(false, "Erreur lors de la mise à jour de l'utilisateur"));
+		}
+	}
 }

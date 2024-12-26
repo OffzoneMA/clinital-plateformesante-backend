@@ -70,6 +70,8 @@ public class WebSecurityConfig {
 
         String[] permitAllRoutes = {"/api/auth/**","/api/users/me" ,  "/api/users/activity/**","/api/demandes/create","/api/cabinet/**",
         		"/api/med/medecins",
+                "/api/users/by-email" ,
+                "/api/users/updateMail/**" ,
         		"/api/med/medById/**",
     			"/api/med/medByName",
     			"/api/med/medByNameOrSpecAndVille/**",

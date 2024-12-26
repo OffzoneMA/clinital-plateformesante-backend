@@ -1,5 +1,6 @@
 package com.clinitalPlatform.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -26,4 +27,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	@Query(value = "SELECT u.is_enabled FROM users u WHERE u.email = ?1", nativeQuery = true)
 	Optional<Boolean> findIsEnabledByEmail(String email);
 
+	List<User> findAllByEmail(String email);
 }
