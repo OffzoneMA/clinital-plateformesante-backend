@@ -306,11 +306,6 @@ public class AuthController {
             }
         }
     }*/
-
-
-
-
-
     //-----------------------------------------------------------------
     //recuperation d'un token de confirmation par user_id
     @GetMapping("/confirmationtoken/{userId}")

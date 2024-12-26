@@ -471,16 +471,20 @@ INSERT INTO `medecins` (`id`, `steps_validation`, `civilite_med`, `contact_urgen
 (3,1,'Mr', '0535618216', NULL,  '141245316',NULL, '351486', 'MOURABITI', NULL, NULL, 'ABDELAALI YAHYA',1, 5, 58);
 
 INSERT INTO `moyenspaiement` (`id_mp`, `type`) VALUES
-(1, 'Cash'),
-(2, 'Credit'),
-(3, 'cheque');
+(1, "Cash"),
+(2, "Credit"),
+(3, "Cheque"),
+(4, "Virement");
+
+
 INSERT INTO `cabinet` (`id_cabinet`, `adresse`, `code_post`,`nom`,`creator_id`,`ville_id_ville`) VALUES
 (1, '1 rue de france', '10000', 'Cabinet 1',1,58),
 (3, '2 rue de france', '10000', 'Cabinet 2',2,58);
 
 INSERT INTO `medecins_moyen_paiement` (`medecin_id`, `moyen_paiement_id_mp`) VALUES
 (1, 1),
-(1, 2); 
+(1, 2),
+(1, 4);
 
 INSERT INTO `type_consultation` (`consultation_id`, `tarif`, `title`, `medecin_id`) VALUES
 (1, 200, 'Premiere consultation', 1),

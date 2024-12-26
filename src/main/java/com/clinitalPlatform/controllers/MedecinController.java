@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 import javax.validation.Valid;
 
 import com.clinitalPlatform.dto.*;
-import com.clinitalPlatform.enums.MotifConsultationEnum;
+import com.clinitalPlatform.enums.TypeMoyenPaiementEnum;
 import com.clinitalPlatform.exception.BadRequestException;
 import com.clinitalPlatform.models.*;
 import com.clinitalPlatform.payload.request.*;
@@ -42,16 +42,12 @@ import org.springframework.web.multipart.MultipartFile;
 import com.clinitalPlatform.services.MedecinServiceImpl;
 import com.clinitalPlatform.repository.MedecinRepository;
 import com.clinitalPlatform.services.ActivityServices;
-import com.clinitalPlatform.util.GlobalVariables;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.security.services.UserDetailsImpl;
 import com.clinitalPlatform.util.PDFGenerator;
-import com.clinitalPlatform.util.ClinitalModelMapper;
 import com.clinitalPlatform.services.interfaces.SpecialiteService;
-import com.clinitalPlatform.exception.BadRequestException;
 import com.clinitalPlatform.models.User;
 
 import org.springframework.format.annotation.DateTimeFormat;
@@ -145,6 +141,11 @@ public class MedecinController {
 	private CabinetRepository cabinetRepository;
 	@Autowired
 	private SpecialiteRepository specialiteRepository;
+
+	@Autowired
+	private VirementBancaireRepository virementBancaireRepository;
+
+
 	public static boolean checkday = false;
 	//end zakia
 	@GetMapping("/medecins")
@@ -185,26 +186,59 @@ public class MedecinController {
 
 	@GetMapping("/medById/{id}")
 	public ResponseEntity<MedecinDTO> getMedecinById(@PathVariable(value="id") Long id) throws Exception {
+		// Récupérer le médecin par son ID
 		Medecin medecin = medecinService.findById(id);
-		List<Langue> langues = medecinService.getLanguesByMedecinId(id); // Récupérer les langues du médecin
 
-		medecin.setLangues(langues); // Ajouter les langues au médecin
-		List<Tarif>tarifs=medecinService.getTarifByMedecinId(id);
+		// Récupérer les langues du médecin
+		List<Langue> langues = medecinService.getLanguesByMedecinId(id);
+		medecin.setLangues(langues);
+
+		// Récupérer les tarifs du médecin
+		List<Tarif> tarifs = medecinService.getTarifByMedecinId(id);
 		medecin.setTarifs(tarifs);
 
-		List<Cabinet>cabinetMedecinsSpaces=cabservice.getAllCabinetsByMedecinId(id);
-
-
-		// Mapping de la la liste de cabinets à une liste de CabinetDTO
+		// Récupérer les cabinets du médecin
+		List<Cabinet> cabinetMedecinsSpaces = cabservice.getAllCabinetsByMedecinId(id);
 		List<CabinetDTO> cabinetDTOList = cabinetMedecinsSpaces.stream()
 				.map(cabinet -> mapper.map(cabinet, CabinetDTO.class))
 				.collect(Collectors.toList());
 
+		// Récupérer les moyens de paiement du médecin et les mapper
+		List<MoyenPaiement> moyenPaiements = new ArrayList<>();
+		for (MoyenPaiement moyen : medecin.getMoyenPaiement()) {
+			if (!moyenPaiements.contains(moyen)) {
+				moyenPaiements.add(moyen);
+			}
+		}
+		List<MoyenPaiementDTO> moyenPaiementDTOList = moyenPaiements.stream()
+				.map(moyen -> {
+					MoyenPaiementDTO moyenPaiementDTO = mapper.map(moyen, MoyenPaiementDTO.class);
+					moyenPaiementDTO.setType(moyen.getType());
+					// Si le moyen de paiement est un virement bancaire, récupérer les infos spécifiques
+					if (moyen.getType() == TypeMoyenPaiementEnum.Virement) {
+						// Trouver le virement bancaire associé au médecin (ou autre logique pour récupérer les infos)
+						Optional<VirementBancaire> virementBancaire = virementBancaireRepository.findByMedecinIdAndMoyenPaiementId_mp(id , moyen.getId_mp());
+
+
+						if(virementBancaire.isPresent()) {
+							// Assurez-vous d'avoir une méthode pour cela
+							VirementBancaire vb = virementBancaire.get();
+							LOGGER.info("Consulting virement bancaire  :"+(vb.getId_vb()) + " for moyen paiement" +( moyen.getId_mp()));
+
+							VirementBancaireDTO virementBancaireDTO = mapper.map(vb, VirementBancaireDTO.class);
+							moyenPaiementDTO.setVirementBancaire(virementBancaireDTO);
+						}
+					}
+					return moyenPaiementDTO;
+				})
+				.collect(Collectors.toList());
+
+		// Mapper le médecin en DTO
 		MedecinDTO medecinDTO = mapper.map(medecin, MedecinDTO.class);
 
+		// Ajouter les cabinets et moyens de paiement au DTO
 		medecinDTO.setCabinet(cabinetDTOList.isEmpty() ? null : cabinetDTOList);
-
-		//medecinDTO.setCabinet(cabinetMedecinsSpaces.isEmpty() ? null : mapper.map(cabinetMedecinsSpaces.get(0), CabinetDTO.class));
+		medecinDTO.setMoyenPaiement(moyenPaiementDTOList.isEmpty() ? null : moyenPaiementDTOList);
 
 		return ResponseEntity.ok(medecinDTO);
 	}
@@ -254,9 +288,6 @@ public class MedecinController {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
 		}
 	}
-
-
-
 
 
 	// end point for getting Doctor by Name or cabinet or speciality and city : %OK%____________________________

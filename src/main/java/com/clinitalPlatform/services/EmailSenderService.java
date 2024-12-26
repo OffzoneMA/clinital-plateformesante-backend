@@ -178,4 +178,39 @@ public class EmailSenderService {
 		}
 	}
 
+    public void sendEmailChangeNotification(String oldEmail, String newEmail) {
+        final String BaseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+        try {
+            SimpleMailMessage mailMessage = new SimpleMailMessage();
+
+            // E-mail vers l'ancienne adresse
+            mailMessage.setTo(oldEmail);
+            mailMessage.setFrom("clinitalcontact@gmail.com");
+            mailMessage.setSubject("Notification de changement d'adresse e-mail");
+            mailMessage.setText("Bonjour,\n\n"
+                    + "Votre adresse e-mail associée à votre compte Clinital a été modifiée avec succès.\n"
+                    + "Nouvelle adresse e-mail : " + newEmail + "\n\n"
+                    + "Si vous n'êtes pas à l'origine de cette modification, veuillez nous contacter immédiatement.\n\n"
+                    + "Cordialement,\nL'équipe Clinital");
+            javaMailSender.send(mailMessage);
+
+            // E-mail vers la nouvelle adresse
+            //mailMessage.setTo(newEmail);
+            /*mailMessage.setText("Bonjour,\n\n"
+                    + "Votre adresse e-mail a été mise à jour avec succès dans notre système Clinital. "
+                    + "Si vous n'avez pas demandé ce changement, veuillez nous contacter immédiatement.\n\n"
+                    + "Cordialement,\nL'équipe Clinital");
+            javaMailSender.send(mailMessage);*/
+
+            LOGGER.info("Notification de changement d'adresse e-mail envoyée à l'utilisateur (Ancienne : {}, Nouvelle : {})", oldEmail, newEmail);
+
+        } catch (Exception e) {
+            LOGGER.error("Erreur lors de l'envoi de l'e-mail de notification de changement : {}", e.getMessage());
+            System.out.println("Erreur lors de l'envoi de l'e-mail");
+        }
+    }
+
+
+
+
 }

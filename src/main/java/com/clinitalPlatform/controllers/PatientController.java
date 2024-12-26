@@ -199,7 +199,6 @@ public class PatientController {
 	public ResponseEntity<PatientResponse> getPatientByUserId() throws Exception {
 	
 		Patient patient = patientService.getPatientMoiByUserId(globalVariables.getConnectedUser().getId());
-		System.out.println(patient.getId());
 		mapper.typeMap(Patient.class, PatientResponse.class)
 		.addMapping(src -> src.getVille().getId_ville(), PatientResponse::setVilleId);
 

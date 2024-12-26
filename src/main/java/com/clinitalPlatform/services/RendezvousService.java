@@ -3,6 +3,8 @@ package com.clinitalPlatform.services;
 import com.clinitalPlatform.dao.IDao;
 import com.clinitalPlatform.dto.RendezvousDTO;
 import com.clinitalPlatform.enums.ERole;
+import com.clinitalPlatform.enums.RdvStatutEnum;
+import com.clinitalPlatform.exception.BadRequestException;
 import com.clinitalPlatform.models.*;
 import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.payload.response.RendezvousResponseother;
@@ -25,11 +27,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -450,6 +450,26 @@ public class RendezvousService implements IDao<Rendezvous>  {
 		return response;
 	}
 
+	public ResponseEntity<?> resolveConflict(RendezvousDTO nouveauRdv, Rendezvous ancienRdv, boolean keepNew) throws Exception {
+		if (keepNew) {
+			// Annuler l'ancien rendez-vous
+			ancienRdv.setStatut(RdvStatutEnum.ANNULE);
+			ancienRdv.setCanceledAt(LocalDateTime.now());
+			rdvrepo.save(ancienRdv); // Sauvegarder les modifications de l'ancien rendez-vous
+
+			Medecin medecin = medRepo.findById(nouveauRdv.getMedecinid())
+					.orElseThrow(() -> new BadRequestException("Medecin not found for this id ::" + nouveauRdv.getMedecinid()));
+			Patient patient = patientRepo.findById(nouveauRdv.getPatientid()).orElseThrow(
+					() -> new BadRequestException("Patient not found for this id :: " +
+							nouveauRdv.getPatientid()));
+
+			// Sauvegarder le nouveau rendez-vous
+			return this.AddnewRdv(globalVariables.getConnectedUser() , nouveauRdv , medecin , patient );
+		} else {
+			// Garder l'ancien rendez-vous inchangé et ne pas sauvegarder le nouveau
+			return ResponseEntity.ok("Conserver l'ancien rendez vous");
+		}
+	}
 
 
 	public ResponseEntity<?> AddnewRdv(User user, RendezvousDTO c, Medecin medecin, Patient patient) throws Exception {

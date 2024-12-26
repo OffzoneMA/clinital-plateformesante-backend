@@ -53,6 +53,8 @@ public class MedecinDTO {
 	//@JsonProperty(access = Access.WRITE_ONLY)
 	private List<MoyenPaiementDTO> moyenPaiement;
 
+	private List<VirementBancaireDTO> virementBancaires;
+
 	private UserDTO user;
 
 

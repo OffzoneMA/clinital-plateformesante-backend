@@ -1,24 +1,24 @@
 package com.clinitalPlatform.controllers;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.validation.Valid;
 
+import com.clinitalPlatform.dto.UserDTO;
+import com.clinitalPlatform.exception.BadRequestException;
+import com.clinitalPlatform.services.*;
 import com.clinitalPlatform.util.GlobalVariables;
 
+import javassist.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.clinitalPlatform.models.EmailConfirmationCode;
 import com.clinitalPlatform.models.User;
@@ -27,13 +27,7 @@ import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.payload.response.MessageResponse;
 import com.clinitalPlatform.repository.ConfirmationTokenRepository;
 import com.clinitalPlatform.repository.UserRepository;
-import com.clinitalPlatform.security.services.UserDetailsServiceImpl;
-import com.clinitalPlatform.services.ActivityServices;
-import com.clinitalPlatform.services.EmailConfirmationService;
-import com.clinitalPlatform.services.EmailSenderService;
-import com.clinitalPlatform.services.PatientService;
 import com.clinitalPlatform.security.jwt.ConfirmationToken;
-import com.clinitalPlatform.services.UserService;
 import org.springframework.http.HttpStatus;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -121,5 +115,53 @@ public class UserController {
 	    return ResponseEntity.ok(new ApiResponse(true, "User deleted successfully"));
 	}
 
-	
+	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	@PostMapping("/updateme")
+	public ResponseEntity<?> updateUserInfo(@Valid @RequestBody UserUpdateRequest request) {
+		try {
+			// Récupérer l'utilisateur connecté
+			User currentUser = userRepository.findById(globalVariables.getConnectedUser().getId())
+					.orElseThrow(() -> new BadRequestException("Utilisateur introuvable"));
+
+			// Vérification si l'email a changé
+			boolean emailChanged = !currentUser.getEmail().equals(request.getEmail());
+
+			// Mise à jour des informations
+			currentUser.setEmail(request.getEmail());
+			currentUser.setTelephone(request.getTelephone());
+
+			// Sauvegarder les modifications
+			User user = userRepository.save(currentUser);
+
+			// Envoyer un email de notification si l'adresse email a changé
+			if (emailChanged) {
+				emailSenderService.sendEmailChangeNotification(currentUser.getEmail(), request.getEmail());
+			}
+
+			// Retourner la réponse
+			Map<String, Object> response = new HashMap<>();
+			response.put("user", user);
+			response.put("emailChanged", emailChanged);
+
+			return ResponseEntity.ok(response);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new ApiResponse(false, "Erreur lors de la mise à jour des informations utilisateur"));
+		}
+	}
+
+	@GetMapping("/me")
+	public ResponseEntity<UserUpdateRequest> getConnectedUserInfo() throws NotFoundException {
+		Long userId = globalVariables.getConnectedUser().getId();
+		User currentUser = userRepository.findById(userId)
+				.orElseThrow(() -> new BadRequestException("Utilisateur introuvable"));
+
+		UserUpdateRequest response = new UserUpdateRequest();
+		response.setEmail(currentUser.getEmail());
+		response.setTelephone(currentUser.getTelephone());
+		return ResponseEntity.ok(response);
+	}
+
+
 }

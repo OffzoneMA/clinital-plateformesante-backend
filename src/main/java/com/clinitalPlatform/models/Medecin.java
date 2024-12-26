@@ -154,6 +154,10 @@ public class Medecin {
 	private List<Tarif> tarifs;
 //--------------------------------------------------------
 
+	@OneToMany(mappedBy = "medecin", cascade = CascadeType.ALL, orphanRemoval = true)
+	@JsonIgnore
+	private List<VirementBancaire> virementsBancaires;
+
 	public void removeCabinet(Cabinet cabinet) {
         for (Iterator<CabinetMedecinsSpace> iterator = cabinets.iterator(); 
 			iterator.hasNext();) {
@@ -172,7 +176,7 @@ public class Medecin {
 				   String photo_med, String photo_couverture_med, List<ExpertisesMedecin> expertises_med, List<DiplomeMedecin> diplome_med,
 				   String description_med, String contact_urgence_med,CiviliteEnum civilite_med,
 				   List<ExperienceMedecin> experience_med, Ville ville, Specialite specialite,
-				   List<MoyenPaiement> moyenPaiement, User user,boolean isActive,List<Langue>langues, List<Tarif> tarifs) {
+				   List<MoyenPaiement> moyenPaiement, User user,boolean isActive,List<Langue>langues, List<Tarif> tarifs , List<VirementBancaire> virementsBancaires) {
 		this.id = id;
 		this.matricule_med = matricule_med;
 		this.inpe = inpe;
@@ -193,7 +197,7 @@ public class Medecin {
 		this.isActive=isActive;
 		this.langues=langues;
 		this.tarifs=tarifs;
-		
+		this.virementsBancaires = virementsBancaires;
 	}
 
 	public Long getFirstCabinetId() {
