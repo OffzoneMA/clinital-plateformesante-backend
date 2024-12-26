@@ -68,7 +68,7 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        String[] permitAllRoutes = {"/api/auth/**", "/api/users/activity/**","/api/demandes/create","/api/cabinet/**",
+        String[] permitAllRoutes = {"/api/auth/**","/api/users/me" ,  "/api/users/activity/**","/api/demandes/create","/api/cabinet/**",
         		"/api/med/medecins",
         		"/api/med/medById/**",
     			"/api/med/medByName",
