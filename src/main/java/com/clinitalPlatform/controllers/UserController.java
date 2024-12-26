@@ -172,7 +172,7 @@ public class UserController {
 		return ResponseEntity.ok(response);
 	}
 
-	@GetMapping("/by-email")
+	@GetMapping("/byEmail")
 	public ResponseEntity<?> getUsersByEmail(@RequestParam String email) {
 		try {
 			List<User> users = userRepository.findAllByEmail(email);
