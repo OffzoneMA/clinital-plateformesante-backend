@@ -190,5 +190,8 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 
 	//	List<Rendezvous> findByPatientIdAndMedecinSpecialiteIdAndDay(Long patientId, Long specialtyId, DayOfWeek dayOfWeek);
 
+	@Query(value = "SELECT COUNT(*) FROM rendezvous WHERE patient = ?1 AND statut IN ('ENATTENTE', 'CONFIRME')", nativeQuery = true)
+	int countPendingOrUpcomingRendezvous(long patientId);
+
 }
 

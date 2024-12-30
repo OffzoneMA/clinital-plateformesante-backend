@@ -6,10 +6,7 @@ import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.models.Patient;
 import com.clinitalPlatform.models.User;
 import com.clinitalPlatform.payload.response.ApiResponse;
-import com.clinitalPlatform.repository.DocumentRepository;
-import com.clinitalPlatform.repository.DossierMedicalRepository;
-import com.clinitalPlatform.repository.MedecinRepository;
-import com.clinitalPlatform.repository.PatientRepository;
+import com.clinitalPlatform.repository.*;
 import com.clinitalPlatform.util.ClinitalModelMapper;
 import com.clinitalPlatform.util.GlobalVariables;
 import org.slf4j.Logger;
@@ -44,6 +41,9 @@ public class PatientService implements IDao<Patient> {
 	
 	@Autowired
     private ClinitalModelMapper modelMapper;
+
+	@Autowired
+	private RdvRepository rdvRepository ;
 
 	@Autowired
 	private RendezvousService rendezvousService;
@@ -87,7 +87,38 @@ public class PatientService implements IDao<Patient> {
 
 	@Override
 	public void delete(Patient o) {
-		patientRepository.deletePatient(o.getId());;
+		Logger logger = LoggerFactory.getLogger(this.getClass());
+
+		try {
+			// Vérifier si le patient a des rendez-vous à venir ou confirmés
+			if (rdvRepository.countPendingOrUpcomingRendezvous(o.getId()) > 0) {
+				throw new IllegalStateException("Vous ne pouvez pas supprimer ce patient car il a un rendez-vous en attente ou confirmé.");
+			}
+
+			// Supprimer les associations dans DocumentMedecin basées sur les rendez-vous
+			documentRepository.deleteDocumentsMedecinsByRendezvousPatient(o.getId());
+
+			// Supprimer les associations dans DocumentMedecin basées sur le patient
+			documentRepository.deleteDocumentsMedecinsByPatientId(o.getId());
+
+			// Supprimer les documents associés aux rendez-vous du patient
+			documentRepository.deleteDocumentsByPatient(o.getId());
+			documentRepository.deleteDocumentsByPatientId(o.getId());
+
+			// Supprimer les rendez-vous associés au patient
+			patientRepository.deleteRendezvousByPatient(o.getId());
+
+			// Supprimer le patient
+			patientRepository.deletePatient(o.getId());
+
+		} catch (IllegalStateException e) {
+			logger.error("Erreur de suppression du patient {} : {}", o.getId(), e.getMessage());
+			throw e; // Relance l'exception pour signaler l'erreur à l'appelant
+
+		} catch (Exception e) {
+			logger.error("Une erreur inattendue s'est produite lors de la suppression du patient {}.", o.getId(), e.getMessage());
+			throw new RuntimeException(e.getMessage());
+		}
 	}
 
 	@Override

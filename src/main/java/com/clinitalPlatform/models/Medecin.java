@@ -83,7 +83,7 @@ public class Medecin {
 	private User user;
 
 	// in this we create a Bridge table between Medecin and Document to link them together
-	@ManyToMany(cascade = {CascadeType.MERGE, CascadeType.PERSIST}, fetch = FetchType.LAZY)
+	@ManyToMany(cascade = {CascadeType.ALL}, fetch = FetchType.LAZY)
 	@JoinTable(
 			name = "DocumentMedecin",
 			joinColumns = @JoinColumn(name = "medecin_id"),

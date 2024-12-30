@@ -50,8 +50,7 @@ public class Document {
 
 	@ManyToMany(fetch = FetchType.LAZY,
       cascade = {
-          CascadeType.PERSIST,
-          CascadeType.MERGE
+          CascadeType.ALL,
       },
       mappedBy = "Meddoc")
   	@JsonIgnore

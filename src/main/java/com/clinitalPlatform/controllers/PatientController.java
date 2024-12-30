@@ -125,7 +125,60 @@ public class PatientController {
 	// Deleting a patient by id. %OK%
 	@DeleteMapping("/delete/{id}")
 	@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_PATIENT')")
-	public Map<String, Boolean> deletePatient(@PathVariable Long id) throws Exception {
+	public ResponseEntity<Map<String, Object>> deletePatient(@PathVariable Long id) {
+		Map<String, Object> response = new HashMap<>();
+
+		try {
+			// Vérifier si le patient existe pour l'utilisateur connecté
+			Optional<Patient> patient = patientRepo.getPatientByUserId(globalVariables.getConnectedUser().getId(), id);
+
+			if (patient.isEmpty()) {
+				response.put("message", "Patient introuvable pour l'utilisateur connecté.");
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+			}
+
+			Patient pt = patient.get();
+
+			// Vérifier si le patient peut être supprimé
+			if (pt.getPatient_type() == PatientTypeEnum.PROCHE) {
+				// Supprimer le patient via le service
+				patientService.delete(pt);
+
+				// Journaliser l'activité
+				activityServices.createActivity(new Date(), "Delete", "Deleted Patient ID : " + pt.getId(), globalVariables.getConnectedUser());
+				LOGGER.info("Deleted Patient by ID : " + pt.getId() + ", UserID : " +
+						(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+
+				// Réponse de succès
+				response.put("message", "Patient supprimé avec succès.");
+				response.put("deleted", true);
+				return ResponseEntity.ok(response);
+
+			} else {
+				// Ne pas autoriser la suppression d'un patient non éligible
+				activityServices.createActivity(new Date(), "Delete", "Cannot delete Patient ID : " + pt.getId(), globalVariables.getConnectedUser());
+				LOGGER.error("Cannot delete Patient ID : " + pt.getId() + ", UserID : " +
+						(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+
+				response.put("message", "Vous n'êtes pas autorisé à supprimer ce patient.");
+				return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+			}
+
+		} catch (IllegalStateException e) {
+			// Gestion d'une erreur métier (exemple : rendez-vous en attente)
+			LOGGER.error("Erreur métier lors de la suppression du patient ID : " + id, e);
+			response.put("message", e.getMessage());
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+
+		} catch (Exception e) {
+			// Gestion d'une erreur inattendue
+			LOGGER.error("Erreur inattendue lors de la suppression du patient ID : " + id, e);
+			response.put("message", "Une erreur inattendue est survenue. Veuillez réessayer plus tard.");
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+		}
+	}
+
+	/*public Map<String, Boolean> deletePatient(@PathVariable Long id) throws Exception {
 		
 		Map<String, Boolean> response = new HashMap<>();
 		Optional<Patient> patient = patientRepo.getPatientByUserId(globalVariables.getConnectedUser().getId(), id);
@@ -146,7 +199,7 @@ public class PatientController {
 			response.put("nomatch", Boolean.FALSE);
 		}
 		return response;
-	}
+	}*/
 
 	// Updating a patient by id. %OK%
 	@PostMapping("/updatepatient/{id}")
@@ -235,13 +288,39 @@ public class PatientController {
   	@GetMapping("/getDossierIdByPatientId/{patientId}")
 	@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_PATIENT')")
 	@ResponseBody
-	public ResponseEntity<Long> getDossierIdByPatientId(@PathVariable("patientId") Long patientId) {
-	    Patient patient = patientRepo.findById(patientId)
-	            .orElseThrow(() -> new BadRequestException("Patient not found with id: " + patientId));
-	    Long dossierId = patient.getDossierMedical().getId_dossier();
-	    return new ResponseEntity<>(dossierId, HttpStatus.OK);
+	public ResponseEntity<Map<String, Object>> getDossierIdByPatientId(@PathVariable("patientId") Long patientId) {
+		Map<String, Object> response = new HashMap<>();
+
+		try {
+			// Vérifier si le patient existe
+			Patient patient = patientRepo.findById(patientId)
+					.orElseThrow(() -> new IllegalArgumentException("Patient introuvable avec l'ID : " + patientId));
+
+			// Vérifier si le dossier médical est présent
+			if (patient.getDossierMedical() == null) {
+				response.put("message", "Aucun dossier médical n'est associé au patient avec l'ID : " + patientId);
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+			}
+
+			// Récupérer l'ID du dossier médical
+			Long dossierId = patient.getDossierMedical().getId_dossier();
+			response.put("dossierId", dossierId);
+			response.put("message", "Dossier médical récupéré avec succès.");
+			return ResponseEntity.ok(response);
+
+		} catch (IllegalArgumentException e) {
+			// Gestion des erreurs spécifiques
+			response.put("message", e.getMessage());
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+
+		} catch (Exception e) {
+			// Gestion des erreurs inattendues
+			response.put("message", e.getMessage());
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+		}
 	}
-  
+
+
 	@GetMapping("/getall")
 	public List<Patient> findALLPatientByUserId() throws Exception {
     

@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import com.clinitalPlatform.enums.PatientTypeEnum;
 import com.clinitalPlatform.models.Patient;
+import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -21,11 +22,22 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
 	Optional<Patient> getPatientByUserId(long id,long idpatient);
 
 	// Deleting a patient from the database.
-	@Modifying
-	@Query(value="DELETE FROM patients WHERE id =?1 and patient_type='PROCHE'",nativeQuery = true)
-	public void deletePatient(long id);
-	
-	@Query(value ="SELECT * FROM patients WHERE id = :id",nativeQuery = true)
+	//@Modifying
+	//@Query(value="DELETE FROM patients WHERE id =?1 and patient_type='PROCHE'",nativeQuery = true)
+	//public void deletePatient(long id);
+
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM rendezvous WHERE patient = ?1", nativeQuery = true)
+    void deleteRendezvousByPatient(long patientId);
+
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM patients WHERE id = ?1 AND patient_type = 'PROCHE'", nativeQuery = true)
+    void deletePatient(long id);
+
+
+    @Query(value ="SELECT * FROM patients WHERE id = :id",nativeQuery = true)
 	Patient getById(Long id);
 
 	@Query(value = "SELECT p.* FROM patients p WHERE p.user_id=?1",nativeQuery = true)

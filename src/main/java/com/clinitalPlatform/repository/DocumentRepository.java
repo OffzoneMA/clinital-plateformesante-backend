@@ -4,7 +4,9 @@ package com.clinitalPlatform.repository;
 import com.clinitalPlatform.models.Document;
 import com.clinitalPlatform.models.DossierMedical;
 import com.clinitalPlatform.models.Patient;
+import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -18,6 +20,37 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 
 	@Query("from Document d where d.patient.nom_pat= ?1")
 	List<Document> getDocByNomPatient(String nom_pat);
+
+	@Modifying
+	@Transactional
+	@Query(value = "UPDATE documents SET rdv_id = NULL WHERE rdv_id IN (SELECT id FROM rendezvous WHERE patient = ?1)", nativeQuery = true)
+	void dissociateDocumentsByPatient(long patientId);
+
+	@Modifying
+	@Transactional
+	@Query("UPDATE Document d SET d.patient = NULL WHERE d.patient.id = ?1")
+	void dissociateDocumentsPaientByPatient(long patientId);
+
+	@Modifying
+	@Transactional
+	@Query(value = "DELETE FROM document_medecin WHERE document_id IN (SELECT d.id_doc FROM documents d WHERE d.patient_id = ?1)", nativeQuery = true)
+	void deleteDocumentsMedecinsByPatientId(long patientId);
+
+	@Modifying
+	@Transactional
+	@Query(value = "DELETE FROM document_medecin WHERE document_id IN (SELECT d.id_doc FROM documents d WHERE d.rdv_id IN (SELECT r.id FROM rendezvous r WHERE r.patient = ?1))", nativeQuery = true)
+	void deleteDocumentsMedecinsByRendezvousPatient(long patientId);
+
+
+	@Modifying
+	@Transactional
+	@Query(value = "DELETE FROM documents WHERE patient_id = ?1", nativeQuery = true)
+	void deleteDocumentsByPatientId(long patientId);
+
+	@Modifying
+	@Transactional
+	@Query(value = "DELETE FROM documents WHERE rdv_id IN (SELECT id FROM rendezvous WHERE patient = ?1)", nativeQuery = true)
+	void deleteDocumentsByPatient(long patientId);
 
 
 	List<Document> findAll();

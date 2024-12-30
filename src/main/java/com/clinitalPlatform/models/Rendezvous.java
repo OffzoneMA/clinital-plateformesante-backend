@@ -47,7 +47,7 @@ public class Rendezvous {
 	@JoinColumn(name = "patient", nullable = true, referencedColumnName = "id", insertable = true, updatable = true)
 	private Patient patient;
 
-	@OneToMany(mappedBy = "rendezvous")
+	@OneToMany(mappedBy = "rendezvous", cascade = CascadeType.ALL, orphanRemoval = true)
 	@LazyCollection(LazyCollectionOption.FALSE)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	private List<Document> documents;

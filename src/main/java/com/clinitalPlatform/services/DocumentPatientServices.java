@@ -61,20 +61,6 @@ public class DocumentPatientServices {
     }
 
     /*public Medecin shareDocumentsWithMedecin(Long medecinId, List<Long> documentIds) {
-        Optional<Medecin> optionalMedecin = medecinRepo.findById(medecinId);
-
-        if (!optionalMedecin.isPresent()) {
-            throw new IllegalArgumentException("Medecin with ID " + medecinId + " not found");
-        }
-
-        Medecin medecin = optionalMedecin.get();
-        List<Document> documents = docrepo.findAllById(documentIds);
-
-        medecin.getMeddoc().addAll(documents);
-        return medecinRepo.save(medecin);
-    }*/
-
-    public Medecin shareDocumentsWithMedecin(Long medecinId, List<Long> documentIds) {
         // Vérifier si le médecin existe
         Medecin medecin = medecinRepo.findById(medecinId)
                 .orElseThrow(() -> new IllegalArgumentException("Medecin with ID " + medecinId + " not found"));
@@ -82,11 +68,11 @@ public class DocumentPatientServices {
         // Récupérer les documents associés aux IDs donnés
         List<Document> documents = docrepo.findAllById(documentIds);
 
-
-        // Filtrer les documents qui ne sont pas déjà associés au médecin
+        // Filtrer les documents déjà partagés
         List<Document> newDocuments = documents.stream()
                 .filter(doc -> !medecin.getMeddoc().contains(doc))
                 .collect(Collectors.toList());
+
 
         if (newDocuments.isEmpty()) {
             // Aucun nouveau document à partager
@@ -98,6 +84,55 @@ public class DocumentPatientServices {
 
         // Sauvegarder les modifications dans la base de données
         return medecinRepo.save(medecin);
+    }*/
+
+    @Transactional
+    public Medecin shareDocumentsWithMedecin(Long medecinId, List<Long> documentIds) {
+        // Vérification des paramètres
+        if (medecinId == null) {
+            throw new IllegalArgumentException("Medecin ID cannot be null");
+        }
+        if (documentIds == null || documentIds.isEmpty()) {
+            throw new IllegalArgumentException("Document IDs cannot be null or empty");
+        }
+
+        // Récupération du médecin
+        Medecin medecin = medecinRepo.findById(medecinId)
+                .orElseThrow(() -> new IllegalArgumentException("Medecin with ID " + medecinId + " not found"));
+
+        // Récupération des documents
+        List<Document> documents = docrepo.findAllById(documentIds);
+
+        if (documents.isEmpty()) {
+            throw new IllegalArgumentException("No documents found for the provided IDs: " + documentIds);
+        }
+
+        // Vérifier s'il manque des documents par rapport aux IDs fournis
+        List<Long> missingDocumentIds = documentIds.stream()
+                .filter(id -> documents.stream().noneMatch(doc -> doc.getId_doc().equals(id)))
+                .collect(Collectors.toList());
+        if (!missingDocumentIds.isEmpty()) {
+            throw new IllegalArgumentException("Documents not found for IDs: " + missingDocumentIds);
+        }
+
+        // Filtrer les documents non encore associés au médecin
+        List<Document> newDocuments = documents.stream()
+                .filter(doc -> !medecin.getMeddoc().contains(doc))
+                .collect(Collectors.toList());
+
+        if (newDocuments.isEmpty()) {
+            throw new IllegalStateException("All documents are already shared with Medecin ID: " + medecinId);
+        }
+
+        // Ajouter les nouveaux documents au médecin
+        medecin.getMeddoc().addAll(newDocuments);
+
+        // Sauvegarder les modifications
+        Medecin updatedMedecin = medecinRepo.save(medecin);
+
+        // Log pour le suivi
+
+        return updatedMedecin;
     }
 
 

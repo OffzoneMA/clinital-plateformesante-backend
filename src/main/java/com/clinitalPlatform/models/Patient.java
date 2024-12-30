@@ -71,6 +71,11 @@ public class Patient {
 	@JsonIgnore
 	private User user;
 
+	@OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
+	@JsonIgnore
+	private List<Rendezvous> rendezvous;
+
+
 	public Patient() {
 		super();
 	}
@@ -91,6 +96,6 @@ public class Patient {
 		this.dossierMedical = dossierMedical;
 		this.patient_type = patient_type;
 		this.user = user;
-	
+		this.rendezvous = lesrdvs;
 	}
 }
