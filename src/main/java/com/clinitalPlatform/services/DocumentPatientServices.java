@@ -1,5 +1,6 @@
 package com.clinitalPlatform.services;
 
+import com.clinitalPlatform.exception.ResourceNotFoundException;
 import com.clinitalPlatform.models.*;
 import com.clinitalPlatform.payload.request.DocumentRequest;
 import com.clinitalPlatform.repository.*;
@@ -8,10 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Transactional
@@ -153,7 +151,12 @@ public class DocumentPatientServices {
         return document;
     }*/
 
-    public Document shareDocumentWithMedecins(Long documentId, List<Long> medecinIds) {
+    public Map<String, Object> shareDocumentWithMedecins(Long documentId, List<Long> medecinIds) {
+        // Validation des entrées
+        if (documentId == null || medecinIds == null || medecinIds.isEmpty()) {
+            throw new IllegalArgumentException("Document ID and Medecin IDs cannot be null or empty");
+        }
+
         // Vérifier si le document existe
         Document document = docrepo.findById(documentId)
                 .orElseThrow(() -> new IllegalArgumentException("Document with ID " + documentId + " not found"));
@@ -161,25 +164,70 @@ public class DocumentPatientServices {
         // Récupérer la liste des médecins par leurs IDs
         List<Medecin> medecins = medecinRepo.findAllById(medecinIds);
 
-        if (medecins.isEmpty()) {
-            throw new IllegalArgumentException("No valid Medecins found for the provided IDs");
+        // Vérifier si tous les IDs de médecins fournis sont valides
+        Set<Long> foundIds = medecins.stream()
+                .map(Medecin::getId)
+                .collect(Collectors.toSet());
+        List<Long> invalidIds = medecinIds.stream()
+                .filter(id -> !foundIds.contains(id))
+                .collect(Collectors.toList());
+
+        if (!invalidIds.isEmpty()) {
+            throw new ResourceNotFoundException("Medecins", "Id", invalidIds);
         }
 
-        // Ajouter le document uniquement aux médecins qui ne l'ont pas déjà
-        medecins.forEach(medecin -> {
+        // Initialiser les compteurs et les listes pour le rapport
+        int alreadySharedCount = 0;
+        int newlySharedCount = 0;
+        List<Medecin> updatedMedecins = new ArrayList<>();
+        List<Long> newlySharedMedecinIds = new ArrayList<>();
+        List<Long> alreadySharedMedecinIds = new ArrayList<>();
+
+        // Traiter chaque médecin
+        for (Medecin medecin : medecins) {
+            // Initialiser la liste des documents si elle est null
             if (medecin.getMeddoc() == null) {
                 medecin.setMeddoc(new ArrayList<>());
             }
-            if (!medecin.getMeddoc().contains(document)) {
-                medecin.getMeddoc().add(document);
+
+            // Vérifier si le médecin a déjà le document
+            if (medecin.getMeddoc().contains(document)) {
+                alreadySharedCount++;
+                alreadySharedMedecinIds.add(medecin.getId());
+                continue;
             }
-        });
 
-        // Sauvegarder les médecins mis à jour
-        medecinRepo.saveAll(medecins);
+            // Ajouter le document au médecin
+            medecin.getMeddoc().add(document);
+            updatedMedecins.add(medecin);
+            newlySharedMedecinIds.add(medecin.getId());
+            newlySharedCount++;
+        }
 
-        // Retourner le document partagé
-        return document;
+        // Sauvegarder uniquement les médecins qui ont été modifiés
+        if (!updatedMedecins.isEmpty()) {
+            medecinRepo.saveAll(updatedMedecins);
+        }
+
+        // Préparer un message clair pour le résultat
+        Map<String, Object> result = new HashMap<>();
+        if (newlySharedCount == 0 && alreadySharedCount == medecinIds.size()) {
+            result.put("message", "Le document est déjà partagé avec tous les médecins sélectionnés.");
+        } else if (newlySharedCount > 0 && alreadySharedCount > 0) {
+            result.put("message", "Le document a été partagé avec certains médecins, tandis qu'il était déjà partagé avec d'autres.");
+        } else if (newlySharedCount > 0) {
+            result.put("message", "Le document a été partagé avec succès avec tous les médecins sélectionnés.");
+        }
+
+        result.put("documentId", documentId);
+        result.put("newlySharedCount", newlySharedCount);
+        result.put("alreadySharedCount", alreadySharedCount);
+        result.put("totalMedecinsProcessed", medecinIds.size());
+        result.put("newlySharedMedecinIds", newlySharedMedecinIds);
+        result.put("alreadySharedMedecinIds", alreadySharedMedecinIds);
+        result.put("invalidMedecinIds", invalidIds);
+
+        return result;
     }
 
 }

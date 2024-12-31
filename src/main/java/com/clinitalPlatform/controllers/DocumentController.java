@@ -1,6 +1,7 @@
 package com.clinitalPlatform.controllers;
 
 import com.clinitalPlatform.dto.DocumentDTO;
+import com.clinitalPlatform.exception.ResourceNotFoundException;
 import com.clinitalPlatform.models.*;
 import com.clinitalPlatform.payload.request.UpdateDocumentRequest;
 import com.clinitalPlatform.payload.response.ApiResponse;
@@ -475,18 +476,40 @@ public class DocumentController {
             @RequestParam Long documentId,
             @RequestBody List<Long> medecinIds) {
         try {
-            Document document = docservices.shareDocumentWithMedecins(documentId, medecinIds);
+            // Appeler le service pour partager le document avec les médecins
+            Map<String, Object> result = docservices.shareDocumentWithMedecins(documentId, medecinIds);
 
-            // Retournez une réponse explicite avec un message ou l'objet partagé
-            return ResponseEntity.ok(new ApiResponse(true, "Document shared successfully!", document));
+            // Construire le message pour le front-end
+            String message;
+            if ((int) result.get("newlySharedCount") == 0 && (int) result.get("alreadySharedCount") == medecinIds.size()) {
+                message = "Le document est déjà partagé avec tous les médecins sélectionnés.";
+            } else if ((int) result.get("newlySharedCount") > 0 && (int) result.get("alreadySharedCount") > 0) {
+                message = "Le document a été partagé avec certains médecins, tandis qu'il était déjà partagé avec d'autres.";
+            } else if ((int) result.get("newlySharedCount") > 0) {
+                message = "Le document a été partagé avec succès avec tous les médecins sélectionnés.";
+            } else {
+                message = "Aucune opération effectuée.";
+            }
+
+            // Retourner une réponse HTTP 200 (OK) avec un message clair et les détails
+            return ResponseEntity.ok(new ApiResponse(true, message, result));
+        } catch (ResourceNotFoundException e) {
+            // Gérer les exceptions spécifiques aux ressources non trouvées
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse(false, e.getMessage(), null));
+        } catch (IllegalArgumentException e) {
+            // Gérer les erreurs de validation ou d'argument invalide
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(false, e.getMessage(), null));
         } catch (Exception e) {
+            // Gérer toute autre exception
             e.printStackTrace();
-
-            // Retournez une réponse explicite en cas d'erreur
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse(false, "Error sharing document: " + e.getMessage(), null));
+                    .body(new ApiResponse(false, "Erreur lors du partage du document : " + e.getMessage(), null));
         }
     }
+
+
 
 
 }
