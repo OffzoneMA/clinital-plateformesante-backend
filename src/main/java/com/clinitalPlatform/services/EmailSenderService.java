@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
@@ -12,6 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.clinitalPlatform.models.Demande;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 @Transactional
 @Service
@@ -211,6 +215,50 @@ public class EmailSenderService {
     }
 
 
+	public void sendProcheDeletionNotification(String userEmail, String procheName) {
+		try {
+			SimpleMailMessage mailMessage = new SimpleMailMessage();
+			mailMessage.setTo(userEmail);
+			mailMessage.setFrom("clinitalcontact@gmail.com");
+			mailMessage.setSubject("Confirmation de suppression d'un proche - Clinital");
 
+			String message = String.format(
+					"Bonjour,\n\n" +
+							"Nous vous confirmons la suppression du proche '%s' de votre compte Clinital.\n\n" +
+							"Détails de l'opération :\n" +
+							"- Date de suppression : %s\n" +
+							"- Proche supprimé : %s\n" +
+							//"- Compte concerné : %s\n\n" +
+							"Important :\n" +
+							"- Cette action est irréversible\n" +
+							"- Toutes les données associées à ce proche ont été supprimées\n" +
+							//"- Les rendez-vous futurs liés à ce proche ont été annulés\n\n" +
+							"Si vous n'êtes pas à l'origine de cette suppression ou si vous pensez qu'il s'agit d'une erreur, " +
+							"veuillez nous contacter immédiatement :\n" +
+							"- Par email : support@clinital.com\n" +
+							//"- Par téléphone : +XXX XXX XXX\n\n" +
+							//"Pour des raisons de sécurité, nous vous conseillons de vérifier régulièrement " +
+							//"les activités de votre compte dans la section 'Historique des activités'.\n\n" +
+							"Cordialement,\n" +
+							"L'équipe Clinital",
+					procheName,
+					new SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date()),
+					procheName,
+					userEmail
+			);
 
+			mailMessage.setText(message);
+
+			javaMailSender.send(mailMessage);
+			LOGGER.info("Email de notification de suppression du proche '{}' envoyé à : {}", procheName, userEmail);
+
+		} catch (MailException e) {
+			LOGGER.error("Erreur lors de l'envoi de l'email (Proche: {}, Email: {}) : {}",
+					procheName, userEmail, e.getMessage());
+			throw new RuntimeException("Impossible d'envoyer l'email de confirmation de suppression", e);
+		} catch (Exception e) {
+			LOGGER.error("Erreur inattendue lors de l'envoi de l'email de notification : {}", e.getMessage());
+			throw new RuntimeException("Une erreur inattendue est survenue lors de l'envoi de l'email", e);
+		}
+	}
 }

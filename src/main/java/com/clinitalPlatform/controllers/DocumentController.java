@@ -18,11 +18,13 @@ import com.clinitalPlatform.util.GlobalVariables;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 //import com.clinitalPlatform.security.config.azure.AzureServices;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -94,19 +96,18 @@ public class DocumentController {
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
     Iterable<Patient> getPatientsConcerned() throws Exception {
 
-        Optional<Patient> patient = patientRepo.findById(globalVariables.getConnectedUser().getId());
+        Optional<Patient> patient = patientRepo.findByUserIdAndPatientType(globalVariables.getConnectedUser().getId());
 
-        if (!patient.isPresent()) {
+        if (patient.isEmpty()) {
             return Collections.emptyList();
         }else {
 
             activityServices.createActivity(new Date(), "Read", "Consulting all patients concerned", globalVariables.getConnectedUser());
-            LOGGER.info("Consulting All patients concerned By User ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+            LOGGER.info("Consulting All patients concerned By User ID : " + (globalVariables.getConnectedUser() != null ? globalVariables.getConnectedUser().getId() : ""));
             System.out.println("TEST ici"+globalVariables.getConnectedUser());
 
 
-            return docrepository.getMeAndMesProches(patient.get().getId())
-                    .stream().collect(Collectors.toList());
+            return new ArrayList<>(docrepository.getMeAndMesProches(globalVariables.getConnectedUser().getId()));
         }
 
     }
@@ -370,17 +371,53 @@ public class DocumentController {
 
     @DeleteMapping(path = "/deleteDoc")
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
-    public ResponseEntity<?> deleteDoc(@RequestParam Long docId) throws Exception {
+    @Transactional
+    public ResponseEntity<?> deleteDoc(@RequestParam Long docId) {
+        try {
+            // Vérifier si le document existe
+            Optional<Document> documentOptional = docrepository.findById(docId);
+            if (documentOptional.isEmpty()) {
+                LOGGER.error("Document avec ID : {} introuvable", docId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse(false, "Document introuvable avec ID : " + docId));
+            }
 
-        Optional<Document> document = docrepository.findById(docId);
+            Document document = documentOptional.get();
 
-        docrepository.delete(document.get());
-        //azureAdapter.deleteBlob(document.get().getFichier_doc());
-        activityServices.createActivity(new Date(),"Delete","Delete document with ID :"+docId,globalVariables.getConnectedUser());
-        LOGGER.info("Delete document with ID :"+docId+" by User with ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
-        return ResponseEntity.ok(new ApiResponse(true, "Document has been Deleted"));
+            // Supprimer les relations (si applicable)
+            // Exemple : Si Document a une relation avec une autre entité comme DocumentMedecin
+            if (document.getMedecins() != null && !document.getMedecins().isEmpty()) {
+                document.getMedecins().clear();
+                docrepository.save(document);
+            }
 
+            docrepository.deleteByDocumentId(document.getId_doc());
+
+            // Supprimer le document
+            docrepository.delete(document);
+            LOGGER.info("Document avec ID : {} supprimé avec succès", docId);
+
+            // Enregistrer une activité pour la suppression
+            activityServices.createActivity(new Date(), "Delete", "Suppression du document avec ID : " + docId,
+                    globalVariables.getConnectedUser());
+
+            // Retourner une réponse de succès
+            return ResponseEntity.ok(new ApiResponse(true, "Document supprimé avec succès."));
+
+        } catch (DataIntegrityViolationException e) {
+            // Gérer les contraintes d'intégrité référentielle
+            LOGGER.error("Impossible de supprimer le document avec ID : {}, contrainte d'intégrité référentielle.", docId, e);
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ApiResponse(false, "Impossible de supprimer le document en raison de contraintes de données."));
+        } catch (Exception e) {
+            // Gérer les exceptions inattendues
+            LOGGER.error("Erreur lors de la suppression du document avec ID : {}", docId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "Une erreur est survenue lors de la suppression du document. Veuillez réessayer plus tard."));
+        }
     }
+
+
 
     // Generating a SAS token for the Azure Blob Storage.
     /*@GetMapping("/getSasToken")

@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import javax.validation.Valid;
 
+import com.clinitalPlatform.services.EmailSenderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,6 +76,9 @@ public class PatientController {
 	@Autowired
 	private ActivityServices  activityServices;
 
+	@Autowired
+	private EmailSenderService emailSenderService;
+
 	private final Logger LOGGER=LoggerFactory.getLogger(getClass());
   
 
@@ -141,6 +145,75 @@ public class PatientController {
 
 			// Vérifier si le patient peut être supprimé
 			if (pt.getPatient_type() == PatientTypeEnum.PROCHE) {
+				try {
+					// Récupérer les informations nécessaires avant la suppression
+					String userEmail = globalVariables.getConnectedUser().getEmail();
+					String procheName = pt.getNom_pat() + " " + pt.getPrenom_pat();
+
+					// Supprimer le patient via le service
+					patientService.delete(pt);
+
+					// Envoyer l'email de notification de manière asynchrone
+					emailSenderService.sendProcheDeletionNotification(userEmail, procheName);
+
+					// Journaliser l'activité
+					activityServices.createActivity(new Date(), "Delete", "Deleted Patient ID : " + pt.getId(), globalVariables.getConnectedUser());
+					LOGGER.info("Deleted Patient by ID : " + pt.getId() + ", UserID : " +
+							(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+
+					// Réponse de succès
+					response.put("message", "Patient supprimé avec succès. Un email de confirmation vous a été envoyé.");
+					response.put("deleted", true);
+					return ResponseEntity.ok(response);
+
+				} catch (RuntimeException e) {
+					// Gérer l'erreur d'envoi d'email tout en confirmant la suppression
+					LOGGER.warn("Patient supprimé mais erreur lors de l'envoi de l'email de notification : {}", e.getMessage());
+					response.put("message", "Patient supprimé avec succès, mais l'email de confirmation n'a pas pu être envoyé.");
+					response.put("deleted", true);
+					return ResponseEntity.ok(response);
+				}
+
+			} else {
+				// Ne pas autoriser la suppression d'un patient non éligible
+				activityServices.createActivity(new Date(), "Delete", "Cannot delete Patient ID : " + pt.getId(), globalVariables.getConnectedUser());
+				LOGGER.error("Cannot delete Patient ID : " + pt.getId() + ", UserID : " +
+						(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+
+				response.put("message", "Vous n'êtes pas autorisé à supprimer ce patient.");
+				return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+			}
+
+		} catch (IllegalStateException e) {
+			// Gestion d'une erreur métier (exemple : rendez-vous en attente)
+			LOGGER.error("Erreur métier lors de la suppression du patient ID : " + id, e);
+			response.put("message", e.getMessage());
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+
+		} catch (Exception e) {
+			// Gestion d'une erreur inattendue
+			LOGGER.error("Erreur inattendue lors de la suppression du patient ID : " + id, e);
+			response.put("message", "Une erreur inattendue est survenue. Veuillez réessayer plus tard.");
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+		}
+	}
+
+	/*public ResponseEntity<Map<String, Object>> deletePatient(@PathVariable Long id) {
+		Map<String, Object> response = new HashMap<>();
+
+		try {
+			// Vérifier si le patient existe pour l'utilisateur connecté
+			Optional<Patient> patient = patientRepo.getPatientByUserId(globalVariables.getConnectedUser().getId(), id);
+
+			if (patient.isEmpty()) {
+				response.put("message", "Patient introuvable pour l'utilisateur connecté.");
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+			}
+
+			Patient pt = patient.get();
+
+			// Vérifier si le patient peut être supprimé
+			if (pt.getPatient_type() == PatientTypeEnum.PROCHE) {
 				// Supprimer le patient via le service
 				patientService.delete(pt);
 
@@ -176,7 +249,7 @@ public class PatientController {
 			response.put("message", "Une erreur inattendue est survenue. Veuillez réessayer plus tard.");
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
 		}
-	}
+	}*/
 
 	/*public Map<String, Boolean> deletePatient(@PathVariable Long id) throws Exception {
 		

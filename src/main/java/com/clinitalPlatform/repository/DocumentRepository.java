@@ -41,6 +41,13 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 	@Query(value = "DELETE FROM document_medecin WHERE document_id IN (SELECT d.id_doc FROM documents d WHERE d.rdv_id IN (SELECT r.id FROM rendezvous r WHERE r.patient = ?1))", nativeQuery = true)
 	void deleteDocumentsMedecinsByRendezvousPatient(long patientId);
 
+	@Modifying
+	@Transactional
+	@Query(value = "DELETE FROM document_medecin WHERE document_id = :documentId", nativeQuery = true)
+	void deleteByDocumentId(@Param("documentId") Long documentId);
+
+
+
 
 	@Modifying
 	@Transactional
