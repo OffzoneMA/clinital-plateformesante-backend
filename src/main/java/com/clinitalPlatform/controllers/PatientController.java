@@ -145,7 +145,7 @@ public class PatientController {
 
 			// Vérifier si le patient peut être supprimé
 			if (pt.getPatient_type() == PatientTypeEnum.PROCHE) {
-				try {
+
 					// Récupérer les informations nécessaires avant la suppression
 					String userEmail = globalVariables.getConnectedUser().getEmail();
 					String procheName = pt.getNom_pat() + " " + pt.getPrenom_pat();
@@ -165,14 +165,6 @@ public class PatientController {
 					response.put("message", "Patient supprimé avec succès. Un email de confirmation vous a été envoyé.");
 					response.put("deleted", true);
 					return ResponseEntity.ok(response);
-
-				} catch (RuntimeException e) {
-					// Gérer l'erreur d'envoi d'email tout en confirmant la suppression
-					LOGGER.warn("Patient supprimé mais erreur lors de l'envoi de l'email de notification : {}", e.getMessage());
-					response.put("message", "Patient supprimé avec succès, mais l'email de confirmation n'a pas pu être envoyé.");
-					response.put("deleted", true);
-					return ResponseEntity.ok(response);
-				}
 
 			} else {
 				// Ne pas autoriser la suppression d'un patient non éligible

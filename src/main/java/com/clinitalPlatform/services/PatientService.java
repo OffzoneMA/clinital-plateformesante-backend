@@ -91,9 +91,9 @@ public class PatientService implements IDao<Patient> {
 
 		try {
 			// Vérifier si le patient a des rendez-vous à venir ou confirmés
-			if (rdvRepository.countPendingOrUpcomingRendezvous(o.getId()) > 0) {
-				throw new IllegalStateException("Vous ne pouvez pas supprimer ce patient car il a un rendez-vous en attente ou confirmé.");
-			}
+			//if (rdvRepository.countPendingOrUpcomingRendezvous(o.getId()) > 0) {
+			//	throw new IllegalStateException("Vous ne pouvez pas supprimer ce patient car il a un rendez-vous en attente ou confirmé.");
+			//}
 
 			// Supprimer les associations dans DocumentMedecin basées sur les rendez-vous
 			documentRepository.deleteDocumentsMedecinsByRendezvousPatient(o.getId());
