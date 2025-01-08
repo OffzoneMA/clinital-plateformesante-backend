@@ -129,7 +129,33 @@ public class RdvController {
 	    }
 	}
 
+	@GetMapping("medcin/findByPatients")
+	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	public ResponseEntity<Set<Medecin>> findMedecinsWithRendezvousForPatients(@RequestParam List<Long> patientIds) {
+		try {
+			Long userId = globalVariables.getConnectedUser().getId();
 
+			// Utilisation d'un ensemble pour éviter les doublons
+			Set<Medecin> medecins = new HashSet<>();
+
+			// Parcourir chaque ID de patient et récupérer les rendez-vous
+			for (Long patientId : patientIds) {
+				List<Rendezvous> rendezvousList = rdvrepository.findRdvByIduserandPatient(userId, patientId);
+
+				rendezvousList.forEach(rdv -> medecins.add(rdv.getMedecin()));
+
+				activityServices.createActivity(new Date(), "Read",
+						"Consulting medecins by Patient ID: " + patientId, userId);
+				LOGGER.info("Consulting medecins by Patient ID: " + patientId + ", UserID: " + userId);
+			}
+
+			return ResponseEntity.ok(medecins);
+
+		} catch (Exception e) {
+			LOGGER.error("An error occurred while finding medecins for patients.", e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptySet());
+		}
+	}
 
 //	@Value(value = "${azure.storage.account-key}")
 //	String azureStorageToken;
