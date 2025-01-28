@@ -156,6 +156,62 @@ public class DocumentController {
         }
     }
 
+    @PostMapping(path = "/addAndShareDoc")
+    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    @ResponseBody
+    public ResponseEntity<?> addAndShareDoc(
+            @RequestParam String document,
+            @RequestParam MultipartFile docFile,
+            @RequestParam Long medecinId) throws Exception {
+
+        try {
+            // ------ Save Document
+            Document savedDoc = docservices.create(document);
+
+            // ------ Handle File Upload
+            String extension = FilenameUtils.getExtension(docFile.getOriginalFilename());
+            String fileName = savedDoc.getTitre_doc() + "." + extension;
+
+            // Simuler l'upload du fichier (remplacez par votre implémentation Azure)
+            String uploadedFileUrl = "this is the URL of uploaded file: " + fileName + " in Azure"; // Placeholder
+            savedDoc.setFichier_doc(uploadedFileUrl);
+
+            // ------ Mettre à jour les métadonnées du document
+            savedDoc.setNumero_doc(savedDoc.getId_doc()); // Numero doc is doc ID
+
+            // ------ Sauvegarder les modifications du document
+            Document finalSavedDoc = docrepository.save(savedDoc);
+
+            //Rendezvous rdv= rdvRepository.findById(finalSavedDoc.getRendezvous().getId()).orElseThrow(()->new Exception("NO MATCHING FOUND"));
+            //rdv.getDocuments().add(finalSavedDoc);
+
+            // ------ Partager le document avec le médecin
+            List<Long> documentIds = Collections.singletonList(finalSavedDoc.getId_doc());
+            docservices.shareDocumentsWithMedecin(medecinId, documentIds);
+
+            // ------ Ajouter une activité
+            activityServices.createActivity(
+                    new Date(),
+                    "Add and Share",
+                    "Added and shared document ID:" + finalSavedDoc.getId_doc(),
+                    globalVariables.getConnectedUser()
+            );
+
+            // ------ Log d'information
+            LOGGER.info("Added and shared document with ID " + finalSavedDoc.getId_doc()
+                    + " by user with ID: "
+                    + (globalVariables.getConnectedUser() instanceof User
+                    ? globalVariables.getConnectedUser().getId()
+                    : ""));
+
+            return ResponseEntity.ok(new ApiResponse(true, "Document created and shared successfully!", finalSavedDoc));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.ok(new ApiResponse(false, "Document not created and shared! " + e.getMessage()));
+        }
+    }
+
     //
     @PutMapping("/update")
     @PreAuthorize("hasAnyAuthority('ROLE_PATIENT')")

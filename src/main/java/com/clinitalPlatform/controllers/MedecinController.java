@@ -798,8 +798,7 @@ public class MedecinController {
 	public ResponseEntity<?> GetCreno(
 			@PathVariable long idmed,
 			@PathVariable long weeks,
-			@PathVariable(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate)
-			throws Exception {
+			@PathVariable(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate) {
 
 		try {
 			// Vérifier si le médecin existe
@@ -934,15 +933,21 @@ public class MedecinController {
 				}
 			}
 
+			User connectedUser = globalVariables.getConnectedUser();
+			if (connectedUser != null) {
+				activityServices.createActivity(new Date(), "Read", "Consult Medecin Agenda by his ID : " + idmed, connectedUser);
+				LOGGER.info("Consult Medecin Agenda By his ID : " + idmed + " by User : " + (connectedUser instanceof User ? connectedUser.getId() : ""));
+			}
+
 			// Logging user activity
-			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+			/*Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 			if (!(authentication instanceof AnonymousAuthenticationToken)) {
 				User connectedUser = globalVariables.getConnectedUser();
 				if (connectedUser != null) {
 					activityServices.createActivity(new Date(), "Read", "Consult Medecin Agenda by his ID : " + idmed, connectedUser);
 					LOGGER.info("Consult Medecin Agenda By his ID : " + idmed + " by User : " + (connectedUser instanceof User ? connectedUser.getId() : ""));
 				}
-			}
+			}*/
 
 			// Return the agenda response list
 			return ResponseEntity.ok(agendaResponseList);

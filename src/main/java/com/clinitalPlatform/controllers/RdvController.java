@@ -3,12 +3,9 @@ package com.clinitalPlatform.controllers;
 import com.clinitalPlatform.dto.ModeCountDTO;
 import com.clinitalPlatform.dto.PatientCountsDTO;
 import com.clinitalPlatform.dto.RendezvousDTO;
-import com.clinitalPlatform.enums.ModeConsultationEnum;
-import com.clinitalPlatform.enums.MotifConsultationEnum;
 import com.clinitalPlatform.enums.RdvStatutEnum;
 import com.clinitalPlatform.exception.BadRequestException;
 import com.clinitalPlatform.models.Medecin;
-import com.clinitalPlatform.models.ModeConsultation;
 import com.clinitalPlatform.models.Patient;
 import com.clinitalPlatform.models.Rendezvous;
 import com.clinitalPlatform.payload.request.RendezvousRequest;
@@ -28,7 +25,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import org.hibernate.validator.constraints.ParameterScriptAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -192,6 +188,7 @@ public class RdvController {
 		response.setMedecinid(rdv.getMedecin() != null ? rdv.getMedecin().getId() : null);
 		response.setPatientid(rdv.getPatient() != null ? rdv.getPatient().getId() : null);
 		response.setLinkVideoCall(rdv.getLinkVideoCall());
+		response.setCabinet(rdv.getCabinet().getId_cabinet());
 
 		// Conversion de motif
 		if (rdv.getMotifConsultation() != null) {
@@ -396,32 +393,50 @@ public class RdvController {
 		}}
 
 
- // DELETE AN RDV By Medecin : %ok%
-	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
-	@DeleteMapping("/patient/delete/{id}")
-	public ResponseEntity<?> deleteRdvbyPatient(@Valid @PathVariable Long id) throws Exception {
-		// UserDetailsImpl userDetails = (UserDetailsImpl)
-		// SecurityContextHolder.getContext().getAuthentication()
-		// .getPrincipal();
-		Patient pat = patientService.getPatientMoiByUserId(globalVariables.getConnectedUser().getId());
+    // DELETE AN RDV By Medecin : %ok%
+    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    @DeleteMapping("/patient/delete/{id}")
+    public ResponseEntity<ApiResponse> deleteRdvbyPatient(@Valid @PathVariable Long id) {
+         try {
+             Patient pat = patientService.getPatientMoiByUserId(globalVariables.getConnectedUser().getId());
+			 if(pat == null) {
+				 return ResponseEntity.status(HttpStatus.NOT_FOUND)
+						 .body(new ApiResponse(false, "Patient non trouvé pour user :: " + globalVariables.getConnectedUser().getId()));
+			 }
 
-		Optional<Rendezvous> rdv = rdvrepository.findRdvByIdandPatient(id, pat.getId());
-		if (rdv.isPresent()) {
+             Rendezvous rdv = rdvrepository.findRdvByIdUserandId(globalVariables.getConnectedUser().getId(), id);
 
-			rdvservice.deleteRendezvous(id);
-			activityServices.createActivity(new Date(), "Delete", "Patient Delete Rdv By : " + id,
-					globalVariables.getConnectedUser());
-			LOGGER.info(
-					"Patient Delete  Rdv By ID : " + id + ", UserID : " + globalVariables.getConnectedUser().getId());
-			return ResponseEntity.ok(new ApiResponse(true, "RDV has been deleted Seccussefully"));
-		} else
-			activityServices.createActivity(new Date(), "Warning", "Cannot found Rdv By ID : " + id,
-					globalVariables.getConnectedUser());
-		LOGGER.warn("Cannot found Rdv By ID : " + id + ", UserID : " + globalVariables.getConnectedUser().getId());
-		return ResponseEntity.ok(new ApiResponse(false, "Rendez-vous non trouver pour id :: " + id));
+             if (rdv == null) {
+                 activityServices.createActivity(new Date(), "Warning",
+                         "Cannot find Rdv By ID : " + id, globalVariables.getConnectedUser());
 
-	}
+                 LOGGER.warn("Cannot find Rdv By ID : {}, UserID : {}",
+                         id, globalVariables.getConnectedUser().getId());
 
+                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                         .body(new ApiResponse(false, "Rendez-vous non trouvé pour id :: " + id));
+             }
+
+             rdvservice.deleteRendezvous(id);
+
+             activityServices.createActivity(new Date(), "Delete",
+                     "Patient Delete Rdv By : " + id, globalVariables.getConnectedUser());
+
+             LOGGER.info("Patient Delete Rdv By ID : {}, UserID : {}",
+                     id, globalVariables.getConnectedUser().getId());
+
+             return ResponseEntity.ok(new ApiResponse(true, "RDV has been deleted successfully"));
+
+         } catch (Exception e) {
+             LOGGER.error("Error deleting Rdv: {}", e.getMessage(), e);
+
+             activityServices.createActivity(new Date(), "Error",
+                     "Error deleting Rdv: " + e.getMessage(), id);
+
+             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                     .body(new ApiResponse(false, "An error occurred while deleting the Rendez-vous"));
+         }
+     }
 
 	// Update RDv bay Medecin : %ok%
 	// Get Rdv For connected Medecin : %OK%
@@ -463,6 +478,7 @@ public class RdvController {
 	 * }
 	 */
 	// cancel RDV for connected Medecin : %OK% les autres status.
+
 
 	// cancel Rdv For connected Patient : %OK%
 	@PutMapping("/patient/cancelRdv/{id}")

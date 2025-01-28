@@ -24,6 +24,6 @@ public class RendezvousResponse {
 	private Long patientid;
 	private String LinkVideoCall;
 	private PatientResponse patient;
-
+	private Long cabinet;
 
 }

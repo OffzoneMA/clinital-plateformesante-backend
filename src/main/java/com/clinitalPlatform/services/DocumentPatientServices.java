@@ -40,6 +40,11 @@ public class DocumentPatientServices {
             Patient patient = patientRepo.findById(documentReq.getPatientId()).orElseThrow(()->new Exception("No Matching Patient found"));
             //Rendezvous rendezvous =  rdvRepository.findById(documentReq.getRdvId()).orElseThrow(()->new Exception("No Matching RDV found"));
             Rendezvous rendezvous =  null;
+            if (documentReq.getRdvId() != null && documentReq.getRdvId() != 0) {
+                rendezvous = rdvRepository.findById(documentReq.getRdvId())
+                        .orElseThrow(() -> new Exception("No Matching RDV found"));
+            }
+
             TypeDocument typedoc= typeDocumentRepo.findById(documentReq.getTypeDocId()).orElseThrow(()->new Exception("No Matching type doc found"));
             Document documentEntity = new Document();
             documentEntity.setTitre_doc(documentReq.getTitre_doc());
