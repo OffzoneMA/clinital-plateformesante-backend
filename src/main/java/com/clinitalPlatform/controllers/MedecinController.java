@@ -932,13 +932,6 @@ public class MedecinController {
 					return ResponseEntity.ok(Collections.singletonMap("message", "Prochain RDV le " + formattedDateTime));
 				}
 			}
-
-			User connectedUser = globalVariables.getConnectedUser();
-			if (connectedUser != null) {
-				activityServices.createActivity(new Date(), "Read", "Consult Medecin Agenda by his ID : " + idmed, connectedUser);
-				LOGGER.info("Consult Medecin Agenda By his ID : " + idmed + " by User : " + (connectedUser instanceof User ? connectedUser.getId() : ""));
-			}
-
 			// Logging user activity
 			/*Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 			if (!(authentication instanceof AnonymousAuthenticationToken)) {
@@ -953,7 +946,9 @@ public class MedecinController {
 			return ResponseEntity.ok(agendaResponseList);
 
 		} catch (Exception e) {
-			throw new BadRequestException("error :" + e);
+			LOGGER.info("Error Consult Medecin Agenda By his ID : " + e.getMessage() );
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(false, e.getMessage()));
 		}
 	}
 

@@ -20,10 +20,11 @@ public class RendezvousResponse {
 	private RdvStatutEnum statut;
     private ModeConsultation modeconsultation;
 	private MotifConsultationEnum motif;
+	private Long motifid;
 	private Long medecinid;
 	private Long patientid;
 	private String LinkVideoCall;
 	private PatientResponse patient;
-	private Long cabinet;
+	private Long cabinetid;
 
 }

@@ -188,7 +188,8 @@ public class RdvController {
 		response.setMedecinid(rdv.getMedecin() != null ? rdv.getMedecin().getId() : null);
 		response.setPatientid(rdv.getPatient() != null ? rdv.getPatient().getId() : null);
 		response.setLinkVideoCall(rdv.getLinkVideoCall());
-		response.setCabinet(rdv.getCabinet().getId_cabinet());
+		response.setCabinetid(rdv.getCabinet().getId_cabinet());
+		response.setMotifid(rdv.getMotifConsultation().getId_motif());
 
 		// Conversion de motif
 		if (rdv.getMotifConsultation() != null) {
@@ -703,8 +704,8 @@ public class RdvController {
 			@Valid @PathVariable(value = "id") long idrdv)
 			throws BadRequestException {
 		try {
-			Optional<Rendezvous> isRdv = rdvrepository.findById(idrdv);
-			if (isRdv.isPresent()) {
+			Rendezvous isRdv = rdvrepository.getById(idrdv);
+			if (isRdv != null) {
 				// update
 				return ResponseEntity.ok(rdvservice.UpdateRdvdate(rdvDetails, idrdv));
 
@@ -713,8 +714,7 @@ public class RdvController {
 				return ResponseEntity.ok(new ApiResponse(false, "RDV Not Found" + rdvDetails.getDay()));
 		} catch (Exception e) {
 			e.printStackTrace();
-			return ResponseEntity.ok(null);
-
+			return ResponseEntity.badRequest().body(e.getMessage());
 		}
 	}
 

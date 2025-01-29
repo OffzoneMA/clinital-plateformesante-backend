@@ -99,11 +99,9 @@ public class WebSecurityConfig {
                 "/api/cabinet/medecin/**",
                 "/api/medecinSchedule/shedulebyMed/**",
                 "/api/med/schedulesofMed/**",
-                "/api/med/creneaux/**"
-
-
-
-
+                "/api/med/creneaux/**",
+                "/api/metrics/**",
+                "/actuator/**"
         };
 
 
@@ -113,8 +111,6 @@ public class WebSecurityConfig {
                 "/api/rdv/patient/**","/api/rdv/today/**","/api/rdv/med/**", "/api/rdv/rdvs/medecin","/api/users/**", "/api/rdv/**",
                 "/api/medecinSchedule/fromCreno/**",
                 "/api/rdv/rdvs/patient","/api/rdv/patient/rdvbyday", "/api/med/equipe","api/med/getAllPatients"
-                                        
-
         };
 
 
