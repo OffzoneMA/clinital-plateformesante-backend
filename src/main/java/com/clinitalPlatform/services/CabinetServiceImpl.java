@@ -102,11 +102,15 @@ public class CabinetServiceImpl implements CabinetService{
 	}
 
 	public List<Cabinet> getAllCabinetsByMedecinId(Long medecinId) {
-		Medecin medecin = medrepo.findById(medecinId)
-				.orElseThrow(() -> new RuntimeException("Medecin not found with ID: " + medecinId));
-		return medecin.getCabinets().stream()
-				.map(CabinetMedecinsSpace::getCabinet)
-				.collect(Collectors.toList());
+		return medrepo.findById(medecinId)
+				.map(medecin -> {
+					// Forcer le chargement des cabinets
+					medecin.getCabinets().size();
+					return medecin.getCabinets().stream()
+							.map(CabinetMedecinsSpace::getCabinet)
+							.collect(Collectors.toList());
+				})
+				.orElseGet(List::of);
 	}
 
 

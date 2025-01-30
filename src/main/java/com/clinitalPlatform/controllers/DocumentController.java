@@ -18,6 +18,7 @@ import com.clinitalPlatform.util.GlobalVariables;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 //import com.clinitalPlatform.security.config.azure.AzureServices;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -296,16 +297,48 @@ public class DocumentController {
     // Returning a list of documents by patient id.
     @GetMapping("/allDocsByPatientId/{id}")
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
-    @ResponseBody
-    public List<DocumentResponse> findAllDocsByPatientId(@PathVariable("id") long id ) throws Exception {
+    public ResponseEntity<?> findAllDocsByPatientId(@PathVariable("id") long id) {
+        try {
+            // Log la requête
+            String userId = globalVariables.getConnectedUser() != null
+                    ? String.valueOf(globalVariables.getConnectedUser().getId())
+                    : "Unknown";
+            LOGGER.info("Attempting to fetch documents for patient ID: {} by user ID: {}", id, userId);
 
+            // Vérifier si le patient existe
+            Patient patient = patientRepo.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Patient not found with ID: " + id));
 
-        Patient patient=patientRepo.findById(id).orElseThrow(()->new Exception("No Such Patient Found"));
+            // Récupérer les documents
+            List<Document> documents = docrepository.getDocumentsByPatientId(patient.getId());
 
-        List<Document> documents = docrepository.findByPatientId(patient.getId());
-        activityServices.createActivity(new Date(),"Read","Consulting All  documents by patient ID :"+id,globalVariables.getConnectedUser());
-        LOGGER.info("Consulting All  documents by patient ID :"+id+" By User ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
-        return documents.stream().map(doc -> mapper.map(doc, DocumentResponse.class)).collect(Collectors.toList());
+            // Enregistrer l'activité
+            activityServices.createActivity(
+                    new Date(),
+                    "Read",
+                    String.format("Consulting all documents for patient ID: %d", id),
+                    globalVariables.getConnectedUser()
+            );
+
+            // Mapper et retourner les résultats
+            List<DocumentResponse> response = documents.stream()
+                    .map(doc -> mapper.map(doc, DocumentResponse.class))
+                    .collect(Collectors.toList());
+
+            LOGGER.info("Successfully retrieved {} documents for patient ID: {}", documents.size(), id);
+
+            return ResponseEntity.ok()
+                    .body(response);
+
+        } catch (Exception e) {
+            LOGGER.error("Unexpected error while fetching documents: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(
+                            false,
+                            e.getMessage(),
+                            null
+                    ));
+        }
     }
 
     // Returning all the types of the document.

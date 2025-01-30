@@ -21,6 +21,9 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 	@Query("from Document d where d.patient.nom_pat= ?1")
 	List<Document> getDocByNomPatient(String nom_pat);
 
+	@Query("from Document d where d.patient.id= ?1")
+	List<Document> getDocumentsByPatientId(Long id);
+
 	@Modifying
 	@Transactional
 	@Query(value = "UPDATE documents SET rdv_id = NULL WHERE rdv_id IN (SELECT id FROM rendezvous WHERE patient = ?1)", nativeQuery = true)
