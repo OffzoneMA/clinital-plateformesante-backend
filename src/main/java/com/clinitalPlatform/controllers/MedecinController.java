@@ -891,6 +891,7 @@ public class MedecinController {
 
 			if (hasAvailabilityThisWeek && !allSlotsTakenThisWeek) {
 				// Retourner l'agenda complet pour cette semaine
+                LOGGER.info("Consult Medecin Agenda By his ID : have availability this week" + weeks);
 				return ResponseEntity.ok(agendaResponseList);
 			}
 

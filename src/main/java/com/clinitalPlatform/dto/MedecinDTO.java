@@ -56,7 +56,4 @@ public class MedecinDTO {
 	private List<VirementBancaireDTO> virementBancaires;
 
 	private UserDTO user;
-
-
-	 
 }
