@@ -493,10 +493,12 @@ public class RdvController {
 		// .getPrincipal();
 		Patient pat = patientService.getPatientMoiByUserId(globalVariables.getConnectedUser().getId());
 
-		Optional<Rendezvous> isRdv = rdvrepository.findRdvByIdandPatient(id, pat.getId());
-		if (isRdv.isPresent()) {
+		if(pat == null) {
+			return ResponseEntity.badRequest().body(new ApiResponse(false, "Patient not found by userId : " + globalVariables.getConnectedUser().getId()));
+		}
 
-			Rendezvous rdv = rdvrepository.findRdvByIdandPatient(id, pat.getId()).get();
+		Rendezvous rdv = rdvrepository.findRdvByIdUserandId(globalVariables.getConnectedUser().getId(), id);
+		if (rdv != null) {
 
 			rdv.setCanceledAt(LocalDateTime.now());
 			rdv.setStatut(RdvStatutEnum.ANNULE);
@@ -509,7 +511,7 @@ public class RdvController {
 			activityServices.createActivity(new Date(), "Warning", "Cannot found Rdv By ID : " + id,
 					globalVariables.getConnectedUser());
 		LOGGER.warn("Cannot found Rdv By ID : " + id + ", UserID : " + globalVariables.getConnectedUser().getId());
-		return ResponseEntity.ok(new ApiResponse(false, "RDV Not Found" + id));
+		return ResponseEntity.badRequest().body(new ApiResponse(false, "RDV Not Found" + id));
 
 	}
 
