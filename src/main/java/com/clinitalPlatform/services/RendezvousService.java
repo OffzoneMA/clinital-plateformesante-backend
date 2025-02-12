@@ -546,8 +546,8 @@ public class RendezvousService implements IDao<Rendezvous>  {
 	public Rendezvous updateerdv(long rdvId,RendezvousDTO rdvDTO, Medecin medecin, Patient patient) throws Exception{
 		Rendezvous rdv = rdvrepo.findById(rdvId).orElseThrow(() -> new Exception("RDV not found"));
 
-		MotifConsultation motif = mRepository.findById(rdvDTO.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a Motif"));
-		ModeConsultation mode =moderespo.findById(rdvDTO.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a Mode consultation"));
+		MotifConsultation motif = mRepository.findById(rdvDTO.getMotif()).orElseThrow(()->new Exception("No such Id exist for a Motif"));
+		ModeConsultation mode =moderespo.findById(rdvDTO.getModeconsultation()).orElseThrow(()->new Exception("No such Id exist for a Mode consultation"));
 		Cabinet cabinet=cabrepo.findById(rdvDTO.getCabinet()).orElseThrow(()->new Exception("No such Id exist for a cabinet"));
 		rdv.setId(rdvDTO.getId());
 		rdv.setCanceledAt(rdvDTO.getCanceledat());

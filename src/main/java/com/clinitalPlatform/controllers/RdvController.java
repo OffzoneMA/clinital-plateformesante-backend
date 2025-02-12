@@ -381,7 +381,6 @@ public class RdvController {
 	@PutMapping("/patient/updateRdv/{id}")
 	public ResponseEntity<Rendezvous> updateeRDV(@PathVariable("id") Long rdvId, @RequestBody RendezvousDTO rdvDTO) throws Exception {
 		try{
-			System.err.println(rdvDTO);
 			Medecin medecin = medRepo.findById(rdvDTO.getMedecinid())
 					.orElseThrow(() -> new BadRequestException("Medecin not found for this id ::" + rdvDTO.getMedecinid()));
 			Patient patient = patientRepo.findById(rdvDTO.getPatientid()).orElseThrow(
@@ -713,7 +712,7 @@ public class RdvController {
 
 			} else
 
-				return ResponseEntity.ok(new ApiResponse(false, "RDV Not Found" + rdvDetails.getDay()));
+				return ResponseEntity.badRequest().body(new ApiResponse(false, "RDV Not Found" + rdvDetails.getDay()));
 		} catch (Exception e) {
 			e.printStackTrace();
 			return ResponseEntity.badRequest().body(e.getMessage());
