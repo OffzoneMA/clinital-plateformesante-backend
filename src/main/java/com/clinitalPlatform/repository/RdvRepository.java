@@ -2,6 +2,7 @@ package com.clinitalPlatform.repository;
 
 
 import com.clinitalPlatform.dto.RendezvousDTO;
+import com.clinitalPlatform.enums.RdvStatutEnum;
 import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.models.Rendezvous;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -193,5 +194,10 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 	@Query(value = "SELECT COUNT(*) FROM rendezvous WHERE patient = ?1 AND statut IN ('ENATTENTE', 'CONFIRME')", nativeQuery = true)
 	int countPendingOrUpcomingRendezvous(long patientId);
 
+	List<Rendezvous> findByStartBetween(LocalDateTime start, LocalDateTime end);
+
+	List<Rendezvous> findByStatutAndCanceledAtAfter(RdvStatutEnum rdvStatutEnum, LocalDateTime lastCheck);
+
+	List<Rendezvous> findByStartBefore(LocalDateTime sixMonthsAgo);
 }
 

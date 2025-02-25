@@ -33,6 +33,8 @@ import com.clinitalPlatform.security.oauth2.OAuth2AuthenticationSuccessHandler;
 import com.clinitalPlatform.security.oauth2.RestAuthenticationEntryPoint;
 import com.clinitalPlatform.security.services.UserDetailsServiceImpl;
 
+import java.util.Collections;
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(
@@ -101,7 +103,11 @@ public class WebSecurityConfig {
                 "/api/med/schedulesofMed/**",
                 "/api/med/creneaux/**",
                 "/api/metrics/**",
-                "/actuator/**"
+                "/actuator/**",
+                "/api/ws/**",
+                "/ws",
+                "/ws/**",
+                "/api/notifications/**"
         };
 
 
@@ -183,7 +189,9 @@ public class WebSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("*");
+        //configuration.addAllowedOrigin("*");
+        configuration.setAllowCredentials(true);
+        configuration.setAllowedOriginPatterns(Collections.singletonList("*"));
         configuration.addAllowedHeader("*");
         configuration.addAllowedMethod("OPTIONS");
         configuration.addAllowedMethod("GET");
