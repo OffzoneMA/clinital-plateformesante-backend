@@ -3,6 +3,7 @@ package com.clinitalPlatform.controllers;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -793,11 +794,10 @@ public class MedecinController {
 	//Recuperation de l'agenda********************************************
 
 	//AFFICHAGE DE L'AGENDA
-	@GetMapping("/agenda/{idmed}/{weeks}/{startDate}")
+	@GetMapping("/agenda/{idmed}/{startDate}")
 	@JsonSerialize(using = LocalDateSerializer.class)
 	public ResponseEntity<?> GetCreno(
 			@PathVariable long idmed,
-			@PathVariable long weeks,
 			@PathVariable(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate) {
 
 		try {
@@ -822,137 +822,194 @@ public class MedecinController {
 					.map(item -> mapper.map(item, MedecinSchedule.class))
 					.collect(Collectors.toList());
 
-			LocalDate now = LocalDate.now();
-			LocalDate startOfCurrentWeek = getStartOfWeek(now);
-			LocalDate endOfCurrentWeek = getEndOfWeek(now);
+			// Si startDate est null, utiliser la date d'aujourd'hui
+			if (startDate == null) {
+				startDate = LocalDate.now();
+			}
 
-			boolean hasAvailabilityThisWeek = false;
-			boolean allSlotsTakenThisWeek = true;
+			// Calculer le début de la semaine basé sur startDate
+			LocalDate startOfWeek = getStartOfWeek(startDate);
+			LocalDate endOfWeek = getEndOfWeek(startDate);
 
-			for (int j = 1; j <= weeks; j++) {
-				LocalDate currentDate = startDate;
-				for (int i = 1; i <= 7; i++) {
-					boolean checkDay = false;
+			// Obtenir la date et l'heure actuelles pour les comparaisons
+			LocalDate currentDay = LocalDate.now();
+			LocalDateTime now = LocalDateTime.now();
 
-					if (!schedules.isEmpty()) {
-						for (MedecinSchedule medsch : schedules) {
-							if (medsch.getDay().getValue() == currentDate.getDayOfWeek().getValue()) {
-								checkDay = true;
-								AgendaResponse agenda = null;
+			// Vérifier les disponibilités pour chaque jour de la semaine
+			LocalDate iterationDate = startOfWeek;
+			while (!iterationDate.isAfter(endOfWeek)) {
+				boolean checkDay = false;
+				boolean isPastDay = iterationDate.isBefore(currentDay);
+				boolean isToday = iterationDate.isEqual(currentDay);
 
-								for (AgendaResponse ag : agendaResponseList) {
-									if (ag.getDay().getValue() == medsch.getDay().getValue() && ag.getWeek() == j) {
-										agenda = ag;
-										break;
-									}
+				if (!schedules.isEmpty()) {
+					for (MedecinSchedule medsch : schedules) {
+						if (medsch.getDay().getValue() == iterationDate.getDayOfWeek().getValue()) {
+							checkDay = true;
+							AgendaResponse agenda = null;
+
+							for (AgendaResponse ag : agendaResponseList) {
+								if (ag.getDay().getValue() == medsch.getDay().getValue()) {
+									agenda = ag;
+									break;
 								}
-
-								if (agenda != null) {
-									agenda = medecinService.CreateCreno(medsch, agenda, idmed, j, currentDate.atStartOfDay());
-									agendaResponseList.set(agendaResponseList.indexOf(agenda), agenda);
-								} else {
-									agenda = new AgendaResponse();
-									agenda.setDay(currentDate.getDayOfWeek());
-									agenda.setWorkingDate(currentDate.atStartOfDay());
-									agenda = medecinService.CreateCreno(medsch, agenda, idmed, j, currentDate.atStartOfDay());
-									agendaResponseList.add(agenda);
-								}
-
-								long hours = ChronoUnit.HOURS.between(medsch.getAvailabilityStart(), medsch.getAvailabilityEnd());
-								agenda.getMedecinTimeTable().add(new GeneralResponse("startTime", medsch.getAvailabilityStart()));
-								agenda.getMedecinTimeTable().add(new GeneralResponse("endTime", medsch.getAvailabilityStart().plusHours(hours)));
-								String startTime = medsch.getAvailabilityStart().getHour() + ":" + medsch.getAvailabilityStart().getMinute();
-								String endTime = medsch.getAvailabilityEnd().getHour() + ":" + medsch.getAvailabilityEnd().getMinute();
-								agenda.getWorkingHours().add(new HorairesResponse(startTime, endTime));
-
-								if (!currentDate.isBefore(startOfCurrentWeek) && !currentDate.isAfter(endOfCurrentWeek)) {
-									hasAvailabilityThisWeek = true;
-									allSlotsTakenThisWeek = false;
-								}
-
-								continue;
 							}
+
+							if (agenda != null) {
+								// Si c'est un jour passé, n'ajoutez pas de créneaux disponibles
+								if (!isPastDay) {
+									agenda = medecinService.CreateCreno(medsch, agenda, idmed, 1, iterationDate.atStartOfDay());
+
+									// Si c'est aujourd'hui, filtrez les créneaux qui sont déjà passés
+									if (isToday) {
+										// Vérifier le type de getAvailableSlot() et utiliser le filtre approprié
+										if (!agenda.getAvailableSlot().isEmpty()) {
+											// Supposons que getAvailableSlot() retourne une liste de SlotResponse
+											// avec une méthode getStart() qui retourne une heure au format String
+											agenda.setAvailableSlot(
+													agenda.getAvailableSlot().stream()
+															.filter(slot -> {
+																try {
+																	// Parsing de l'heure de début (format attendu HH:mm)
+																	LocalTime slotTime = LocalTime.parse(slot);
+																	LocalDateTime slotDateTime = LocalDateTime.of(currentDay, slotTime);
+																	return slotDateTime.isAfter(now);
+																} catch (Exception e) {
+																	// En cas d'erreur de parsing, on garde le créneau par défaut
+																	LOGGER.warn("Erreur lors du parsing de l'heure du créneau: " + e.getMessage());
+																	return true;
+																}
+															})
+															.collect(Collectors.toList())
+											);
+										}
+									}
+								} else {
+									// Jour passé - vider les créneaux disponibles
+									agenda.setAvailableSlot(new ArrayList<>());
+								}
+
+								agendaResponseList.set(agendaResponseList.indexOf(agenda), agenda);
+							} else {
+								agenda = new AgendaResponse();
+								agenda.setDay(iterationDate.getDayOfWeek());
+								agenda.setWorkingDate(iterationDate.atStartOfDay());
+
+								// Si c'est un jour passé, n'ajoutez pas de créneaux disponibles
+								if (!isPastDay) {
+									agenda = medecinService.CreateCreno(medsch, agenda, idmed, 1, iterationDate.atStartOfDay());
+
+									// Si c'est aujourd'hui, filtrez les créneaux qui sont déjà passés
+									if (isToday) {
+										// Vérifier le type de getAvailableSlot() et utiliser le filtre approprié
+										if (!agenda.getAvailableSlot().isEmpty()) {
+											// Supposons que getAvailableSlot() retourne une liste de SlotResponse
+											// avec une méthode getStart() qui retourne une heure au format String
+											agenda.setAvailableSlot(
+													agenda.getAvailableSlot().stream()
+															.filter(slot -> {
+																try {
+																	// Parsing de l'heure de début (format attendu HH:mm)
+																	LocalTime slotTime = LocalTime.parse(slot);
+																	LocalDateTime slotDateTime = LocalDateTime.of(currentDay, slotTime);
+																	return slotDateTime.isAfter(now);
+																} catch (Exception e) {
+																	// En cas d'erreur de parsing, on garde le créneau par défaut
+																	LOGGER.warn("Erreur lors du parsing de l'heure du créneau: " + e.getMessage());
+																	return true;
+																}
+															})
+															.collect(Collectors.toList())
+											);
+										}
+									}
+								} else {
+									// Jour passé - initialiser avec une liste vide
+									agenda.setAvailableSlot(new ArrayList<>());
+								}
+
+								agendaResponseList.add(agenda);
+							}
+
+							long hours = ChronoUnit.HOURS.between(medsch.getAvailabilityStart(), medsch.getAvailabilityEnd());
+							agenda.getMedecinTimeTable().add(new GeneralResponse("startTime", medsch.getAvailabilityStart()));
+							agenda.getMedecinTimeTable().add(new GeneralResponse("endTime", medsch.getAvailabilityStart().plusHours(hours)));
+							String startTime = medsch.getAvailabilityStart().getHour() + ":" + medsch.getAvailabilityStart().getMinute();
+							String endTime = medsch.getAvailabilityEnd().getHour() + ":" + medsch.getAvailabilityEnd().getMinute();
+							agenda.getWorkingHours().add(new HorairesResponse(startTime, endTime));
 						}
 					}
-
-					if (!checkDay) {
-						AgendaResponse agenda = new AgendaResponse();
-						agenda.setDay(currentDate.getDayOfWeek());
-						agenda.setWorkingDate(currentDate.atStartOfDay());
-						agendaResponseList.add(agenda);
-					}
-					currentDate = currentDate.plusDays(1);
 				}
+
+				if (!checkDay) {
+					AgendaResponse agenda = new AgendaResponse();
+					agenda.setDay(iterationDate.getDayOfWeek());
+					agenda.setWorkingDate(iterationDate.atStartOfDay());
+					// Initialiser avec une liste vide pour les jours sans horaires programmés
+					agenda.setAvailableSlot(new ArrayList<>());
+					agendaResponseList.add(agenda);
+				}
+				iterationDate = iterationDate.plusDays(1);
 			}
 
 			// Supprimer les doublons
 			Set<AgendaResponse> set = new LinkedHashSet<>(agendaResponseList);
 			agendaResponseList = new ArrayList<>(set);
 
-			if (hasAvailabilityThisWeek && !allSlotsTakenThisWeek) {
-				// Retourner l'agenda complet pour cette semaine
-                LOGGER.info("Consult Medecin Agenda By his ID : have availability this week" + weeks);
+			// Vérifier s'il y a des disponibilités pour cette semaine
+			boolean hasAvailabilityThisWeek = agendaResponseList.stream()
+					.anyMatch(agenda -> !agenda.getAvailableSlot().isEmpty());
+
+			if(hasAvailabilityThisWeek) {
+				LOGGER.info("Consult Medecin Agenda By his ID: " + idmed + " for week starting " + startOfWeek);
 				return ResponseEntity.ok(agendaResponseList);
-			}
+			} else {
+				// Fetch all future appointments for this doctor
+				List<Rendezvous> futureAppointments = rdvRepository.findByMedecinIdAndStartAfterOrderByStartAsc(idmed, LocalDateTime.now());
 
-			// Fetch all future appointments for this doctor
-			List<Rendezvous> futureAppointments = rdvRepository.findByMedecinIdAndStartAfterOrderByStartAsc(idmed, LocalDateTime.now());
+				// Find the next available slot considering both schedules and existing appointments
+				Optional<LocalDateTime> nextAvailableSlot = schedules.stream()
+						.flatMap(schedule -> {
+							LocalDate date = LocalDate.now();
+							List<LocalDateTime> slots = new ArrayList<>();
 
-			// Find the next available slot considering both schedules and existing appointments
-			Optional<LocalDateTime> nextAvailableSlot = schedules.stream()
-					.flatMap(schedule -> {
-						LocalDate date = LocalDate.now();
-						List<LocalDateTime> slots = new ArrayList<>();
-
-						while (slots.size() < 10) { // Look for the next 10 potential slots
-							if (schedule.getDay() == date.getDayOfWeek()) {
-								LocalDateTime slotStart = date.atTime(LocalTime.from(schedule.getAvailabilityStart()));
-								if (slotStart.isAfter(LocalDateTime.now())) {
-									slots.add(slotStart);
+							while (slots.size() < 10) { // Look for the next 10 potential slots
+								if (schedule.getDay() == date.getDayOfWeek()) {
+									LocalDateTime slotStart = date.atTime(LocalTime.from(schedule.getAvailabilityStart()));
+									if (slotStart.isAfter(LocalDateTime.now())) {
+										slots.add(slotStart);
+									}
 								}
+								date = date.plusDays(1);
 							}
-							date = date.plusDays(1);
-						}
-						return slots.stream();
-					})
-					.filter(slotStart -> {
-						// Check if the slot doesn't conflict with existing appointments
-						return futureAppointments.stream().noneMatch(appointment ->
-								(slotStart.isEqual(appointment.getStart()) || slotStart.isAfter(appointment.getStart()))
-										&& slotStart.isBefore(appointment.getEnd())
-						);
-					})
-					.min(Comparator.naturalOrder());
+							return slots.stream();
+						})
+						.filter(slotStart -> {
+							// Check if the slot doesn't conflict with existing appointments
+							return futureAppointments.stream().noneMatch(appointment ->
+									(slotStart.isEqual(appointment.getStart()) || slotStart.isAfter(appointment.getStart()))
+											&& slotStart.isBefore(appointment.getEnd())
+							);
+						})
+						.min(Comparator.naturalOrder());
 
-			if (nextAvailableSlot.isPresent()) {
-				LocalDateTime nextAvailableDateTime = nextAvailableSlot.get();
-
-				if (nextAvailableDateTime.toLocalDate().isAfter(endOfCurrentWeek)) {
-					// Display message for future weeks only
+				if (nextAvailableSlot.isPresent()) {
+					LocalDateTime nextAvailableDateTime = nextAvailableSlot.get();
 					String formattedDateTime = nextAvailableDateTime.format(DateTimeFormatter.ofPattern("dd MM yyyy"));
 					return ResponseEntity.ok(Collections.singletonMap("message", "Prochain RDV le " + formattedDateTime));
+				} else {
+					return ResponseEntity.ok(Collections.singletonMap("message", "Aucune disponibilité en ligne."));
 				}
 			}
-			// Logging user activity
-			/*Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-			if (!(authentication instanceof AnonymousAuthenticationToken)) {
-				User connectedUser = globalVariables.getConnectedUser();
-				if (connectedUser != null) {
-					activityServices.createActivity(new Date(), "Read", "Consult Medecin Agenda by his ID : " + idmed, connectedUser);
-					LOGGER.info("Consult Medecin Agenda By his ID : " + idmed + " by User : " + (connectedUser instanceof User ? connectedUser.getId() : ""));
-				}
-			}*/
-
-			// Return the agenda response list
-			return ResponseEntity.ok(agendaResponseList);
 
 		} catch (Exception e) {
-			LOGGER.info("Error Consult Medecin Agenda By his ID : " + e.getMessage() );
+			LOGGER.info("Error Consult Medecin Agenda By his ID: " + e.getMessage());
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse(false, e.getMessage()));
+					.body(new ApiResponse(false, e.getMessage()));
 		}
 	}
-
+	// Méthode utilitaire pour trouver le prochain créneau disponible
+	// Méthode utilitaire pour obtenir le début de la semaine
 	private LocalDate getStartOfWeek(LocalDate date) {
 		return date.with(DayOfWeek.MONDAY);
 	}

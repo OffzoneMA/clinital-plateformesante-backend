@@ -99,8 +99,8 @@ public class PushNotificationService {
                 appointmentDetails,
                 autor,
                 NotificationType.ERROR,
-                true,
-                "/appointments",
+                false,
+                "/agenda",
                 rdvStart
         );
     }
