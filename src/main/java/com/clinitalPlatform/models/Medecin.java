@@ -155,6 +155,9 @@ public class Medecin {
 //--------------------------------------------------------
 
 	@OneToMany(mappedBy = "medecin", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<MedecinImage> images = new ArrayList<>();
+
+	@OneToMany(mappedBy = "medecin", cascade = CascadeType.ALL, orphanRemoval = true)
 	@JsonIgnore
 	private List<VirementBancaire> virementsBancaires;
 
