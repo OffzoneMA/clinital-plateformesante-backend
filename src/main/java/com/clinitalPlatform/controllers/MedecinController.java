@@ -968,7 +968,7 @@ public class MedecinController {
 				List<Rendezvous> futureAppointments = rdvRepository.findByMedecinIdAndStartAfterOrderByStartAsc(idmed, LocalDateTime.now());
 
 				// Find the next available slot considering both schedules and existing appointments
-				Optional<LocalDateTime> nextAvailableSlot = schedules.stream()
+				/*Optional<LocalDateTime> nextAvailableSlot = schedules.stream()
 						.flatMap(schedule -> {
 							LocalDate date = LocalDate.now();
 							List<LocalDateTime> slots = new ArrayList<>();
@@ -999,7 +999,8 @@ public class MedecinController {
 					return ResponseEntity.ok(Collections.singletonMap("message", "Prochain RDV le " + formattedDateTime));
 				} else {
 					return ResponseEntity.ok(Collections.singletonMap("message", "Aucune disponibilité en ligne."));
-				}
+				}*/
+				return this.getNextAvailableAppointment(idmed);
 			}
 
 		} catch (Exception e) {
@@ -1008,6 +1009,52 @@ public class MedecinController {
 					.body(new ApiResponse(false, e.getMessage()));
 		}
 	}
+
+
+	public ResponseEntity<?> getNextAvailableAppointment(Long idmed) {
+		List<MedecinSchedule> schedules = medScheduleRepo.findByMedId(idmed);
+
+		if (schedules.isEmpty()) {
+			return ResponseEntity.ok(Collections.singletonMap("message", "Aucune disponibilité en ligne."));
+		}
+
+		List<Rendezvous> futureAppointments = rdvRepository.findByMedecinIdAndStartAfterOrderByStartAsc(idmed, LocalDateTime.now());
+
+		// Générer les futures dates disponibles
+		LocalDate today = LocalDate.now();
+		LocalDate searchLimit = today.plusYears(1); // On cherche sur 1 année
+		LocalDate nextAvailableDate = null;
+
+		while (today.isBefore(searchLimit)) {
+			for (MedecinSchedule schedule : schedules) {
+				if (schedule.getDay() == today.getDayOfWeek()) {
+					LocalDateTime slotStart = today.atTime(schedule.getAvailabilityStart().toLocalTime());
+
+					// Vérifier s'il y a des créneaux déjà réservés ce jour-là
+					boolean isTaken = futureAppointments.stream().anyMatch(rdv ->
+							!rdv.getEnd().isBefore(slotStart) && !rdv.getStart().isAfter(slotStart.plusHours(1))
+					);
+
+					if (!isTaken) {
+						nextAvailableDate = today;
+						break;
+					}
+				}
+			}
+			if (nextAvailableDate != null) break;
+			today = today.plusDays(1);
+		}
+
+		if (nextAvailableDate != null) {
+			return ResponseEntity.ok(Collections.singletonMap("message", "Prochain RDV le " +
+					nextAvailableDate.format(DateTimeFormatter.ofPattern("dd MM yyyy"))));
+		} else {
+			return ResponseEntity.ok(Collections.singletonMap("message", "Aucune disponibilité en ligne."));
+		}
+	}
+
+
+
 	// Méthode utilitaire pour trouver le prochain créneau disponible
 	// Méthode utilitaire pour obtenir le début de la semaine
 	private LocalDate getStartOfWeek(LocalDate date) {

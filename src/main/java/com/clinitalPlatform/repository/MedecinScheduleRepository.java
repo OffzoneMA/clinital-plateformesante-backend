@@ -66,4 +66,17 @@ public interface MedecinScheduleRepository extends JpaRepository<MedecinSchedule
     List<MedecinSchedule> findByMotifConsultation_Motif(MotifConsultationEnum motif);
     @Query("SELECT ms FROM MedecinSchedule ms JOIN ms.motifConsultation mc WHERE mc.id IN :idsMotifs")
     List<MedecinSchedule> findByMotifConsultationIdIn(@Param("idsMotifs") List<Long> idsMotifs);
+
+    // Alternative plus lisible et potentiellement plus portable
+    @Query("""
+    SELECT MIN(r.start) 
+    FROM Rendezvous r 
+    JOIN MedecinSchedule ms ON r.medecin.id = ms.medecin.id
+    WHERE r.medecin.id = :idmed 
+    AND r.start > CURRENT_TIMESTAMP 
+    AND r.statut != 'CANCELED'
+    AND ms.day = FUNCTION('DAYOFWEEK', r.start) - 1
+    AND FUNCTION('TIME', r.start) BETWEEN FUNCTION('TIME', ms.availabilityStart) AND FUNCTION('TIME', ms.availabilityEnd)
+    """)
+    LocalDateTime findAlternativeNextAppointmentSlot(@Param("idmed") Long idmed);
 }
