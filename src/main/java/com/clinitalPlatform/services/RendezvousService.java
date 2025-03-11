@@ -482,8 +482,13 @@ public class RendezvousService implements IDao<Rendezvous>  {
 
 			ModeConsultation mode = moderespo.findById(c.getModeconsultation())
 					.orElseThrow(() -> new Exception("No such Id exists for ModeConsultation"));
-			Cabinet cabinet = cabrepo.findById(c.getCabinet())
-					.orElseThrow(() -> new Exception("No such Id exist for a cabinet"));
+
+			Cabinet cabinet = null;
+
+			if(c.getCabinet() != null && c.getCabinet() != 0) {
+				cabinet = cabrepo.findById(c.getCabinet())
+						.orElseThrow(() -> new Exception("No such Id exist for a cabinet"));
+			}
 
 			// Vérification de la réservation
 			//Boolean isReserved = this.isHasRdvToday(medecin.getSpecialite().getId_spec(), c.getStart().toLocalDate(), patient.getId());
@@ -510,7 +515,9 @@ public class RendezvousService implements IDao<Rendezvous>  {
 					}
 				}
 				rendezvous.setLinkVideoCall(urlVideoCallGenerator.joinConference());
-				rendezvous.setCabinet(cabinet);
+				if(cabinet != null) {
+					rendezvous.setCabinet(cabinet);
+				}
 				LOGGER.info("id=" + rendezvous.getId());
 
 				entityManger.persist(rendezvous);

@@ -188,7 +188,7 @@ public class RdvController {
 		response.setMedecinid(rdv.getMedecin() != null ? rdv.getMedecin().getId() : null);
 		response.setPatientid(rdv.getPatient() != null ? rdv.getPatient().getId() : null);
 		response.setLinkVideoCall(rdv.getLinkVideoCall());
-		response.setCabinetid(rdv.getCabinet().getId_cabinet());
+		response.setCabinetid(rdv.getCabinet() != null ? rdv.getCabinet().getId_cabinet(): null);
 		response.setMotifid(rdv.getMotifConsultation().getId_motif());
 
 		// Conversion de motif

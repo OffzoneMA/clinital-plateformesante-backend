@@ -215,21 +215,6 @@ public class MedecinController {
 				.map(moyen -> {
 					MoyenPaiementDTO moyenPaiementDTO = mapper.map(moyen, MoyenPaiementDTO.class);
 					moyenPaiementDTO.setType(moyen.getType());
-					// Si le moyen de paiement est un virement bancaire, récupérer les infos spécifiques
-					if (moyen.getType() == TypeMoyenPaiementEnum.Virement) {
-						// Trouver le virement bancaire associé au médecin (ou autre logique pour récupérer les infos)
-						Optional<VirementBancaire> virementBancaire = virementBancaireRepository.findByMedecinIdAndMoyenPaiementId_mp(id , moyen.getId_mp());
-
-
-						if(virementBancaire.isPresent()) {
-							// Assurez-vous d'avoir une méthode pour cela
-							VirementBancaire vb = virementBancaire.get();
-							LOGGER.info("Consulting virement bancaire  :"+(vb.getId_vb()) + " for moyen paiement" +( moyen.getId_mp()));
-
-							VirementBancaireDTO virementBancaireDTO = mapper.map(vb, VirementBancaireDTO.class);
-							moyenPaiementDTO.setVirementBancaire(virementBancaireDTO);
-						}
-					}
 					return moyenPaiementDTO;
 				})
 				.collect(Collectors.toList());

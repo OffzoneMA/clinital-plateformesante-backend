@@ -29,7 +29,7 @@ public class ScheduledNotificationService {
      * Vérifie chaque heure s'il y a des rendez-vous prévus dans moins de 24h
      * et envoie des notifications aux patients concernés.
      */
-    @Scheduled(cron = "0 0 * * * *") // Toutes les heures
+    @Scheduled(cron = "0 8 * * * *") // Toutes les heures
     public void sendAppointmentReminders() {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime threshold = now.plusHours(24);
