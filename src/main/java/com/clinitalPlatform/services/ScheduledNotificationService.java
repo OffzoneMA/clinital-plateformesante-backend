@@ -46,7 +46,7 @@ public class ScheduledNotificationService {
                         + rdv.getStart().toLocalDate();
                 if(!notificationExists){
                     pushNotificationService.sendAppointmentReminder(patient.getUser().getId(), rdv.getMedecin().getSpecialite().getLibelle() , appointmentDetails ,
-                            "Dr" + "" + rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med() , rdv.getStart() , rdv.getId());
+                            "Dr" + " " + rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med() , rdv.getStart() , rdv.getId());
                 }
 
             }
@@ -62,12 +62,16 @@ public class ScheduledNotificationService {
 
         for (Rendezvous rdv : canceledAppointments) {
             if (rdv.getPatient() != null) {
-                pushNotificationService.sendAppointmentCancellation(
-                        rdv.getPatient().getUser().getId(), rdv.getMedecin().getSpecialite().getLibelle() ,
-                        "Votre rendez-vous du " + rdv.getStart().toLocalDate() + " a été annulé." ,
-                        "Dr" + "" + rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med() ,
-                        rdv.getStart() , rdv.getId()
-                );
+                boolean notificationExists = notificationRepository.existsByRdvIdAndType(rdv.getId(), NotificationType.ERROR);
+
+                if(!notificationExists) {
+                    pushNotificationService.sendAppointmentCancellation(
+                            rdv.getPatient().getUser().getId(), rdv.getMedecin().getSpecialite().getLibelle(),
+                            "Votre rendez-vous du " + rdv.getStart().toLocalDate() + " a été annulé.",
+                            "Dr" + " " + rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med(),
+                            rdv.getStart(), rdv.getId()
+                    );
+                }
             }
         }
     }
