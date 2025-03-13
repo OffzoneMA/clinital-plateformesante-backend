@@ -25,6 +25,7 @@ public class Notification {
 	private LocalDateTime createdAt;
 	private LocalDateTime rdvStart;
 	private String url;
+	private Long rdvId;
 	private boolean isRead;
 	@ManyToOne
 	@JoinColumn(name = "id")
@@ -38,6 +39,12 @@ public class Notification {
 		createdAt = LocalDateTime.now();
 		if (type == null) {
 			type = NotificationType.INFO;
+		}
+	}
+
+	public void setRdvId(Long rdvId) {
+		if (NotificationType.REMINDER.equals(this.type)) {
+			this.rdvId = rdvId;
 		}
 	}
 

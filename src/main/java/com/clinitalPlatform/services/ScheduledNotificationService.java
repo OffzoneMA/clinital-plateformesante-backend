@@ -29,7 +29,7 @@ public class ScheduledNotificationService {
      * Vérifie chaque heure s'il y a des rendez-vous prévus dans moins de 24h
      * et envoie des notifications aux patients concernés.
      */
-    @Scheduled(cron = "0 8 * * * *") // Toutes les heures
+    @Scheduled(cron = "0 */20 * * * *")
     public void sendAppointmentReminders() {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime threshold = now.plusHours(24);
@@ -38,12 +38,17 @@ public class ScheduledNotificationService {
 
         for (Rendezvous rdv : upcomingAppointments) {
             if (rdv.getPatient() != null) {
+                // Vérifier si une notification a déjà été envoyée pour ce rendez-vous
+                boolean notificationExists = notificationRepository.existsByRdvIdAndType(rdv.getId(), NotificationType.REMINDER);
+
                 Patient patient = rdv.getPatient();
                 String appointmentDetails = "Votre rendez-vous est prévu le "
                         + rdv.getStart().toLocalDate();
+                if(!notificationExists){
+                    pushNotificationService.sendAppointmentReminder(patient.getUser().getId(), rdv.getMedecin().getSpecialite().getLibelle() , appointmentDetails ,
+                            "Dr" + "" + rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med() , rdv.getStart() , rdv.getId());
+                }
 
-                pushNotificationService.sendAppointmentReminder(patient.getUser().getId(), rdv.getMedecin().getSpecialite().getLibelle() , appointmentDetails ,
-                        rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med() , rdv.getStart());
             }
         }
     }
@@ -60,8 +65,8 @@ public class ScheduledNotificationService {
                 pushNotificationService.sendAppointmentCancellation(
                         rdv.getPatient().getUser().getId(), rdv.getMedecin().getSpecialite().getLibelle() ,
                         "Votre rendez-vous du " + rdv.getStart().toLocalDate() + " a été annulé." ,
-                        rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med() ,
-                        rdv.getStart()
+                        "Dr" + "" + rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med() ,
+                        rdv.getStart() , rdv.getId()
                 );
             }
         }

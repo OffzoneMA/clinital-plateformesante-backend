@@ -67,7 +67,7 @@ class ScheduledNotificationServiceTest {
 
         // Vérifier que la notification est bien envoyée
         verify(pushNotificationService, times(1)).sendAppointmentReminder(
-                eq(1L), anyString() , anyString(), anyString() , LocalDateTime.now()
+                eq(1L), anyString() , anyString(), anyString() , LocalDateTime.now() , 1L
         );
     }
 
@@ -82,7 +82,7 @@ class ScheduledNotificationServiceTest {
         scheduledNotificationService.notifyCanceledAppointments();
 
         verify(pushNotificationService, times(1)).sendAppointmentCancellation(
-                eq(1L), anyString() , anyString() , anyString() , LocalDateTime.now()
+                eq(1L), anyString() , anyString() , anyString() , LocalDateTime.now() , 1L
         );
     }
 }

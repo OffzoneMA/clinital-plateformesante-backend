@@ -13,10 +13,7 @@ import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.payload.response.PatientResponse;
 import com.clinitalPlatform.payload.response.RendezvousResponse;
 import com.clinitalPlatform.repository.*;
-import com.clinitalPlatform.services.ActivityServices;
-import com.clinitalPlatform.services.MedecinServiceImpl;
-import com.clinitalPlatform.services.PatientService;
-import com.clinitalPlatform.services.RendezvousService;
+import com.clinitalPlatform.services.*;
 import com.clinitalPlatform.util.ClinitalModelMapper;
 import com.clinitalPlatform.util.GlobalVariables;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -92,6 +89,9 @@ public class RdvController {
 
 	@Autowired
 	private ActivityServices activityServices;
+
+    @Autowired
+    PushNotificationService pushNotificationService;
 
 	private final Logger LOGGER = LoggerFactory.getLogger(getClass());
 
@@ -505,6 +505,12 @@ public class RdvController {
 			activityServices.createActivity(new Date(), "Update", "Patient Cancel Rdv ID : " + id,
 					globalVariables.getConnectedUser());
 			LOGGER.info("Patient Cancel Rdv ID : " + id + ", UserID : " + globalVariables.getConnectedUser().getId());
+            pushNotificationService.sendAppointmentCancellation(
+                    rdv.getPatient().getUser().getId(), rdv.getMedecin().getSpecialite().getLibelle() ,
+                    "Votre rendez-vous du " + rdv.getStart().toLocalDate() + " a été annulé." ,
+                    rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med() ,
+                    rdv.getStart() , rdv.getId()
+            );
 			return ResponseEntity.ok(mapper.map(updatedrdv, RendezvousResponse.class));
 		} else
 			activityServices.createActivity(new Date(), "Warning", "Cannot found Rdv By ID : " + id,

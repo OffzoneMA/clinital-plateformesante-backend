@@ -41,4 +41,5 @@ public interface NotificationRepository extends JpaRepository<Notification , Lon
     @Query("DELETE FROM Notification n WHERE n.createdAt < :threshold")
     void deleteOldNotifications(@Param("threshold") LocalDateTime threshold);
 
+    boolean existsByRdvIdAndType(Long id, NotificationType notificationType);
 }

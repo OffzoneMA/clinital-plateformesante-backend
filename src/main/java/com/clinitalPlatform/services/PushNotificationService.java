@@ -40,7 +40,7 @@ public class PushNotificationService {
     @Transactional
     public void sendNotificationToUser(Long userId, String title, String message,
                                        String description , String autor, NotificationType type,
-                                       boolean requiresAction, String url , LocalDateTime rdvStart) {
+                                       boolean requiresAction, String url , LocalDateTime rdvStart , Long rdvId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found", "id", userId.toString()));
 
@@ -57,6 +57,9 @@ public class PushNotificationService {
         notification.setRead(false);
         if(rdvStart != null){
             notification.setRdvStart(rdvStart);
+        }
+        if(rdvId != null){
+            notification.setRdvId(rdvId);
         }
 
         notification = notificationRepository.save(notification);
@@ -76,7 +79,7 @@ public class PushNotificationService {
     }
 
     @Transactional
-    public void sendAppointmentReminder(Long userId, String message , String appointmentDetails , String autor , LocalDateTime rdvStart) {
+    public void sendAppointmentReminder(Long userId, String message , String appointmentDetails , String autor , LocalDateTime rdvStart , Long rdvId) {
         sendNotificationToUser(
                 userId,
                 "Rappel de rendez-vous",
@@ -86,22 +89,24 @@ public class PushNotificationService {
                 NotificationType.REMINDER,
                 false,
                 "/appointments" ,
-                rdvStart
+                rdvStart ,
+                rdvId
         );
     }
 
     @Transactional
-    public void sendAppointmentCancellation(Long userId, String message , String appointmentDetails , String autor , LocalDateTime rdvStart) {
+    public void sendAppointmentCancellation(Long userId, String message , String appointmentDetails , String autor , LocalDateTime rdvStart , Long rdvId) {
         sendNotificationToUser(
                 userId,
-                "Annulation de rendez-vous",
+                "Votre rendez-vous a été annulé",
                 message ,
                 appointmentDetails,
                 autor,
                 NotificationType.ERROR,
                 false,
                 "/agenda",
-                rdvStart
+                rdvStart ,
+                rdvId
         );
     }
 

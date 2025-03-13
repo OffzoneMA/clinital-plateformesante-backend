@@ -96,6 +96,7 @@ public class NotificationController {
                 NotificationType.valueOf((String) notificationData.get("type")),
                 (Boolean) notificationData.get("requiresAction"),
                 (String) notificationData.get("url") ,
+                null,
                 null
         );
         return ResponseEntity.ok().build();
@@ -120,8 +121,9 @@ public class NotificationController {
             @RequestBody String message ,
             @RequestBody String appointmentDetails ,
             @RequestBody String autor ,
-            @RequestBody LocalDateTime rdvStart) {
-        pushNotificationService.sendAppointmentReminder(userId, message , appointmentDetails ,autor, rdvStart);
+            @RequestBody LocalDateTime rdvStart ,
+            @RequestBody Long rdvId) {
+        pushNotificationService.sendAppointmentReminder(userId, message , appointmentDetails ,autor, rdvStart , rdvId);
         return ResponseEntity.ok().build();
     }
 
@@ -131,8 +133,9 @@ public class NotificationController {
             @RequestBody String message ,
             @RequestBody String appointmentDetails ,
             @RequestBody String autor ,
-            @RequestBody LocalDateTime rdvStart) {
-        pushNotificationService.sendAppointmentCancellation(userId, message , appointmentDetails , autor , rdvStart);
+            @RequestBody LocalDateTime rdvStart ,
+            @RequestBody Long rdvId) {
+        pushNotificationService.sendAppointmentCancellation(userId, message , appointmentDetails , autor , rdvStart , rdvId);
         return ResponseEntity.ok().build();
     }
 }
