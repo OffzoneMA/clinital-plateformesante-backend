@@ -42,4 +42,9 @@ public interface NotificationRepository extends JpaRepository<Notification , Lon
     void deleteOldNotifications(@Param("threshold") LocalDateTime threshold);
 
     boolean existsByRdvIdAndType(Long id, NotificationType notificationType);
+
+    @Modifying
+    @Query("DELETE FROM Notification n WHERE n.user = :user AND n.isRead = true")
+    void deleteAllReadByUser(@Param("user") User user);
+
 }

@@ -127,7 +127,7 @@ public class NotificationService {
                 .type(notification.getType().toString())
                 .requiresAction(notification.isRequiresAction())
                 .time(notification.getCreatedAt().format(DateTimeFormatter.ofPattern("HH:mm")))
-                .rdvTime(notification.getRdvStart().format(DateTimeFormatter.ofPattern("HH:mm")))
+                .rdvTime(notification.getRdvStart() != null ? notification.getRdvStart().format(DateTimeFormatter.ofPattern("HH:mm")) : null)
                 .isRead(notification.isRead())
                 .createdAt(notification.getCreatedAt())
                 .url(notification.getUrl())

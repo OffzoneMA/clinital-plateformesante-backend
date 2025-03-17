@@ -1007,15 +1007,20 @@ public class MedecinController {
 
 		// Générer les futures dates disponibles
 		LocalDate today = LocalDate.now();
-		LocalDate searchLimit = today.plusYears(1); // On cherche sur 1 année
+		LocalDate nextWeekStart = today.with(TemporalAdjusters.next(DayOfWeek.MONDAY));
+		LocalDate searchLimit = nextWeekStart.plusYears(1); // On cherche sur 1 an à partir de la semaine prochaine
 		LocalDate nextAvailableDate = null;
 
-		while (today.isBefore(searchLimit)) {
+        while (nextWeekStart.isBefore(searchLimit)) {
 			for (MedecinSchedule schedule : schedules) {
 				if (schedule.getDay() == today.getDayOfWeek()) {
 					LocalDateTime slotStart = today.atTime(schedule.getAvailabilityStart().toLocalTime());
 
-					// Vérifier s'il y a des créneaux déjà réservés ce jour-là
+					// Ajout de cette condition pour éviter de proposer un créneau déjà passé aujourd'hui
+					if (slotStart.isBefore(LocalDateTime.now())) {
+						continue;
+					}
+
 					boolean isTaken = futureAppointments.stream().anyMatch(rdv ->
 							!rdv.getEnd().isBefore(slotStart) && !rdv.getStart().isAfter(slotStart.plusHours(1))
 					);
@@ -1025,6 +1030,7 @@ public class MedecinController {
 						break;
 					}
 				}
+
 			}
 			if (nextAvailableDate != null) break;
 			today = today.plusDays(1);
@@ -1038,10 +1044,7 @@ public class MedecinController {
 		}
 	}
 
-
-
-	// Méthode utilitaire pour trouver le prochain créneau disponible
-	// Méthode utilitaire pour obtenir le début de la semaine
+    // Méthode utilitaire pour obtenir le début de la semaine
 	private LocalDate getStartOfWeek(LocalDate date) {
 		return date.with(DayOfWeek.MONDAY);
 	}

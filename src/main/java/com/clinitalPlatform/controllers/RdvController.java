@@ -501,16 +501,17 @@ public class RdvController {
 
 			rdv.setCanceledAt(LocalDateTime.now());
 			rdv.setStatut(RdvStatutEnum.ANNULE);
-			final Rendezvous updatedrdv = rdvrepository.save(rdv);
+			Rendezvous updatedrdv = rdvrepository.save(rdv);
 			activityServices.createActivity(new Date(), "Update", "Patient Cancel Rdv ID : " + id,
 					globalVariables.getConnectedUser());
 			LOGGER.info("Patient Cancel Rdv ID : " + id + ", UserID : " + globalVariables.getConnectedUser().getId());
             pushNotificationService.sendAppointmentCancellation(
                     rdv.getPatient().getUser().getId(), rdv.getMedecin().getSpecialite().getLibelle() ,
                     "Votre rendez-vous du " + rdv.getStart().toLocalDate() + " a été annulé." ,
-                    rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med() ,
-                    rdv.getStart() , rdv.getId()
+                    "Dr" + " " + rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med() ,
+                    rdv.getStart() , updatedrdv.getId()
             );
+			LOGGER.info("cancel rdv" + updatedrdv.getId());
 			return ResponseEntity.ok(mapper.map(updatedrdv, RendezvousResponse.class));
 		} else
 			activityServices.createActivity(new Date(), "Warning", "Cannot found Rdv By ID : " + id,

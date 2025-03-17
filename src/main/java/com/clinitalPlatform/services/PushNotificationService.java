@@ -58,6 +58,8 @@ public class PushNotificationService {
         if(rdvStart != null){
             notification.setRdvStart(rdvStart);
         }
+        logger.info("rendez-vous id" + " " + rdvId);
+
         if(rdvId != null){
             notification.setRdvId(rdvId);
         }
@@ -88,7 +90,7 @@ public class PushNotificationService {
                 autor,
                 NotificationType.REMINDER,
                 false,
-                "/appointments" ,
+                "/agenda" ,
                 rdvStart ,
                 rdvId
         );
@@ -96,6 +98,8 @@ public class PushNotificationService {
 
     @Transactional
     public void sendAppointmentCancellation(Long userId, String message , String appointmentDetails , String autor , LocalDateTime rdvStart , Long rdvId) {
+
+        logger.info("rdv id cancel cancel" + " " + rdvId  );
         sendNotificationToUser(
                 userId,
                 "Votre rendez-vous a été annulé",

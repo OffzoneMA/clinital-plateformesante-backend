@@ -69,7 +69,8 @@ public class ScheduledNotificationService {
                             rdv.getPatient().getUser().getId(), rdv.getMedecin().getSpecialite().getLibelle(),
                             "Votre rendez-vous du " + rdv.getStart().toLocalDate() + " a été annulé.",
                             "Dr" + " " + rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med(),
-                            rdv.getStart(), rdv.getId()
+                            rdv.getStart(),
+                            rdv.getId()
                     );
                 }
             }

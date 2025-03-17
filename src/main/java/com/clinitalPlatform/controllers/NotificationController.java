@@ -2,10 +2,14 @@ package com.clinitalPlatform.controllers;
 
 import com.clinitalPlatform.dto.NotificationDTO;
 import com.clinitalPlatform.enums.NotificationType;
+import com.clinitalPlatform.models.User;
 import com.clinitalPlatform.payload.response.ApiResponse;
+import com.clinitalPlatform.repository.NotificationRepository;
+import com.clinitalPlatform.repository.UserRepository;
 import com.clinitalPlatform.services.GlobalNotificationService;
 import com.clinitalPlatform.services.NotificationService;
 import com.clinitalPlatform.services.PushNotificationService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +29,12 @@ public class NotificationController {
     private PushNotificationService pushNotificationService;
     @Autowired
     private GlobalNotificationService globalNotificationService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<NotificationDTO>> getUserNotifications(@PathVariable Long userId) {
@@ -80,6 +90,29 @@ public class NotificationController {
         }
 
     }
+
+    /**
+     * Supprimer toutes les notifications lues d'un utilisateur.
+     */
+    @DeleteMapping("/delete-read/{id}")
+    @Transactional
+    public ResponseEntity<?> deleteAllReadNotifications(@PathVariable Long id) {
+        try {
+            if (id == null || id <= 0) {
+                return ResponseEntity.badRequest().body("L'ID utilisateur est invalide.");
+            }
+
+            User user = userRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+            notificationRepository.deleteAllReadByUser(user);
+
+            return ResponseEntity.ok("Notifications lues supprimées avec succès.");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Erreur lors de la suppression des notifications : " + e.getMessage());
+        }
+    }
+
 
     // Endpoints pour l'envoi de notifications
 

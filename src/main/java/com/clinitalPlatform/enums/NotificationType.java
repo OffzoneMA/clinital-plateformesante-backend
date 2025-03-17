@@ -5,5 +5,7 @@ public enum NotificationType {
     SUCCESS,
     WARNING,
     ERROR,
-    REMINDER
+    REMINDER ,
+    DOCUMENT ,
+    EMAIL
 }
