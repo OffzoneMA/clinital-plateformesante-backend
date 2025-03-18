@@ -306,22 +306,6 @@ public class RendezvousService implements IDao<Rendezvous>  {
 		return rdvrepo.getRdvByIdMedecinandIdPatientandDate(idmed,patid);
 	}
 
-	public boolean isExistingRDVForMedecinAndDay(Long idpat, Long medecinId,LocalDate day) throws Exception {
-		// Retrieve Medecin entity
-		Optional<Medecin> optionalMedecin = medRepo.findById(medecinId);
-		if (optionalMedecin.isEmpty()) {
-			LOGGER.info("there is no medecin founded");
-			return false;
-		}
-		Medecin medecin = optionalMedecin.get();
-
-		// Retrieve RDVs for the same day and medecin's specialty
-		List<Rendezvous> existingRDVs = rdvrepo.findRdvByPatientandSpecInDate(idpat,medecin.getSpecialite().getId_spec(),day);
-
-		// Check if any existing RDVs were found
-		return !existingRDVs.isEmpty();
-	}
-
 //	public ResponseEntity<?> AddnewRdvgestionregle(User user,RendezvousDTO c,Medecin medecin,Patient patient) throws Exception{
 //		try {
 //			// DayOfWeek day = DayOfWeek.valueOf(c.getDay());
@@ -492,7 +476,9 @@ public class RendezvousService implements IDao<Rendezvous>  {
 
 			// Vérification de la réservation
 			//Boolean isReserved = this.isHasRdvToday(medecin.getSpecialite().getId_spec(), c.getStart().toLocalDate(), patient.getId());
-			Boolean isReserved = false,ModeMedecin=false;isReserved= this.isHasRdvToday( medecin.getSpecialite().getId_spec(), c.getStart().toLocalDate(),patient.getId());
+			Boolean isReserved = false,ModeMedecin=false;
+
+			isReserved= this.isHasRdvToday( medecin.getSpecialite().getId_spec(), c.getStart().toLocalDate(),patient.getId());
 
 			if (!isReserved ||ModeMedecin) {
 
@@ -682,19 +668,21 @@ public class RendezvousService implements IDao<Rendezvous>  {
 
 
 	// Checking if a patient has a rendezvous with a doctor today.
-	public Boolean isHasRdvToday(Long spec,LocalDate date,Long idpat) throws Exception{
+	public Boolean isHasRdvToday(Long spec, LocalDate date, Long idpat) throws Exception {
 		try {
-			List<Rendezvous> rdv= rdvrepo.findRdvByPatientandSpecInDate(idpat,spec, date);
-			System.out.println(mapper.map(rdv, Rendezvous.class));
+			List<Rendezvous> rdv = rdvrepo.findRdvByPatientandSpecInDate(idpat, spec, date);
 
-			if(rdv.isEmpty()){
-				return false;
-			} else return true;
+			// Filtrer les rendez-vous annulés
+			List<Rendezvous> validRdv = rdv.stream()
+					.filter(r -> r.getStatut() != RdvStatutEnum.ANNULE) // Vérification avec l'Enum
+					.collect(Collectors.toList());
+
+			System.out.println(mapper.map(validRdv, Rendezvous.class));
+
+			return !validRdv.isEmpty();
 		} catch (Exception e) {
-			// TODO: handle exception
 			throw new Exception(e.getMessage());
 		}
-
 	}
 
 	public RendezvousDTO getRdvToday(Long spec,LocalDate date) throws Exception{
