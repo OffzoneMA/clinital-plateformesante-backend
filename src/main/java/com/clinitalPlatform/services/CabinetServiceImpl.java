@@ -55,7 +55,7 @@ public class CabinetServiceImpl implements CabinetService{
 	
 	@Override
 	public List<Cabinet> findAll() throws Exception { 
-		List<Cabinet> cabinets=cabinetRepository.findAll()
+		List<Cabinet> cabinets= cabinetRepository.findAll()
 				.stream().map(cabinet->modelMapper.map(cabinet, Cabinet.class) )
 				.collect(Collectors.toList());
 				return cabinets;
@@ -65,8 +65,6 @@ public class CabinetServiceImpl implements CabinetService{
 	public Cabinet create(CabinetRequest cabinetreq,Medecin med) throws Exception {
 		
 		Ville ville= villerepo.findById(cabinetreq.getId_ville()).orElseThrow(()->new Exception("No matching ville"));
-
-
 		PaymentInfo paymentInfo = new PaymentInfo();
 		paymentInfo.setIntituleCompte(cabinetreq.getIntituleCompte());
 		paymentInfo.setRib(cabinetreq.getRib());

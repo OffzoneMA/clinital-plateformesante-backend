@@ -4,6 +4,7 @@ import com.clinitalPlatform.models.Cabinet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,7 +21,7 @@ import java.util.List;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
-@RequestMapping("/api/cabinet")
+@RequestMapping("/api/cabinet/")
 public class CabinetController {
 
     @Autowired
@@ -36,12 +37,25 @@ public class CabinetController {
 	 CabinetServiceImpl cabservice;
 	
 	public final Logger LOGGER=LoggerFactory.getLogger(this.getClass());
-	
-    @GetMapping("/allcabinet")
-	public ResponseEntity<?> getAllCabinets() throws Exception {
-		return ResponseEntity.ok(cabservice.findAll());
+
+	@GetMapping("/allcabinet")
+	public ResponseEntity<?> getAllCabinets() {
+		try {
+			LOGGER.info("Get all cabinet from db start");
+
+			List<Cabinet> cabinets = cabinetrep.findAll();
+			LOGGER.info("Get all cabinet from db");
+			if (cabinets.isEmpty()) {
+				return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Aucun cabinet trouvé.");
+			}
+			return ResponseEntity.ok(cabinets);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Erreur interne du serveur : " + e.getMessage());
+		}
 	}
-	
+
+
 	@GetMapping("/cabinetById/{id}")
 	public ResponseEntity<?> findById(@PathVariable Long id) throws Exception{
 		return ResponseEntity.ok(cabservice.findById(id));

@@ -178,6 +178,24 @@ public class MedecinController {
 				.collect(Collectors.toList());
 	}
 
+
+    @GetMapping("/allcabinet")
+    public ResponseEntity<?> getAllCabinets() {
+        try {
+            LOGGER.info("Get all cabinet from db start");
+
+            List<Cabinet> cabinets = cabinetRepository.findAll();
+            LOGGER.info("Get all cabinet from db");
+            if (cabinets.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Aucun cabinet trouvé.");
+            }
+            return ResponseEntity.ok(cabinets);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erreur interne du serveur : " + e.getMessage());
+        }
+    }
+
 	// Get Medecin By Id : %OK%
 	/*@GetMapping("/medById/{id}")
 	public ResponseEntity<Medecin> getMedecinById(@PathVariable(value="id") Long id) throws Exception {
