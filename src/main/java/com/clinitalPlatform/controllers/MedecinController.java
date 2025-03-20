@@ -146,6 +146,9 @@ public class MedecinController {
 	@Autowired
 	private VirementBancaireRepository virementBancaireRepository;
 
+	@Autowired
+	private SpecialiteRechercheService specialiteRechercheService;
+
 
 	public static boolean checkday = false;
 	//end zakia
@@ -312,12 +315,17 @@ public class MedecinController {
 	public Iterable<Medecin> medByNameOrSpecAndVille(@RequestParam String ville,
 													 @RequestParam String search) throws Exception {
 
-		System.out.println("la ville: " + ville);
-		System.out.println("recherche: " + search);
-
-		List<Medecin> medecins = medrepository.getMedecinBySpecialiteOrNameOrCabinetAndVille(search, ville).stream()
-				.filter(med -> med.getIsActive() == true)
+		// Récupérer les médecins correspondant à la recherche
+		List<Medecin> medecins = medrepository.getMedecinBySpecialiteOrNameOrCabinetAndVille(search, ville)
+				.stream()
+				.filter(med -> med.getIsActive())
 				.collect(Collectors.toList());
+
+		// Vérifier si la recherche concerne une spécialité et l’incrémenter dans les stats
+		Specialite specialite = specialiteRepository.getSpecialiteByName(search);
+		if(specialite != null) {
+			specialiteRechercheService.incrementerRecherche(specialite.getId_spec());
+		}
 
 		return medecins;
 	}
@@ -327,9 +335,18 @@ public class MedecinController {
 	@GetMapping("/medByNameAndSpec")
 	public Iterable<Medecin> findMedSpecNameVille(@RequestParam String name,
 				@RequestParam String search) throws Exception {
-					
-		return medrepository.getMedecinBySpecialiteAndName(search, name).stream()
-		.filter(med->med.getIsActive()==true).collect(Collectors.toList());
+
+		List<Medecin> medecins = medrepository.getMedecinBySpecialiteAndName(search, name)
+				.stream()
+				.filter(med -> med.getIsActive() == true)
+				.collect(Collectors.toList());
+
+		// Vérifier si la spécialité existe et incrémenter son compteur
+		Specialite specialite = specialiteRepository.getSpecialiteByName(search);
+		if(specialite != null) {
+			specialiteRechercheService.incrementerRecherche(specialite.getId_spec());
+		}
+		return medecins;
 	}
 
 	//Endpoint for getting Doctor by Name or speciality : %OK%---------------------------------
@@ -350,7 +367,7 @@ public class MedecinController {
 		List<Cabinet> cabinets = cabinetRepository.findByNomContainingIgnoreCase(search);
 
 		if (specialite != null) {
-
+			specialiteRechercheService.incrementerRecherche(specialite.getId_spec());
 			return medrepository.getMedecinBySpecOrName(search).stream()
 					.filter(med -> med.getIsActive())
 					.collect(Collectors.toList());

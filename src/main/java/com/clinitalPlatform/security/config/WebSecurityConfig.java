@@ -95,6 +95,7 @@ public class WebSecurityConfig {
                 "/api/med/combinedfilter",
     			"/api/ville/**",
     			"/api/specialites/**",
+                "/api/specialites_recherche/**",
                 "/api/langues/**",
                 "/api/tarifmed/**",
                "/api/medecinSchedule/fromCreno/**",
