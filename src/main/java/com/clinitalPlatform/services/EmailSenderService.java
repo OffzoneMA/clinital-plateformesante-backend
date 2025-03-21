@@ -28,7 +28,7 @@ public class EmailSenderService {
 	@Value("${front.url}")
 	private String frontUrl;
 
-
+	private final String SUPPORT_EMAIL = "roukeyaassouma@gmail.com";
 
 	public void sendMailConfirmation(String userEmail, String confirmationToken) {
 		final String BaseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
@@ -71,9 +71,7 @@ public class EmailSenderService {
 			LOGGER.error("Erreur lors de l'envoi de l'e-mail de confirmation : {}", e);
 		}
 	}
-	//end new link email
-
-
+	//end new link emai
 	
 	public void sendMailDemandeValidation(Demande demande,String pw ) {
 		SimpleMailMessage mailMessage = new SimpleMailMessage();
@@ -116,7 +114,7 @@ public class EmailSenderService {
 	        LOGGER.error("Erreur lors de l'envoi de l'e-mail de confirmation : {}", e);
 	    }
 	}
- public void sendMailChangePassword(String userEmail) {
+ 	 public void sendMailChangePassword(String userEmail) {
 		
 	    try {
 	    	 String message = "Bonjour,\n\n"
@@ -261,4 +259,48 @@ public class EmailSenderService {
 			throw new RuntimeException("Une erreur inattendue est survenue lors de l'envoi de l'email", e);
 		}
 	}
+
+	public void sendContactForm(String userEmail, String prenom, String nom, String telephone, String message, String userType) {
+		try {
+			SimpleMailMessage mailMessage = new SimpleMailMessage();
+			mailMessage.setTo(SUPPORT_EMAIL);
+			mailMessage.setFrom(userEmail);
+			mailMessage.setSubject("Nouveau message de contact de " + prenom + " " + nom + " (" + userType + ")");
+			mailMessage.setText(
+					"Type d'utilisateur: " + userType + "\n" +
+							"Nom: " + nom + "\n" +
+							"Prénom: " + prenom + "\n" +
+							"Email: " + userEmail + "\n" +
+							"Téléphone: " + (telephone.isEmpty() ? "Non fourni" : telephone) + "\n\n" +
+							"Message:\n" + message
+			);
+			javaMailSender.send(mailMessage);
+			LOGGER.info("Le formulaire de contact a été envoyé avec succès au support.");
+
+		} catch (Exception e) {
+			LOGGER.error("Erreur lors de l'envoi du formulaire de contact : {}", e.getMessage());
+		}
+	}
+
+	// Envoi de confirmation de réception au user
+	public void sendContactConfirmation(String userEmail, String prenom) {
+		try {
+			SimpleMailMessage mailMessage = new SimpleMailMessage();
+			mailMessage.setTo(userEmail);
+			mailMessage.setFrom("clinitalcontact@gmail.com");
+			mailMessage.setSubject("Confirmation de votre demande de contact");
+			mailMessage.setText(
+					"Bonjour " + prenom + ",\n\n" +
+							"Nous avons bien reçu votre message et nous vous répondrons dans les plus brefs délais.\n\n" +
+							"Merci de nous avoir contactés.\n\n" +
+							"L'équipe Clinital"
+			);
+			javaMailSender.send(mailMessage);
+			LOGGER.info("Email de confirmation envoyé à l'utilisateur : " + userEmail);
+
+		} catch (Exception e) {
+			LOGGER.error("Erreur lors de l'envoi de l'email de confirmation : {}", e.getMessage());
+		}
+	}
+
 }

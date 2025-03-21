@@ -110,7 +110,8 @@ public class WebSecurityConfig {
                 "/api/ws/**",
                 "/ws",
                 "/ws/**",
-                "/api/notifications/**"
+                "/api/notifications/**",
+                "/api/contact/**"
         };
 
 

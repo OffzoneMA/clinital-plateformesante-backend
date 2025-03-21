@@ -469,7 +469,8 @@ public class RendezvousService implements IDao<Rendezvous>  {
 
 			Cabinet cabinet = null;
 
-			if(c.getCabinet() != null && c.getCabinet() != 0) {
+			LOGGER.info("Cabinet id value , {}" , c.getCabinet());
+			if (c.getCabinet() != null && c.getCabinet() != 0) {
 				cabinet = cabrepo.findById(c.getCabinet())
 						.orElseThrow(() -> new Exception("No such Id exist for a cabinet"));
 			}
