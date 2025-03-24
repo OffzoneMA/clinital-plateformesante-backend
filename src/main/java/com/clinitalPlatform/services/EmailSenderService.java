@@ -28,8 +28,6 @@ public class EmailSenderService {
 	@Value("${front.url}")
 	private String frontUrl;
 
-	private final String SUPPORT_EMAIL = "roukeyaassouma@gmail.com";
-
 	public void sendMailConfirmation(String userEmail, String confirmationToken) {
 		final String BaseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
 		System.out.println("this is the URL Root :"+BaseUrl);
@@ -263,6 +261,7 @@ public class EmailSenderService {
 	public void sendContactForm(String userEmail, String prenom, String nom, String telephone, String message, String userType) {
 		try {
 			SimpleMailMessage mailMessage = new SimpleMailMessage();
+			String SUPPORT_EMAIL = "clinital.rs@gmail.com";
 			mailMessage.setTo(SUPPORT_EMAIL);
 			mailMessage.setFrom(userEmail);
 			mailMessage.setSubject("Nouveau message de contact de " + prenom + " " + nom + " (" + userType + ")");
