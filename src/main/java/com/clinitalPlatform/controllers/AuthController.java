@@ -4,18 +4,15 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 
-import com.clinitalPlatform.models.JwtTokens;
+import com.clinitalPlatform.models.*;
 import com.clinitalPlatform.enums.ERole;
- import com.clinitalPlatform.models.Demande;
-import com.clinitalPlatform.models.Medecin;
-import com.clinitalPlatform.models.Patient;
-import com.clinitalPlatform.models.Secretaire;
 import com.clinitalPlatform.payload.request.*;
 import com.clinitalPlatform.payload.response.MessageResponse;
+import com.clinitalPlatform.repository.MedecinRepository;
 import com.clinitalPlatform.repository.PasswordResetTokenRepository;
 import com.clinitalPlatform.security.jwt.PasswordResetToken;
 import com.clinitalPlatform.security.services.UserDetailsServiceImpl;
-import com.clinitalPlatform.services.EmailSenderService;
+import com.clinitalPlatform.services.*;
 import com.clinitalPlatform.services.interfaces.MedecinService;
 import com.clinitalPlatform.services.interfaces.SecretaireService;
 import com.clinitalPlatform.util.ApiError;
@@ -44,17 +41,12 @@ import org.slf4j.LoggerFactory;
 
 import com.clinitalPlatform.util.GlobalVariables;
 import com.clinitalPlatform.exception.BadRequestException;
-import com.clinitalPlatform.models.User;
 import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.payload.response.JwtResponse;
 import com.clinitalPlatform.repository.UserRepository;
 import com.clinitalPlatform.security.jwt.ConfirmationToken;
 import com.clinitalPlatform.security.jwt.JwtService;
 import com.clinitalPlatform.security.services.UserDetailsImpl;
-import com.clinitalPlatform.services.ActivityServices;
-import com.clinitalPlatform.services.AutService;
-import com.clinitalPlatform.services.DemandeServiceImpl;
-import com.clinitalPlatform.services.UserService;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -101,10 +93,16 @@ public class AuthController {
     MedecinService medecinSevice;
 
     @Autowired
+    private MedecinRepository medecinRepository;
+
+    @Autowired
     SecretaireService secretaireService;
 
 	@Autowired
 	private DemandeServiceImpl demandeService;
+
+    @Autowired
+    private DocumentsCabinetServices documentsCabinetServices;
 	
     @Autowired
     UserRepository userRepository;
@@ -154,10 +152,35 @@ public class AuthController {
             autService.updateLastLoginDate(userDetails.getId());
             activityServices.createActivity(new Date(), "Login", "Authentication reussi", user);
             LOGGER.info("Authentication reussi");
-            if(userDetails.getRole().equals(ERole.ROLE_MEDECIN)) {
+            if (userDetails.getRole().equals(ERole.ROLE_MEDECIN)) {
+                // Récupérer la demande et le médecin en toute sécurité
                 Demande demande = demandeService.findDemandeByConnectedUser(userDetails.getId());
-                return ResponseEntity.ok(new JwtResponse(accessToken, userDetails.getId(), userDetails.getEmail(), userDetails.getTelephone(), userDetails.getRole(),refreshToken,demande.getState()));	
+                Medecin medecin = medecinRepository.getMedecinByUserId(userDetails.getId());
+
+                // Initialisation du nombre de documents à 0
+                int documentsCount = 0;
+
+                // Vérifier si le médecin est non null avant de récupérer ses documents
+                if (medecin != null) {
+                    List<DocumentsCabinet> documentsCabinets = documentsCabinetServices.getDocumentsByMedecin(medecin.getId());
+                    documentsCount = documentsCabinets.size();
+                }
+
+                // Vérifier si la demande est non null avant d'accéder à son état
+                int demandeState = (demande != null) ? demande.getState() : 0;
+
+                return ResponseEntity.ok(new JwtResponse(
+                        accessToken,
+                        userDetails.getId(),
+                        userDetails.getEmail(),
+                        userDetails.getTelephone(),
+                        userDetails.getRole(),
+                        refreshToken,
+                        demandeState,
+                        documentsCount
+                ));
             }
+
             // Retourner la réponse avec le token JWT et les détails de l'utilisateur
             return ResponseEntity.ok(new JwtResponse(accessToken, userDetails.getId(), userDetails.getEmail(), userDetails.getTelephone(), userDetails.getRole(), refreshToken));
         } catch (UsernameNotFoundException e) {
@@ -168,6 +191,8 @@ public class AuthController {
             System.out.println("incorrect");
             // Mot de passe incorrect
             return ResponseEntity.ok(new ApiResponse(false, "incorrect_password"));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 

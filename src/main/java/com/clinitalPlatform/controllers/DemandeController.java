@@ -3,6 +3,9 @@ package com.clinitalPlatform.controllers;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.clinitalPlatform.payload.response.MessageResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,13 +42,23 @@ public class DemandeController {
 	
 	@Autowired
 	GlobalVariables globalVariables;
-	
+
+	private final Logger LOGGER= LoggerFactory.getLogger(getClass());
+
+
 	// A method that creates a demande.
 	@PostMapping("create")
-	public ResponseEntity<?> create(@RequestBody DemandeDTO demande){
-		
-		return ResponseEntity.ok(demandeService.create(demande));
+	public ResponseEntity<?> create(@RequestBody DemandeDTO demande) {
+		try {
+			LOGGER.info("Création d'une demande pour un médecin...");
+			return demandeService.create(demande);
+		} catch (Exception e) {
+			LOGGER.error("Erreur lors de la création de la demande: {}", e.getMessage(), e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new MessageResponse("Erreur interne, veuillez réessayer plus tard."));
+		}
 	}
+
 
 	// Updating a demande by id. 
 	@PutMapping("update/{id}")

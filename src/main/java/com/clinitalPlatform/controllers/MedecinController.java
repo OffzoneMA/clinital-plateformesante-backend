@@ -477,7 +477,7 @@ public class MedecinController {
 			 String fileNameWithExtension = docFile.getOriginalFilename();
 
 	        // ----Add document :
-	        DocumentsCabinet savedDoc = docservices.create(documentReq);
+	        DocumentsCabinet savedDoc = docservices.create(documentReq , med);
 	        savedDoc.setFichier_doc(fileNameWithExtension);
 			doccabrepository.save(savedDoc);
 			med.setStepsValidation(med.getStepsValidation()+1);

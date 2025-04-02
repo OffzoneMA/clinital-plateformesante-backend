@@ -1,5 +1,6 @@
 package com.clinitalPlatform.services;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 
 import static net.andreinc.mockneat.types.enums.StringType.ALPHA_NUMERIC;
@@ -63,18 +64,30 @@ public class DemandeServiceImpl implements DemandeService{
 
 	@Override
 	public ResponseEntity<?> create(DemandeDTO demande) {
+		try {
+			LOGGER.info("Demande données: {}", demande);
 
-		if (userRepository.existsByEmail(demande.getMail())) {
-			return ResponseEntity.badRequest().body(new MessageResponse("Error: Email is already in use!"));
+			if (demande == null || demande.getMail() == null || demande.getMail().isEmpty()) {
+				return ResponseEntity.badRequest().body(new MessageResponse("Error: L'email est requis"));
+			}
+
+			if (userRepository.existsByEmail(demande.getMail())) {
+				return ResponseEntity.badRequest().body(new MessageResponse("Error: Email déjà utilisé !"));
+			}
+
+			Demande d = modelMapper.map(demande, Demande.class);
+			Demande saved = demandeRepository.save(d);
+
+			LOGGER.info("Demande d'inscription créée par un Médecin. Email : {}", d.getMail());
+			return ResponseEntity.ok(modelMapper.map(saved, Demande.class));
+
+		} catch (Exception e) {
+			LOGGER.error("Erreur lors de la création de la demande: {}", e.getMessage(), e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new MessageResponse("Erreur interne, veuillez réessayer plus tard."));
 		}
-
-		Demande d = modelMapper.map(demande,Demande.class);
-		Demande saved = demandeRepository.save(d);
-	
-        LOGGER.info("Demande d'inscription cree par un Medecin son email : "+d.getMail());
-		return ResponseEntity.ok(modelMapper.map(saved, Demande.class));
 	}
-	
+
 	@Override
 	public DemandeDTO update(DemandeDTO demande, Long id) throws Exception {
 		Optional<Demande> demandeOptional = demandeRepository.findByIDemande(id);

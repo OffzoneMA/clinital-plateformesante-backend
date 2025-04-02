@@ -19,22 +19,30 @@ public class DocumentsCabinet {
     private CabinetDocuemtsEnum type_doc;
     private LocalDate date_ajout_doc;
 	private String fichier_doc;
+
+    private String nom_fichier;
     
-    @ManyToOne(cascade = CascadeType.ALL,fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_cabinet", nullable = false, referencedColumnName = "id_cabinet", insertable = true, updatable = true)
     private Cabinet cabinet;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_medecin", nullable = false)
+    private Medecin medecin;
+
 
     private CabinetDocStateEnum validationState;
 
     public DocumentsCabinet(){
         super();
     }
-    public DocumentsCabinet(CabinetDocuemtsEnum type,LocalDate date,String file, Cabinet cabinet,CabinetDocStateEnum state){
+    public DocumentsCabinet(CabinetDocuemtsEnum type,LocalDate date,String file, Cabinet cabinet,CabinetDocStateEnum state , Medecin medecin){
         super();
         this.type_doc=type;
         this.cabinet=cabinet;
         this.date_ajout_doc=date;
         this.fichier_doc=file;
         this.validationState=state;
+        this.medecin = medecin;
     }
 }

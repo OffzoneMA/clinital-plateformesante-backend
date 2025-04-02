@@ -16,5 +16,7 @@ public class DocumentsCabinetRequest {
 	private String fichier_doc;
     private long id_cabinet;
     private CabinetDocStateEnum docstate;
-    
+    private  long id_medecin;
+    private String nom_fichier;
+
 }
