@@ -6,6 +6,7 @@ import com.clinitalPlatform.models.Demande;
 import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.models.MedecinSchedule;
 import com.clinitalPlatform.payload.request.FilterRequest;
+import com.clinitalPlatform.payload.request.MedecinMultiScheduleRequest;
 import com.clinitalPlatform.payload.request.MedecinScheduleRequest;
 import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.repository.MedecinScheduleRepository;
@@ -67,6 +68,17 @@ public class MedecinScheduleController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Une erreur interne est survenue.");
+        }
+    }
+
+    @PostMapping("multi")
+    public ResponseEntity<?> createMultiSchedule(@RequestBody MedecinMultiScheduleRequest request) {
+        try {
+            Long userId = globalVariables.getConnectedUser().getId(); // Or however you get the current user ID
+            List<MedecinSchedule> createdSchedules = medecinScheduleService.createMultiSchedule(request, userId);
+            return ResponseEntity.ok(new ApiResponse(true, "Multiple schedules created successfully", createdSchedules));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
         }
     }
 

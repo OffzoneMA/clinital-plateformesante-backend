@@ -60,6 +60,8 @@ public class MedecinSchedule {
 	private Cabinet cabinet;
 
 	private Boolean isnewpatient;
+
+	private Boolean isFollowUpPatients;
 	
 	public MedecinSchedule(){
 		super();

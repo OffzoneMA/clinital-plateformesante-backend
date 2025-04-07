@@ -1,5 +1,6 @@
 package com.clinitalPlatform.repository;
 
+import com.clinitalPlatform.enums.MotifConsultationEnum;
 import com.clinitalPlatform.models.MotifConsultation;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -18,4 +19,5 @@ public interface MotifConsultationRepository extends JpaRepository<MotifConsulta
     @Query(value = "SELECT id_motif FROM motifs_consultation WHERE libelle IN (:libelles)", nativeQuery = true)
     List<Long> findIdsByLibelles(@Param("libelles") List<String> libelles);
 
+    MotifConsultation findByMotif(MotifConsultationEnum motif);
 }

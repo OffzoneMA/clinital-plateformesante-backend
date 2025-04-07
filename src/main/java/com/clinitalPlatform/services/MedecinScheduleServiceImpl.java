@@ -3,6 +3,7 @@ package com.clinitalPlatform.services;
 import com.clinitalPlatform.exception.BadRequestException;
 import com.clinitalPlatform.exception.ConflictException;
 import com.clinitalPlatform.models.*;
+import com.clinitalPlatform.payload.request.MedecinMultiScheduleRequest;
 import com.clinitalPlatform.payload.request.MedecinScheduleRequest;
 import com.clinitalPlatform.repository.CabinetRepository;
 import com.clinitalPlatform.repository.MedecinScheduleRepository;
@@ -126,6 +127,73 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
         activityServices.createActivity(new Date(), "Add", "Create New Schedule ID :" + schedule.getId(), globalVariables.getConnectedUser());
         LOGGER.info("Create New Schedule ID:" + schedule.getId() + ", UserID:" + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
         return modelMapper.map(schedule, MedecinSchedule.class);
+    }
+
+    public List<MedecinSchedule> createMultiSchedule(MedecinMultiScheduleRequest multiScheduleRequest, Long userId) throws Exception {
+        Medecin medecin = medecinservices.getMedecinByUserId(userId);
+        Cabinet cabinet = cabinetrepo.findById(medecin.getFirstCabinetId())
+                .orElseThrow(() -> new Exception("No Matching Cabinet found"));
+
+        List<MedecinSchedule> createdSchedules = new ArrayList<>();
+
+        // Process each available day
+        for (DayOfWeek day : multiScheduleRequest.getAvailableDays()) {
+            // Process each time slot for this day
+            for (MedecinMultiScheduleRequest.TimeSlot slot : multiScheduleRequest.getTimeSlots()) {
+                // Verify that end time is after start time
+                if (slot.getEndTime().isBefore(slot.getStartTime())) {
+                    throw new BadRequestException("L'heure de fin doit être après l'heure de début pour le créneau: "
+                            + slot.getStartTime() + " - " + slot.getEndTime());
+                }
+
+                // Check for conflicts with existing schedules for this day
+                List<MedecinSchedule> existingSchedules = medecinScheduleRepository.findByMedIdAndDay(medecin.getId(), day.getValue() - 1);
+                if (existingSchedules != null) {
+                    for (MedecinSchedule existingSchedule : existingSchedules) {
+                        // Convert the request to a format compatible with the conflict check method
+                        MedecinScheduleRequest tempRequest = new MedecinScheduleRequest();
+                        tempRequest.setAvailabilityStart(slot.getStartTime());
+                        tempRequest.setAvailabilityEnd(slot.getEndTime());
+                        tempRequest.setDay(day.toString());
+
+                        if (isConflict(existingSchedule, tempRequest)) {
+                            throw new ConflictException("Ce créneau entre en conflit avec un créneau existant pour le jour: " + day);
+                        }
+                    }
+                }
+
+                // Create new schedule for this day and time slot
+                MedecinSchedule schedule = new MedecinSchedule();
+                schedule.setDay(day);
+                schedule.setAvailabilityStart(slot.getStartTime());
+                schedule.setAvailabilityEnd(slot.getEndTime());
+                schedule.setModeconsultation(multiScheduleRequest.getModesConsultation());
+                schedule.setMotifConsultation(multiScheduleRequest.getMotifsConsultation());
+
+                // Set the consultation duration
+                schedule.setPeriod(slot.getPeriod());
+
+                schedule.setMedecin(medecin);
+                schedule.setCabinet(cabinet);
+
+                // Set patient categories
+                schedule.setIsnewpatient(multiScheduleRequest.getAllowNewPatients());
+                schedule.setIsFollowUpPatients(multiScheduleRequest.getAllowFollowUpPatients());
+
+                // Save the schedule
+                medecinScheduleRepository.save(schedule);
+                createdSchedules.add(schedule);
+
+                // Log activity
+                activityServices.createActivity(new Date(), "Add", "Create New Schedule ID :" + schedule.getId(),
+                        globalVariables.getConnectedUser());
+                LOGGER.info("Create New Schedule ID:" + schedule.getId() +
+                        ", UserID:" + (globalVariables.getConnectedUser() instanceof User ?
+                        globalVariables.getConnectedUser().getId() : ""));
+            }
+        }
+
+        return createdSchedules;
     }
 
 

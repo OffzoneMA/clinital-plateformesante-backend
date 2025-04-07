@@ -14,6 +14,7 @@ import javax.validation.Valid;
 import com.clinitalPlatform.dto.*;
 import com.clinitalPlatform.enums.TypeMoyenPaiementEnum;
 import com.clinitalPlatform.exception.BadRequestException;
+import com.clinitalPlatform.exception.ResourceNotFoundException;
 import com.clinitalPlatform.models.*;
 import com.clinitalPlatform.payload.request.*;
 import com.clinitalPlatform.payload.response.AgendaResponse;
@@ -26,6 +27,7 @@ import com.clinitalPlatform.util.GlobalVariables;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 
+import javassist.NotFoundException;
 import lombok.extern.slf4j.Slf4j;
 
 import org.slf4j.Logger;
@@ -250,6 +252,62 @@ public class MedecinController {
 		return ResponseEntity.ok(medecinDTO);
 	}
 
+	@GetMapping("/me")
+	public ResponseEntity<?> getMedecinByConnectedUser() {
+		try {
+			// Récupérer l'utilisateur connecté
+			User connectedUser = globalVariables.getConnectedUser();
+			if (connectedUser == null) {
+				return ResponseEntity.badRequest().body("User not connected.");
+			}
+
+			// Récupérer le médecin associé à l'utilisateur
+			Medecin medecin = medecinService.getMedecinByUserId(connectedUser.getId());
+			if (medecin == null) {
+				return ResponseEntity.status(404).body("Médecin non trouvé pour cet utilisateur.");
+			}
+
+			// Récupérer les langues du médecin
+			List<Langue> langues = medecinService.getLanguesByMedecinId(medecin.getId());
+			medecin.setLangues(langues);
+
+			// Récupérer les tarifs du médecin
+			List<Tarif> tarifs = medecinService.getTarifByMedecinId(medecin.getId());
+			medecin.setTarifs(tarifs);
+
+			// Récupérer les cabinets du médecin et les mapper
+			List<Cabinet> cabinets = cabservice.getAllCabinetsByMedecinId(medecin.getId());
+			List<CabinetDTO> cabinetDTOList = cabinets.stream()
+					.map(cabinet -> mapper.map(cabinet, CabinetDTO.class))
+					.collect(Collectors.toList());
+
+			// Récupérer et mapper les moyens de paiement
+			List<MoyenPaiementDTO> moyenPaiementDTOList = medecin.getMoyenPaiement().stream()
+					.distinct()
+					.map(moyen -> {
+						MoyenPaiementDTO moyenPaiementDTO = mapper.map(moyen, MoyenPaiementDTO.class);
+						moyenPaiementDTO.setType(moyen.getType());
+						return moyenPaiementDTO;
+					})
+					.collect(Collectors.toList());
+
+			// Mapper le médecin en DTO
+			MedecinDTO medecinDTO = mapper.map(medecin, MedecinDTO.class);
+
+			// Ajouter les cabinets et moyens de paiement au DTO
+			medecinDTO.setCabinet(cabinetDTOList.isEmpty() ? null : cabinetDTOList);
+			medecinDTO.setMoyenPaiement(moyenPaiementDTOList.isEmpty() ? null : moyenPaiementDTOList);
+
+			return ResponseEntity.ok(medecinDTO);
+
+		} catch (NotFoundException e) {
+			return ResponseEntity.status(404).body("{\"error\": \"" + e.getMessage() + "\"}");
+		} catch (ResourceNotFoundException e) {
+			return ResponseEntity.status(404).body("{\"error\": \"" + e.getMessage() + "\"}");
+		} catch (Exception e) {
+			return ResponseEntity.status(500).body("{\"error\": \"Une erreur interne est survenue.\"}");
+		}
+	}
 
 	// Get Medecin y his name : %OK%
 	/*@GetMapping("/medByName")

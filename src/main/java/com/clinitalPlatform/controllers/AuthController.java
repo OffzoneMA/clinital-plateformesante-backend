@@ -103,6 +103,9 @@ public class AuthController {
 
     @Autowired
     private DocumentsCabinetServices documentsCabinetServices;
+
+    @Autowired
+    private SubscriptionService subscriptionService;
 	
     @Autowired
     UserRepository userRepository;
@@ -157,6 +160,8 @@ public class AuthController {
                 Demande demande = demandeService.findDemandeByConnectedUser(userDetails.getId());
                 Medecin medecin = medecinRepository.getMedecinByUserId(userDetails.getId());
 
+                Optional<Subscription> subscription = subscriptionService.getUserLatestSubscription(userDetails.getId());
+
                 // Initialisation du nombre de documents à 0
                 int documentsCount = 0;
 
@@ -168,6 +173,20 @@ public class AuthController {
 
                 // Vérifier si la demande est non null avant d'accéder à son état
                 int demandeState = (demande != null) ? demande.getState() : 0;
+
+                if(subscription.isPresent()) {
+                    return ResponseEntity.ok(new JwtResponse(
+                            accessToken,
+                            userDetails.getId(),
+                            userDetails.getEmail(),
+                            userDetails.getTelephone(),
+                            userDetails.getRole(),
+                            refreshToken,
+                            demandeState,
+                            documentsCount,
+                            subscription.get().getPaymentStatus()
+                    ));
+                }
 
                 return ResponseEntity.ok(new JwtResponse(
                         accessToken,

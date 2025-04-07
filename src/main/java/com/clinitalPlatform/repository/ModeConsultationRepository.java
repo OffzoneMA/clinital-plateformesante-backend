@@ -1,6 +1,7 @@
 package com.clinitalPlatform.repository;
 
 
+import com.clinitalPlatform.enums.ModeConsultationEnum;
 import com.clinitalPlatform.models.ModeConsultation;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -18,4 +19,5 @@ public interface ModeConsultationRepository extends JpaRepository<ModeConsultati
     List<ModeConsultation> getAllModes();
 
 
+    ModeConsultation findByMode(ModeConsultationEnum mode);
 }

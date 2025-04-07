@@ -21,6 +21,9 @@ public class JwtResponse {
 	@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 	private int cabinet_docs;
 
+	@JsonInclude(JsonInclude.Include.NON_DEFAULT)
+	private String subPaidStatus;
+
 	public JwtResponse(String accessToken, Long id, String email, String telephone, ERole role,String refreshToken) {
 		this.token = accessToken;
 		this.id = id;
@@ -48,5 +51,17 @@ public class JwtResponse {
 		this.refreshToken = refreshToken;
 		this.state=state;
 		this.cabinet_docs = cabinet_docs;
+	}
+
+	public JwtResponse(String accessToken, Long id, String email, String telephone, ERole role,String refreshToken,int state , int  cabinet_docs , String subPaidStatus) {
+		this.token = accessToken;
+		this.id = id;
+		this.email = email;
+		this.telephone = telephone;
+		this.role = role;
+		this.refreshToken = refreshToken;
+		this.state=state;
+		this.cabinet_docs = cabinet_docs;
+		this.subPaidStatus= subPaidStatus;
 	}
 }
