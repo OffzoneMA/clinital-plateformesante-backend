@@ -1454,7 +1454,21 @@ public class MedecinController {
 		return equipe;
 	}
 
-	//-----------------------------------------------NETWORK---------------------------------------------------
+    @GetMapping("/medsBy-cabinet")
+    public ResponseEntity<?> medecinForCabinet() throws Exception {
+        Medecin medecin = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+        Long idcab = medecin.getFirstCabinetId();
+
+        List<MedecinDTO> medecins = medrepository.getAllMedecinsByCabinetId(idcab).stream()
+                .map(follower -> mapper.map(follower, MedecinDTO.class))
+                .collect(Collectors.toList());
+
+        LOGGER.info("Show equipe medecin");
+        return ResponseEntity.ok().body(medecins);
+    }
+
+
+    //-----------------------------------------------NETWORK---------------------------------------------------
 	// Add a New Doctor to the Network : %OK%
 	@PostMapping("/addNewNetwork")
 	public ResponseEntity<?> addNewNetwork(@Valid @RequestBody networkRequest network) throws Exception {

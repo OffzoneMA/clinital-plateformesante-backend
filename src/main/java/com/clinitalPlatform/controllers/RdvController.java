@@ -5,6 +5,7 @@ import com.clinitalPlatform.dto.PatientCountsDTO;
 import com.clinitalPlatform.dto.RendezvousDTO;
 import com.clinitalPlatform.enums.RdvStatutEnum;
 import com.clinitalPlatform.exception.BadRequestException;
+import com.clinitalPlatform.models.Cabinet;
 import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.models.Patient;
 import com.clinitalPlatform.models.Rendezvous;
@@ -22,6 +23,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import javassist.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -736,6 +738,44 @@ public class RdvController {
 
 		return l;
 	}
+
+	@GetMapping("/rdvs/medecins/cabinet")
+	public ResponseEntity<?> getRdvForMedecinsByCabinet() {
+		try {
+			Long connectedUserId = globalVariables.getConnectedUser().getId();
+
+			Medecin medecin = medRepo.getMedecinByUserId(connectedUserId);
+			if (medecin == null) {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Médecin non trouvé pour l'utilisateur connecté.");
+			}
+
+			Long cabinetId = medecin.getFirstCabinetId();
+			if (cabinetId == null) {
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Aucun cabinet associé à ce médecin.");
+			}
+
+			List<Medecin> medecins = medRepo.getAllMedecinsByCabinetId(cabinetId);
+			if (medecins == null || medecins.isEmpty()) {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Aucun médecin trouvé pour ce cabinet.");
+			}
+
+			List<Rendezvous> allRendezvous = new ArrayList<>();
+			for (Medecin med : medecins) {
+				List<Rendezvous> medRdvs = rdvrepository.findByAllRdvByMedecin(med.getId());
+				if (medRdvs != null && !medRdvs.isEmpty()) {
+					allRendezvous.addAll(medRdvs);
+				}
+			}
+
+			return ResponseEntity.ok(allRendezvous);
+
+		} catch (Exception e) {
+			// Log l'erreur (si tu as un logger type log.error())
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Erreur lors de la récupération des rendez-vous : " + e.getMessage());
+		}
+	}
+
 
 //	@PostMapping(path = "/uploadDocRdv")
 //	@ResponseBody
