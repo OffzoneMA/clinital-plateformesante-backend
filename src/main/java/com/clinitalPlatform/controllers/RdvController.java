@@ -855,18 +855,38 @@ public class RdvController {
 //	}
 
 	@GetMapping("/med")
-	public Map<String, Integer> getStatistics() throws Exception {
-		Long idmed = medRepo.getMedecinByUserId(globalVariables.getConnectedUser().getId()).getId();
-		LocalDate today = LocalDate.now();
-		int dailyCount = rdvservice.getStatisticsByMed(today, idmed);
-		int monthlyCount = rdvservice.getMonthlyStatisticsByMed(today.getYear(), today.getMonthValue(), idmed);
-		int totalPatients = rdvservice.getTotalPatientsByMed(idmed);
-		Map<String, Integer> statistics = new HashMap<>();
-		statistics.put("day", dailyCount);
-		statistics.put("month", monthlyCount);
-		statistics.put("patients", totalPatients);
-		return statistics;
+	public ResponseEntity<?> getStatistics() {
+		try {
+			Long userId = globalVariables.getConnectedUser().getId();
+			Medecin medecin = medRepo.getMedecinByUserId(userId);
+
+			if (medecin == null) {
+				LOGGER.warn("Aucun médecin trouvé pour l'utilisateur ID : " + userId);
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Médecin non trouvé.");
+			}
+
+			Long idmed = medecin.getId();
+			LocalDate today = LocalDate.now();
+
+			int dailyCount = rdvservice.getStatisticsByMed(today, idmed);
+			int monthlyCount = rdvservice.getMonthlyStatisticsByMed(today.getYear(), today.getMonthValue(), idmed);
+			int totalPatients = rdvservice.getTotalPatientsByMed(idmed);
+
+			Map<String, Integer> statistics = new HashMap<>();
+			statistics.put("day", dailyCount);
+			statistics.put("month", monthlyCount);
+			statistics.put("patients", totalPatients);
+
+			LOGGER.info("Statistiques récupérées pour le médecin ID : " + idmed);
+			return ResponseEntity.ok(statistics);
+
+		} catch (Exception e) {
+			LOGGER.error("Erreur lors de la récupération des statistiques du médecin", e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Erreur lors de la récupération des statistiques.");
+		}
 	}
+
 
 
 	@GetMapping("/rdvs/prochain")
