@@ -855,19 +855,31 @@ public class RdvController {
 //	}
 
 	@GetMapping("/med")
-	public Map<String, Integer> getStatistics() throws Exception {
-		Long idmed = medRepo.getMedecinByUserId(globalVariables.getConnectedUser().getId()).getId();
-		LocalDate today = LocalDate.now();
-		int dailyCount = rdvservice.getStatisticsByMed(today, idmed);
-		int monthlyCount = rdvservice.getMonthlyStatisticsByMed(today.getYear(), today.getMonthValue(), idmed);
-		int totalPatients = rdvservice.getTotalPatientsByMed(idmed);
-		Map<String, Integer> statistics = new HashMap<>();
-		statistics.put("day", dailyCount);
-		statistics.put("month", monthlyCount);
-		statistics.put("patients", totalPatients);
-		return statistics;
-	}
+	public ResponseEntity<?> getStatistics() {
+		try {
+			Long userId = globalVariables.getConnectedUser().getId();
+			Long idmed = medRepo.getMedecinByUserId(userId).getId();
+			LocalDate today = LocalDate.now();
 
+			int dailyCount = rdvservice.getStatisticsByMed(today, idmed);
+			int monthlyCount = rdvservice.getMonthlyStatisticsByMed(today.getYear(), today.getMonthValue(), idmed);
+			int totalPatients = rdvservice.getTotalPatientsByMed(idmed);
+
+			Map<String, Integer> statistics = new HashMap<>();
+			statistics.put("day", dailyCount);
+			statistics.put("month", monthlyCount);
+			statistics.put("patients", totalPatients);
+
+			return ResponseEntity.ok(statistics);
+
+		} catch (NullPointerException e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body(Map.of("error", "Utilisateur ou médecin introuvable."));
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(Map.of("error", "Erreur interne du serveur."));
+		}
+	}
 
 	@GetMapping("/rdvs/prochain")
 	List<Rendezvous> prochainRendezvousForMedecin() throws Exception {

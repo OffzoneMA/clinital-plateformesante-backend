@@ -446,10 +446,26 @@ public class MedecinController {
 
 	// end point for getting Doctor By city : %OK%
 	@GetMapping("/medByVille")
-	public Iterable<Medecin> findMedByVille(@RequestParam Long id_ville) throws Exception {
-			
-			return medrepository.getMedecinByVille(id_ville).stream().filter(med->med.getIsActive()==true).collect(Collectors.toList());
-    }
+	public ResponseEntity<?> findMedByVille(@RequestParam(required = true) Long id_ville) {
+		try {
+			if (id_ville == null || id_ville <= 0) {
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+						.body(Map.of("error", "ID de ville invalide."));
+			}
+
+			List<Medecin> medecinsActifs = medrepository.getMedecinByVille(id_ville)
+					.stream()
+					.filter(Medecin::getIsActive)
+					.collect(Collectors.toList());
+
+			return ResponseEntity.ok(medecinsActifs);
+
+		} catch (Exception e) {
+			log.error("Erreur lors de la récupération des médecins pour la ville {} : {}", id_ville, e.getMessage(), e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(Map.of("error", "Erreur interne du serveur."));
+		}
+	}
 
 	@PostMapping("/addMedtoExistcabinet")
 	@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_MEDECIN')")
