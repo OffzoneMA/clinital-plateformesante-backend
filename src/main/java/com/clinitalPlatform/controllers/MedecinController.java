@@ -694,18 +694,33 @@ public class MedecinController {
 		return ResponseEntity.ok(specialiteService.findAll());
 	}
 	@GetMapping("/getallpatients")
-	Iterable <Patient> getallpatients() throws Exception {
-			activityServices.createActivity(new Date(), "Read", "Show All Rdv for Medecin",
-					globalVariables.getConnectedUser());
-			Medecin medecin = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
-			List<Long> l=medrepository.findPatientIdsByMedecinId(medecin.getId());
-			List<Patient> patients = new ArrayList<>();
-			for (Long id : l) {
-			patientRepository.findById(id).ifPresent(patients::add);
-		}
-			LOGGER.info("Show All patients for Medecin, UserID : " + globalVariables.getConnectedUser().getId());
+	public ResponseEntity<?> getAllPatients() {
+		try {
+			Long userId = globalVariables.getConnectedUser().getId();
+			Medecin medecin = medrepository.getMedecinByUserId(userId);
 
-			return patients;
+			if (medecin == null) {
+				LOGGER.warn("Aucun médecin trouvé pour l'utilisateur ID: " + userId);
+				return ResponseEntity.status(HttpStatus.NOT_FOUND)
+						.body("Médecin introuvable pour l'utilisateur connecté.");
+			}
+
+			List<Long> patientIds = medrepository.findPatientIdsByMedecinId(medecin.getId());
+			List<Patient> patients = new ArrayList<>();
+
+			for (Long id : patientIds) {
+				patientRepository.findById(id).ifPresent(patients::add);
+			}
+
+			activityServices.createActivity(new Date(), "Read", "Show All Patients for Medecin", globalVariables.getConnectedUser());
+			LOGGER.info("Récupération de tous les patients pour le médecin. UserID: " + userId);
+
+			return ResponseEntity.ok(patients);
+		} catch (Exception e) {
+			LOGGER.error("Erreur lors de la récupération des patients : ", e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Une erreur est survenue lors de la récupération des patients.");
+		}
 	}
 
 
@@ -1459,10 +1474,13 @@ public class MedecinController {
 		List<Medecin> medecins = medrepository.getAllMedecinsByCabinetId(idcab);
 		List<Secretaire> secretaires = secretaireService.findByIdCabinet(idcab);
 		List<Assistant> assistants = assistantService.findByIdCabinet(idcab);
+		List<MedecinDTO> medecinsDtos = medrepository.getAllMedecinsByCabinetId(idcab).stream()
+				.map(follower -> mapper.map(follower, MedecinDTO.class))
+				.toList();
 		EquipeDTO equipe = new EquipeDTO();
-		equipe.setMedecins(medecins);
 		equipe.setSecretaires(secretaires);
 		equipe.setAssistants(assistants);
+		equipe.setMedecinDTOS(medecinsDtos);
 
 //    activityServices.createActivity(new Date(), "Read", "Show Equipe for Medecin ",
 //            globalVariables.getConnectedUser());
@@ -1579,15 +1597,38 @@ public class MedecinController {
 
 	// Show all Network of a doc : %OK%
 	@GetMapping("/getAllMedNetWork")
-	public ResponseEntity<List<MedecinDTO>> getAllMedecinNetwork() throws Exception {
-		Medecin med = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
-		List<MedecinDTO> followers = medecinNetworkService.getAllMedecinNetwork(med.getId()).stream()
-				.map(follower -> mapper.map(follower, MedecinDTO.class))
-				.collect(Collectors.toList());
-		activityServices.createActivity(new Date(), "Read", "Consult Medecin Network for Connected Medecin Network", globalVariables.getConnectedUser());
-		LOGGER.info("Consult Medecin Network for Medecin Connected, User ID: " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
-		return ResponseEntity.ok(followers);
+	public ResponseEntity<?> getAllMedecinNetwork() {
+		try {
+			Long userId = globalVariables.getConnectedUser().getId();
+
+			Medecin med = medrepository.getMedecinByUserId(userId);
+			if (med == null) {
+				String message = "Médecin introuvable pour l'utilisateur connecté (ID: " + userId + ")";
+				LOGGER.warn(message);
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body(message);
+			}
+
+			List<MedecinDTO> followers = medecinNetworkService.getAllMedecinNetwork(med.getId())
+					.stream()
+					.map(follower -> mapper.map(follower, MedecinDTO.class))
+					.collect(Collectors.toList());
+
+			activityServices.createActivity(
+					new Date(), "Read",
+					"Consult Medecin Network for Connected Medecin",
+					globalVariables.getConnectedUser()
+			);
+
+			LOGGER.info("Consultation du réseau de médecins pour l'utilisateur ID: " + userId);
+			return ResponseEntity.ok().body(followers);
+
+		} catch (Exception e) {
+			LOGGER.error("Erreur lors de la récupération du réseau de médecins : " + e.getMessage(), e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Une erreur est survenue lors de la récupération du réseau de médecins.");
+		}
 	}
+
 
 	// Update an existing Doctor in the Network
 	@PutMapping("/updateNetwork")
