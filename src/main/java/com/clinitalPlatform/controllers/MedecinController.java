@@ -1580,18 +1580,29 @@ public class MedecinController {
 
 	// Delete a Medecin from network : %OK%
 	@DeleteMapping(path = "/deleteNetwork/{follower_id}")
-	public ResponseEntity<?> deleteMedecinNetwork(@Valid @PathVariable Long follower_id) throws Exception {
+	public ResponseEntity<?> deleteMedecinNetwork(@Valid @PathVariable Long follower_id) {
+		try {
+			if (follower_id == null || follower_id <= 0) {
+				return ResponseEntity.badRequest().body("ID du follower invalide.");
+			}
 
-		Medecin med = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
-		Medecin follower = medrepository.getMedecinById(follower_id);
-		if (follower == null) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Le médecin follower spécifié n'existe pas.");
+			Medecin currentMedecin = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+			if (currentMedecin == null) {
+				return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Utilisateur non autorisé ou non médecin.");
+			}
+
+			Medecin follower = medrepository.getMedecinById(follower_id);
+			if (follower == null) {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Le médecin follower spécifié n'existe pas.");
+			}
+
+			medecinNetworkService.deleteMedecinNetwork(currentMedecin.getId(), follower_id);
+			return ResponseEntity.ok(new ApiResponse(true, "Le lien a été supprimé avec succès."));
+
+		} catch (Exception ex) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Erreur interne lors de la suppression du lien : " + ex.getMessage());
 		}
-
-		medecinNetworkService.deleteMedecinNetwork(med.getId(), follower_id);
-
-		return ResponseEntity.ok(new ApiResponse(true, "Deleted"));
-
 	}
 
 

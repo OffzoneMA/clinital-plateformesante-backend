@@ -14,6 +14,7 @@ import com.clinitalPlatform.services.interfaces.AssistantService;
 import com.clinitalPlatform.services.interfaces.SecretaireService;
 import com.clinitalPlatform.util.ClinitalModelMapper;
 import com.clinitalPlatform.util.GlobalVariables;
+import javassist.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,39 +52,40 @@ public class AssistantServiceImpl implements AssistantService {
 	private ActivityServices ActivityServices;
 	
 	private final Logger LOGGER=LoggerFactory.getLogger(getClass());
-	
-
-
-
-
 
 	@Override
-	public List<Assistant> findAll() {
-		try {ActivityServices.createActivity(new Date(), "Read", "Consult All Assistants ",globalVariables.getConnectedUser());
-		
-			LOGGER.info("Consult All Assistant, UserID : " + globalVariables.getConnectedUser().getId());
-		
-		return assistantRepository
-				.findAll()
-				.stream()
-				.map(assistant->clinitalModelMapper.map(assistant, Assistant.class))
-				.collect(Collectors.toList());} 
-				catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	public List<Assistant> findAll() throws NotFoundException {
+		User connectedUser = globalVariables.getConnectedUser();
+		if (connectedUser == null) {
+			throw new IllegalStateException("Aucun utilisateur connecté.");
 		}
-		return null;
+
+		List<Assistant> assistants = assistantRepository.findAll();
+		for (Assistant assistant : assistants) {
+			clinitalModelMapper.map(assistant, Assistant.class);
+		}
+
+		ActivityServices.createActivity(new Date(), "Read", "Consult All Assistants ", connectedUser);
+		return assistants;
 	}
 
 	@Override
-	public Assistant findById(Long id) throws Exception {
-	 Assistant assistant= assistantRepository.findById(id).orElseThrow(()-> new Exception("Assistant not found"));
-	 ActivityServices.createActivity(new Date(), "Read", "Consult Assistant ID:"+id,globalVariables.getConnectedUser());
-	LOGGER.info("Consult Assistant ID:"+id+", UserID : " + globalVariables.getConnectedUser().getId());
-	 return assistant;
+	public Assistant findById(Long id) throws NotFoundException {
+		User connectedUser = globalVariables.getConnectedUser();
+		if (connectedUser == null) {
+			throw new IllegalStateException("Aucun utilisateur connecté.");
+		}
+
+		Optional<Assistant> assistantOptional = assistantRepository.findById(id);
+		if (assistantOptional.isEmpty()) {
+			throw new NotFoundException("Assistant non trouvé avec l'ID : " + id);
+		}
+
+		Assistant assistant = assistantOptional.get();
+		ActivityServices.createActivity(new Date(), "Read", "Consult Assistant ID:" + id, connectedUser);
+
+		return assistant;
 	}
-
-
 
 
 	public List<Assistant> findByIdCabinet(Long id) {
