@@ -17,6 +17,8 @@ import com.clinitalPlatform.util.ClinitalModelMapper;
 import com.clinitalPlatform.util.GlobalVariables;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import jakarta.validation.Valid;
+import javassist.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -56,7 +58,7 @@ public class MedecinScheduleController {
     // Creat a new Schedule : %OK%
 
     @PostMapping("create")
-//@PreAuthorize("hasAuthority('ROLE_MEDECIN')")
+    //@PreAuthorize("hasAuthority('ROLE_MEDECIN')")
     public ResponseEntity<?> create(@Validated @RequestBody MedecinScheduleRequest medecinScheduleRequest) {
         try {
             MedecinSchedule medecinSchedule = medecinScheduleService.create(medecinScheduleRequest, globalVariables.getConnectedUser().getId());
@@ -82,6 +84,32 @@ public class MedecinScheduleController {
         }
     }
 
+    @PostMapping("multi-for-medecin")
+    public ResponseEntity<?> createMultiForMedecin(@Valid @RequestBody MedecinMultiScheduleRequest request) {
+        try {
+            List<MedecinSchedule> created = medecinScheduleService.createMultiScheduleForMedecin(request);
+            return ResponseEntity.ok(created);
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().body("Erreur lors de la création des créneaux : " + ex.getMessage());
+        }
+    }
+
+    @PutMapping("/multi-update")
+    public ResponseEntity<?> updateMultiSchedule(@Valid @RequestBody MedecinMultiScheduleRequest request) {
+        try {
+            List<MedecinSchedule> updated = medecinScheduleService.updateOrDuplicateSchedule(request);
+            return ResponseEntity.ok(Map.of(
+                    "message", "Mise à jour effectuée avec succès.",
+                    "updatedSchedules", updated
+            ));
+        } catch (BadRequestException | NotFoundException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Erreur serveur interne."));
+        }
+    }
+
+
 
     @PostMapping("update/{id}")
     @ResponseBody
@@ -98,18 +126,31 @@ public class MedecinScheduleController {
             // TODO: handle exception
             throw new Exception(e);
         }
-
-
-
     }
 
     @DeleteMapping("delete/{id}")
-    public ResponseEntity<?> deleteById( @PathVariable Long id) throws Exception{
+    public ResponseEntity<?> deleteById(@PathVariable Long id) {
+        try {
+            // Vérification de l'ID
+            if (id == null || id <= 0) {
+                throw new BadRequestException("L'ID fourni est invalide.");
+            }
 
-        medecinScheduleService.deleteById(id);
+            // Appel du service pour supprimer le planning
+            medecinScheduleService.deleteById(id);
 
-        return ResponseEntity.ok(new ApiResponse(true, "Schedule has been deleted successfully"));
-
+            // Retourner une réponse de succès
+            return ResponseEntity.ok(new ApiResponse(true, "Schedule has been deleted successfully"));
+        } catch (NotFoundException e) {
+            // Gestion de l'exception si l'élément n'est pas trouvé
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse(false, e.getMessage()));
+        } catch (BadRequestException e) {
+            // Gestion de l'exception pour une requête invalide
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(false, e.getMessage()));
+        } catch (Exception e) {
+            // Gestion des erreurs internes
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(false, "Une erreur interne est survenue."));
+        }
     }
 
     @GetMapping("shedulebyMed")
@@ -126,6 +167,7 @@ public class MedecinScheduleController {
             throw new Exception(e);
         }
     }
+
     @GetMapping("shedulebyMedandIdconsult/{id}")
     @ResponseBody
     public ResponseEntity<?> getAllSchedulesByMedIdandIdConsult(@PathVariable long id) throws Exception{

@@ -5,7 +5,7 @@ import com.clinitalPlatform.exception.BadRequestException;
 import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.models.MedecinNetwork;
 import com.clinitalPlatform.models.User;
-import com.clinitalPlatform.payload.request.networkRequest;
+import com.clinitalPlatform.payload.request.NetworkRequest;
 import com.clinitalPlatform.repository.MedecinNetworkRepository;
 import com.clinitalPlatform.repository.MedecinRepository;
 import com.clinitalPlatform.services.interfaces.NetworkService;
@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,11 +48,13 @@ public class MedecinNetworkService implements NetworkService {
     }
 
     @Override
-    public MedecinNetwork addMedecinNetwork(networkRequest medecinNetwork, long user_id) throws Exception {
+    public MedecinNetwork addMedecinNetwork(NetworkRequest medecinNetwork, long user_id) throws Exception {
         Medecin med = medecinRepository.getMedecinByUserId(user_id);
         Medecin follower = medecinRepository.getMedecinById(medecinNetwork.getFollower_id());
 
-        if (med.getId() != follower.getId()) {
+        LOGGER.info("Add Medecin follower to Network by id " + medecinNetwork.getFollower_id() + " Comment : " + medecinNetwork.getComment() + " for Medecin Connected, User ID  : " + (globalVariables.getConnectedUser() != null ? globalVariables.getConnectedUser().getId() : ""));
+
+        if (!Objects.equals(med.getId(), follower.getId())) {
             MedecinNetwork medecinNetworkEntity = new MedecinNetwork(med, follower, medecinNetwork.getComment());
             return medecinNetworkRepository.save(medecinNetworkEntity);
         } else {

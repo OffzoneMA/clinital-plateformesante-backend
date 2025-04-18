@@ -23,7 +23,6 @@ public class SpecialiteController {
 	        // Vérifier si le libellé de la spécialité existe déjà
 	        if (specialiteService.existsByLibelle(specialite.getLibelle())) {
 	        	return ResponseEntity.ok(new ApiResponse(false, "Le libellé de la spécialité existe déjà"));
-	            
 	        }
 	        
 	        // Ajouter la spécialité si le libellé n'existe pas déjà

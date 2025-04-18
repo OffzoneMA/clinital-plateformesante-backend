@@ -12,6 +12,11 @@ import java.util.List;
 @Repository
 public interface SpecialiteRepository extends JpaRepository<Specialite, Long>{
 
+    @Query(value = "SELECT * FROM `specialites` WHERE valid=true",nativeQuery = true)
+    List<Specialite> getAllValidSpecialites();
+
+
+    List<Specialite> findByValidTrue();
 
     @Query(value = "SELECT * FROM `specialites` WHERE id_spec=?1",nativeQuery = true)
     Specialite getSpecialiteById(Long idspec);

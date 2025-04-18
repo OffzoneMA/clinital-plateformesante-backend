@@ -25,11 +25,12 @@ public class SpecialiteServiceImpl implements SpecialiteService{
 
 	@Override
 	public List<SpecialiteDTO> findAll() {
-		return specialiteRepository.findAll()
+		return specialiteRepository.findByValidTrue()
 				.stream()
 				.map(sp->modelMapper.map(sp, SpecialiteDTO.class))
 				.collect(Collectors.toList());
 	}
+
 	public boolean existsByLibelle(String libelle) {
         return specialiteRepository.existsByLibelle(libelle);
     }

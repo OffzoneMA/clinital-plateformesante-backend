@@ -3,7 +3,7 @@ package com.clinitalPlatform.controllers;
 import com.clinitalPlatform.dto.MedecinNetworkDTO;
 import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.models.MedecinNetwork;
-import com.clinitalPlatform.payload.request.networkRequest;
+import com.clinitalPlatform.payload.request.NetworkRequest;
 import com.clinitalPlatform.services.MedecinNetworkService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +19,7 @@ public class MedecinNetworkController {
     private MedecinNetworkService medecinNetworkService;
 
     @PostMapping("/addNewNetwork")
-    public ResponseEntity<MedecinNetwork> addMedecinNetwork(@RequestBody networkRequest request, @RequestParam long userId) {
+    public ResponseEntity<MedecinNetwork> addMedecinNetwork(@RequestBody NetworkRequest request, @RequestParam long userId) {
         try {
             MedecinNetwork medecinNetwork = medecinNetworkService.addMedecinNetwork(request, userId);
             return ResponseEntity.ok(medecinNetwork);

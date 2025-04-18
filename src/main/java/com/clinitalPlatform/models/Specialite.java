@@ -29,15 +29,20 @@ public class Specialite {
 
 	private String libelle;
 
+
+	private boolean valid = true;
+
+
 	@OneToMany(mappedBy="specialite")
 	@LazyCollection(LazyCollectionOption.FALSE)
 	@JsonIgnore
     private List<Medecin> medecins;
 
-	public Specialite(Long id_spec, String libelle, List<Medecin> medecins) {
+	public Specialite(Long id_spec, String libelle, List<Medecin> medecins , boolean valid) {
 		this.id_spec = id_spec;
 		this.libelle = libelle;
 		this.medecins = medecins;
+		this.valid = valid;
 	}
 
 	public Specialite() {

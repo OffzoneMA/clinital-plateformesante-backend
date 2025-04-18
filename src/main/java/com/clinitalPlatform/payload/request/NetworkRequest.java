@@ -3,7 +3,7 @@ package com.clinitalPlatform.payload.request;
 import lombok.Data;
 
 @Data
-public class networkRequest {
+public class NetworkRequest {
     private long follower_id;
-    private String Comment;
+    private String comment;
 }

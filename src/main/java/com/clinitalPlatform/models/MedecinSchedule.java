@@ -49,7 +49,6 @@ public class MedecinSchedule {
 
 	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "medecin_id", nullable = false, referencedColumnName = "id", insertable = true, updatable = true)
-	@JsonIgnore
 	private Medecin medecin;
 
 

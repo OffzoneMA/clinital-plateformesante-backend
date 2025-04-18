@@ -73,7 +73,6 @@ public class WebSecurityConfig {
         String[] permitAllRoutes = {"/api/auth/**","/api/users/me" ,  "/api/users/activity/**","/api/demandes/create","/api/cabinet/**",
         		"/api/med/medecins",
                 "/api/med/allmedecins",
-                "/api/med/checkIfInNetwork/**",
                 "/api/medecin-images/**",
                 "/api/users/byEmail" ,
                 "/api/users/updateMail/**" ,
@@ -121,7 +120,7 @@ public class WebSecurityConfig {
 
 
       
-        String[] authenticatedRoutes = {"/api/demandes/**", "/api/med/**", "/api/doc/**", "/api/shares/**","/api/medecinSchedule/**","/api/patient/**",
+        String[] authenticatedRoutes = {"/api/demandes/**", "/api/med/**", "/api/med/checkIfInNetwork/**" , "/api/doc/**", "/api/shares/**","/api/medecinSchedule/**","/api/patient/**",
                 "/api/rdv/patient/**","/api/rdv/today/**","/api/rdv/med/**", "/api/rdv/rdvs/medecin","/api/users/**", "/api/rdv/**",
                 "/api/medecinSchedule/fromCreno/**", "/api/documents-cabinet/**",
                 "/api/rdv/rdvs/patient","/api/rdv/patient/rdvbyday", "/api/med/equipe","api/med/getAllPatients", "/api/subscriptions/**"

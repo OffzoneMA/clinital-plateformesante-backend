@@ -2,6 +2,7 @@ package com.clinitalPlatform.repository;
 
 import com.clinitalPlatform.enums.MotifConsultationEnum;
 import com.clinitalPlatform.models.MedecinSchedule;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -11,6 +12,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface MedecinScheduleRepository extends JpaRepository<MedecinSchedule, Long> {
 
@@ -79,4 +81,9 @@ public interface MedecinScheduleRepository extends JpaRepository<MedecinSchedule
     AND FUNCTION('TIME', r.start) BETWEEN FUNCTION('TIME', ms.availabilityStart) AND FUNCTION('TIME', ms.availabilityEnd)
     """)
     LocalDateTime findAlternativeNextAppointmentSlot(@Param("idmed") Long idmed);
+
+    @EntityGraph(attributePaths = {"modeconsultation", "motifConsultation"})
+    @Query("SELECT ms FROM MedecinSchedule ms WHERE ms.id = :id")
+    Optional<MedecinSchedule> findByIdWithDetails(@Param("id") Long id);
+
 }

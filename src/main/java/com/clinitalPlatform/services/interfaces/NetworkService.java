@@ -3,13 +3,13 @@ package com.clinitalPlatform.services.interfaces;
 import com.clinitalPlatform.dto.MedecinNetworkDTO;
 import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.models.MedecinNetwork;
-import com.clinitalPlatform.payload.request.networkRequest;
+import com.clinitalPlatform.payload.request.NetworkRequest;
 
 import java.util.List;
 
 public interface NetworkService {
 
-    public MedecinNetwork addMedecinNetwork(networkRequest medecinNetwork, long id) throws Exception;
+    public MedecinNetwork addMedecinNetwork(NetworkRequest medecinNetwork, long id) throws Exception;
 
     public MedecinNetworkDTO updateMedecinNetwork(MedecinNetworkDTO medecinNetworkDTO) throws Exception;
 

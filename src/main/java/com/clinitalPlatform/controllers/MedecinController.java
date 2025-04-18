@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 import javax.validation.Valid;
 
 import com.clinitalPlatform.dto.*;
-import com.clinitalPlatform.enums.TypeMoyenPaiementEnum;
 import com.clinitalPlatform.exception.BadRequestException;
 import com.clinitalPlatform.exception.ResourceNotFoundException;
 import com.clinitalPlatform.models.*;
@@ -439,10 +438,7 @@ public class MedecinController {
 					.collect(Collectors.toList());
 		}
 	}
-//---------------------------------------------------------------------------
-
-
-
+	//---------------------------------------------------------------------------
 
 	// end point for getting Doctor By city : %OK%
 	@GetMapping("/medByVille")
@@ -723,13 +719,7 @@ public class MedecinController {
 		}
 	}
 
-
-
-
 	// Get all medecins ... : %OK%
-
-
-
 
 	// Finding all the schedules bY med Id from a given date.%OK%
 	@GetMapping("/schedulesofMed/{idmed}")
@@ -1321,24 +1311,21 @@ public class MedecinController {
 
 	}
 
-//****************
+	//****************
 
+	private boolean isConflicting(AgendaResponse existingAgenda, MedecinSchedule newSchedule) {
+		LocalTime existingStart = existingAgenda.getWorkingDate().toLocalTime();
+		LocalTime existingEnd = existingAgenda.getWorkingDate().plusDays(1).toLocalTime(); // Fin de la journée de travail
 
+		LocalTime newStart = newSchedule.getAvailabilityStart().toLocalTime();
+		LocalTime newEnd = newSchedule.getAvailabilityEnd().toLocalTime();
 
-
-		private boolean isConflicting(AgendaResponse existingAgenda, MedecinSchedule newSchedule) {
-	LocalTime existingStart = existingAgenda.getWorkingDate().toLocalTime();
-	LocalTime existingEnd = existingAgenda.getWorkingDate().plusDays(1).toLocalTime(); // Fin de la journée de travail
-
-	LocalTime newStart = newSchedule.getAvailabilityStart().toLocalTime();
-	LocalTime newEnd = newSchedule.getAvailabilityEnd().toLocalTime();
-
-	// Vérifiez les conflits en fonction des heures
-	return (newStart.isAfter(existingStart) && newStart.isBefore(existingEnd)) ||
-			(newEnd.isAfter(existingStart) && newEnd.isBefore(existingEnd)) ||
-			(newStart.isBefore(existingStart) && newEnd.isAfter(existingEnd)) ||
-			(newStart.equals(existingStart) || newEnd.equals(existingEnd));
-}
+		// Vérifiez les conflits en fonction des heures
+		return (newStart.isAfter(existingStart) && newStart.isBefore(existingEnd)) ||
+				(newEnd.isAfter(existingStart) && newEnd.isBefore(existingEnd)) ||
+				(newStart.isBefore(existingStart) && newEnd.isAfter(existingEnd)) ||
+				(newStart.equals(existingStart) || newEnd.equals(existingEnd));
+	}
 
 
 	// Finding all the RDV bY med Id from a given date.%OK%
@@ -1505,7 +1492,7 @@ public class MedecinController {
     //-----------------------------------------------NETWORK---------------------------------------------------
 	// Add a New Doctor to the Network : %OK%
 	@PostMapping("/addNewNetwork")
-	public ResponseEntity<?> addNewNetwork(@Valid @RequestBody networkRequest network) throws Exception {
+	public ResponseEntity<?> addNewNetwork(@Valid @RequestBody NetworkRequest network) throws Exception {
 		Long followerId = network.getFollower_id();
 		Medecin follower = medrepository.getMedecinById(network.getFollower_id());
 
@@ -1528,29 +1515,38 @@ public class MedecinController {
 					.body("Le médecin que vous essayez d'ajouter est déjà dans votre réseau.");
 		}
 
-
 		MedecinNetwork medNet = medecinNetworkService.addMedecinNetwork(network, globalVariables.getConnectedUser().getId());
 		activityServices.createActivity(new Date(), "Add", "Add Medecin By ID: " + network.getFollower_id() + " for Connected Medecin Network", globalVariables.getConnectedUser());
-		LOGGER.info("Add Medecin by id " + network.getFollower_id() + " for Medecin Connected, User ID: " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+        LOGGER.info("Add Medecin by id {} for Medecin Connected, User ID: {}", network.getFollower_id(), globalVariables.getConnectedUser() != null ? globalVariables.getConnectedUser().getId() : "");
 		return ResponseEntity.ok(mapper.map(medNet, MedecinNetwork.class));
 	}
 
-	@GetMapping("/checkIfInNetwork/{followerId}")
-	public ResponseEntity<?> checkIfInNetwork(@PathVariable Long followerId) {
-		try {
-			Medecin connectedMedecin = medrepository.getMedecinByUserId(globalVariables.getConnectedUser().getId());
 
-			// Logique pour vérifier si le médecin est dans le réseau
-			Medecin followers = medrepository.findFollowerInNetwork(connectedMedecin.getId(), followerId);
-			if (followers != null) {
-				return ResponseEntity.ok("true");
-			} else {
-				return ResponseEntity.ok("false");
+	@GetMapping("/checkIfInNetwork/{id}")
+	@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_MEDECIN')")
+	public ResponseEntity<?> checkIfInNetwork(@PathVariable(value="id") Long id) {
+		try {
+			Long userId = globalVariables.getConnectedUser().getId();
+			Medecin connectedMedecin = medrepository.getMedecinByUserId(userId);
+
+            LOGGER.info("Check if in network for followerId: {}", id);
+
+			if (connectedMedecin == null) {
+				LOGGER.warn("Aucun médecin trouvé pour l'utilisateur ID: " + userId);
+				return ResponseEntity.status(HttpStatus.NOT_FOUND)
+						.body("Médecin introuvable pour l'utilisateur connecté.");
 			}
+
+			boolean isInNetwork = medrepository.findFollowerInNetwork(connectedMedecin.getId(), id) != null;
+			return ResponseEntity.ok(Collections.singletonMap("inNetwork", isInNetwork));
+
 		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de la vérification du médecin dans le réseau.");
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Erreur lors de la vérification du médecin dans le réseau : " + e.getMessage());
 		}
 	}
+
+
 	@GetMapping("/getMedNetWork/{follower_id}")
 	public ResponseEntity<?> getMedecinNetworkbyId(@Valid @PathVariable Long follower_id) throws Exception {
 		// Récupérer le médecin follower à partir de l'ID follower
@@ -1640,7 +1636,6 @@ public class MedecinController {
 		}
 	}
 
-
 	// Update an existing Doctor in the Network
 	@PutMapping("/updateNetwork")
 	public ResponseEntity<?> updateNetwork(@Valid @RequestBody MedecinNetworkDTO medecinNetworkDTO) throws Exception {
@@ -1649,8 +1644,6 @@ public class MedecinController {
 		LOGGER.info("Updated Medecin Network for ID: " + medecinNetworkDTO.getId().getId_medecin() + " with follower ID: " + medecinNetworkDTO.getId().getId_follower() + ", User ID: " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
 		return ResponseEntity.ok(updatedMedNet);
 	}
-
-
 
 	//---FILTRE MEDECIN NETWORK----------------------------------
 	//FILTRE MULTI VILLE
@@ -1783,7 +1776,6 @@ public class MedecinController {
 		return ResponseEntity.ok(medecinsFiltres);
 	}*/
 
-
 	@GetMapping("/medNetByNameOrSpecAndVille")
 	public ResponseEntity<List<MedecinDTO>> medNetByNameOrSpecAndVille(
 			@RequestParam(name = "ville") List<Long> id_villes,
@@ -1834,33 +1826,33 @@ public class MedecinController {
 	}
 
 
-//------------------------------------------------------------------------------------------------------------------
-@GetMapping("/medByLetter")
-@ResponseBody
-public ResponseEntity<List<Medecin>> findMedByLetter(@RequestParam String lettre) throws Exception {
-	// Valider la lettre
-	if (lettre == null || lettre.length() != 1) {
-		return ResponseEntity.badRequest().body(null);
+	//------------------------------------------------------------------------------------------------------------------
+	@GetMapping("/medByLetter")
+	@ResponseBody
+	public ResponseEntity<List<Medecin>> findMedByLetter(@RequestParam String lettre) throws Exception {
+		// Valider la lettre
+		if (lettre == null || lettre.length() != 1) {
+			return ResponseEntity.badRequest().body(null);
+		}
+
+		// Récupérer les médecins dont le nom commence par la lettre spécifiée
+		List<Medecin> medecins = medrepository.getMedecinByNameStartingWith(lettre.toUpperCase())
+				.stream()
+				.filter(Medecin::getIsActive) // Filtrer uniquement les médecins actifs
+				.collect(Collectors.toList());
+
+		// Pour chaque médecin trouvé, récupérer les langues et tarifs associés
+		for (Medecin medecin : medecins) {
+			List<Langue> langues = medecinService.getLanguesByMedecinName(medecin.getNom_med());
+			medecin.setLangues(langues);
+			List<Tarif> tarifs = medecinService.getTarifByMedecinName(medecin.getNom_med());
+			medecin.setTarifs(tarifs);
+		}
+
+		return ResponseEntity.ok(medecins);
 	}
 
-	// Récupérer les médecins dont le nom commence par la lettre spécifiée
-	List<Medecin> medecins = medrepository.getMedecinByNameStartingWith(lettre.toUpperCase())
-			.stream()
-			.filter(Medecin::getIsActive) // Filtrer uniquement les médecins actifs
-			.collect(Collectors.toList());
-
-	// Pour chaque médecin trouvé, récupérer les langues et tarifs associés
-	for (Medecin medecin : medecins) {
-		List<Langue> langues = medecinService.getLanguesByMedecinName(medecin.getNom_med());
-		medecin.setLangues(langues);
-		List<Tarif> tarifs = medecinService.getTarifByMedecinName(medecin.getNom_med());
-		medecin.setTarifs(tarifs);
-	}
-
-	return ResponseEntity.ok(medecins);
-}
-
-//RECHERCHE DE MEDECIN PAR MOTIF
+	//RECHERCHE DE MEDECIN PAR MOTIF
 
 	@PostMapping("/by_motif_consultation")
 	public ResponseEntity<List<Medecin>> getMedecinsByMotif(@RequestBody MotifRequest motifRequest) {
@@ -1882,7 +1874,7 @@ public ResponseEntity<List<Medecin>> findMedByLetter(@RequestParam String lettre
 		}
 	}
 
-//FILTRE COMBINE------------------------------------
+	//FILTRE COMBINE------------------------------------
 
 	@PostMapping("/combinedfilter")
 	public ResponseEntity<List<Medecin>> filterMedecinsCombined(
