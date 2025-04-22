@@ -109,8 +109,6 @@ public class MedecinScheduleController {
         }
     }
 
-
-
     @PostMapping("update/{id}")
     @ResponseBody
     @JsonSerialize(using = LocalDateTimeSerializer.class)
@@ -199,6 +197,7 @@ public class MedecinScheduleController {
         }
 
     }
+
     @GetMapping("shedulesByIdMedDay/{id}")
     @ResponseBody
     public ResponseEntity<?> GetSchedulesByDay(@PathVariable long id, @RequestBody MedecinScheduleRequest medecinScheduleRequest) throws Exception{
@@ -214,6 +213,7 @@ public class MedecinScheduleController {
 
 
     }
+
     @GetMapping("fromCreno")
     public ResponseEntity<?> getScheduleFromCreno(@RequestParam("creno") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime creno,
                                                   @RequestParam("day") DayOfWeek day,
@@ -279,11 +279,5 @@ public class MedecinScheduleController {
         // Retournez la réponse avec les médecins filtrés
         return new ResponseEntity<>(filteredMedecins, HttpStatus.OK);
     }
-
-
-
-
-
-
 
 }

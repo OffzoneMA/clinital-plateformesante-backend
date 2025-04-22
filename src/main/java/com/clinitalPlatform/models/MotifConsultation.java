@@ -17,6 +17,7 @@ public class MotifConsultation {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id_motif;
     @Column(name = "libelle")
+
 	@Enumerated(EnumType.STRING)
 	private MotifConsultationEnum motif;
 
