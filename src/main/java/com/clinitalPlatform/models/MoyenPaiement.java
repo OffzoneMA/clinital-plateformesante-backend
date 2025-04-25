@@ -19,6 +19,12 @@ public class MoyenPaiement {
 	@Enumerated(EnumType.STRING)
 	private TypeMoyenPaiementEnum type;
 
+	private String description;
+
+	private String cardType;
+
+	private boolean enabled = true;
+
 	@ManyToMany(mappedBy = "moyenPaiement")
 	@JsonIgnore
 	private List<Medecin> medecins;

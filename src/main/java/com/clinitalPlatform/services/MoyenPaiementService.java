@@ -58,46 +58,26 @@ public class MoyenPaiementService {
         moyenPaiementRepository.deleteById(id);
     }
 
-    // Affecter un moyen de paiement à un médecin avec des informations de virement bancaire
-    public Medecin affecterMoyenPaiement(Long medecinId, Long moyenPaiementId,
-                                         VirementBancaireDTO virementBancaireDTO) {
+    public Medecin addPaymentMethodsToMedecin(Long medecinId, List<Long> paymentMethodIds) {
         Medecin medecin = medecinRepository.findById(medecinId)
-                .orElseThrow(() -> new IllegalArgumentException("Médecin non trouvé avec l'ID : " + medecinId));
+                .orElseThrow(() -> new RuntimeException("Médecin introuvable"));
 
-        MoyenPaiement moyenPaiement = moyenPaiementRepository.findById(moyenPaiementId)
-                .orElseThrow(() -> new IllegalArgumentException("Moyen de paiement non trouvé avec l'ID : " + moyenPaiementId));
+        List<MoyenPaiement> selectedMethods = moyenPaiementRepository.findAllById(paymentMethodIds);
 
-        if (moyenPaiement.getType() == TypeMoyenPaiementEnum.Virement) {
-            VirementBancaire virementBancaire = new VirementBancaire(virementBancaireDTO.getRib(),
-                    virementBancaireDTO.getCodeSwift(), virementBancaireDTO.getBankName());
-            virementBancaire.setMedecin(medecin);
-            virementBancaire.setMoyenPaiement(moyenPaiement);
-            virementBancaireRepository.save(virementBancaire);
-        }
-
-        medecin.getMoyenPaiement().add(moyenPaiement);
-        Medecin savedMedecin = medecinRepository.save(medecin);
-        return savedMedecin;
+        medecin.setMoyenPaiement(selectedMethods);
+        return medecinRepository.save(medecin);
     }
 
-    // Récupérer les moyens de paiement pour un médecin
-    public List<MoyenPaiementDTO> getMoyensPaiementPourMedecin(Long medecinId) {
+    public List<MoyenPaiement> getMedecinPaymentMethods(Long medecinId) {
         Medecin medecin = medecinRepository.findById(medecinId)
-                .orElseThrow(() -> new IllegalArgumentException("Médecin non trouvé avec l'ID : " + medecinId));
+                .orElseThrow(() -> new RuntimeException("Médecin introuvable"));
+        return medecin.getMoyenPaiement();
+    }
 
-        return medecin.getMoyenPaiement().stream()
-                .map(moyenPaiement -> {
-                    MoyenPaiementDTO moyenPaiementDTO = modelMapper.map(moyenPaiement, MoyenPaiementDTO.class);
-                    if (moyenPaiement.getType() == TypeMoyenPaiementEnum.Virement) {
-                        Optional<VirementBancaire> virementBancaire = virementBancaireRepository
-                                .findByMedecinIdAndMoyenPaiementId_mp(medecinId, moyenPaiement.getId_mp());
-                        virementBancaire.ifPresent(vb -> {
-                            VirementBancaireDTO virementBancaireDTO = modelMapper.map(vb, VirementBancaireDTO.class);
-                            moyenPaiementDTO.setVirementBancaire(virementBancaireDTO);
-                        });
-                    }
-                    return moyenPaiementDTO;
-                })
-                .collect(Collectors.toList());
+    public void disableMethod(Long id) {
+        MoyenPaiement method = moyenPaiementRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Méthode de paiement introuvable"));
+        method.setEnabled(false);
+        moyenPaiementRepository.save(method);
     }
 }

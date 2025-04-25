@@ -105,6 +105,8 @@ public class WebSecurityConfig {
                 "/api/medecinSchedule/shedulebyMed/**",
                 "/api/med/schedulesofMed/**",
                 "/api/med/creneaux/**",
+                "/api/med/photo-profil/**",
+                "/api/med/photo-couverture/**",
                 "/api/metrics/**",
                 "/actuator/**",
                 "/api/ws/**",
@@ -116,7 +118,9 @@ public class WebSecurityConfig {
                 "/api/mode-consultations/**",
                 "/api/motif-consultations/**",
                 "/api/motifs-fermeture/**",
-                "/swagger-ui/**", "/v3/api-docs/**"
+                "/swagger-ui/**", "/v3/api-docs/**",
+                "/api/moyens-paiement/**",
+                "/api/expertises/**"
         };
 
 

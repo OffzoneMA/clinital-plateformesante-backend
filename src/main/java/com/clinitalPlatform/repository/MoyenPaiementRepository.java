@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface MoyenPaiementRepository extends JpaRepository<MoyenPaiement,Long> {
-
+    List<MoyenPaiement> findByEnabledTrue();
 }

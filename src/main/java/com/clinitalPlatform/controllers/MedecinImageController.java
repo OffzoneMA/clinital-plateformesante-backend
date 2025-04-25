@@ -1,7 +1,14 @@
 package com.clinitalPlatform.controllers;
 
+import com.clinitalPlatform.dto.MedecinImageDTO;
+import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.models.MedecinImage;
+import com.clinitalPlatform.repository.MedecinImageRepository;
+import com.clinitalPlatform.services.CloudinaryService;
 import com.clinitalPlatform.services.MedecinImageService;
+import com.clinitalPlatform.services.interfaces.MedecinService;
+import com.clinitalPlatform.util.GlobalVariables;
+import javassist.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +19,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/medecin-images")
@@ -20,13 +28,76 @@ public class MedecinImageController {
 
     @Autowired
     private MedecinImageService medecinImageService;
+    @Autowired
+    private GlobalVariables globalVariables;
+    @Autowired
+    private MedecinService medecinService;
+    @Autowired
+    private CloudinaryService cloudinaryService;
+    @Autowired
+    private MedecinImageRepository medecinImageRepository;
 
     /**
      * Récupérer toutes les images d'un médecin
      */
     @GetMapping("/{medecinId}")
-    public ResponseEntity<List<MedecinImage>> getAllImages(@PathVariable Long medecinId) {
-        return ResponseEntity.ok(medecinImageService.getAllImagesByMedecinId(medecinId));
+    public ResponseEntity<?> getAllImages(@PathVariable Long medecinId) {
+        try {
+           List<MedecinImage> images = medecinImageService.getAllImagesByMedecinId(medecinId);
+            if (images.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
+            }
+            // Convertir les images en DTOs
+            List<MedecinImageDTO> imageDTOs = images.stream()
+                .map(image -> {
+                    MedecinImageDTO dto = new MedecinImageDTO(); // Créez l'objet sans passer par le constructeur
+                    dto.setId(image.getId());
+                    dto.setImageUrl(image.getImageUrl());
+                    dto.setDescription(image.getDescription());
+                    dto.setType(image.getType());
+                    dto.setActive(image.isActive());
+                    return dto; // Retourne l'objet initialisé avec les setters
+                })
+                .toList();
+            return ResponseEntity.ok(imageDTOs);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    /**
+     * Récupérer toutes les images du médecin connecté
+     */
+    @GetMapping("/connected-med")
+    public ResponseEntity<?> getConnectedMedecinImages() {
+        try {
+            Long userId = globalVariables.getConnectedUser().getId();
+            Medecin medecin = medecinService.getMedecinByUserId(userId);
+            if (medecin != null) {
+                List<MedecinImage> images = medecinImageService.getAllImagesByMedecinId(medecin.getId());
+                if (images.isEmpty()) {
+                    return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
+                }
+
+                List<MedecinImageDTO> imageDTOs = images.stream()
+                    .map(image -> {
+                        MedecinImageDTO dto = new MedecinImageDTO(); // Créez l'objet sans passer par le constructeur
+                        dto.setId(image.getId());
+                        dto.setImageUrl(image.getImageUrl());
+                        dto.setDescription(image.getDescription());
+                        dto.setType(image.getType());
+                        dto.setActive(image.isActive());
+                        return dto; // Retourne l'objet initialisé avec les setters
+                    })
+                    .toList();
+
+                return ResponseEntity.ok(imageDTOs);
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+        }catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
 
     /**
@@ -64,28 +135,99 @@ public class MedecinImageController {
     /**
      * Télécharger une nouvelle image
      */
-    @PostMapping("/{medecinId}/upload")
+    @PostMapping("/upload/connected")
     public ResponseEntity<?> uploadImage(
-            @PathVariable Long medecinId,
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("type") String type,
-            @RequestParam(value = "description", required = false) String description) {
+            @RequestParam("image") MultipartFile image,
+            @RequestParam("description") String description,
+            @RequestParam("type") String type) {
 
         try {
-            //MedecinImage savedImage = medecinImageService.uploadImage(medecinId, file, type, description);
-            MedecinImage savedImage = new MedecinImage();
+            Long userId = globalVariables.getConnectedUser().getId();
+            // Vérification de l'existence du médecin
+            Medecin medecin = medecinService.getMedecinByUserId(userId);
+            if (medecin == null) {
+                return ResponseEntity.status(404).body("Médecin non trouvé.");
+            }
 
-            // Synchroniser les champs photo_med et photo_couverture_med du médecin
-            //medecinImageService.synchronizeMedecinPhotos(medecinId);
+            // Upload de l'image sur Cloudinary
+            String imageUrl = cloudinaryService.uploadImage(image, "medecin_images");
 
-            return ResponseEntity.status(HttpStatus.CREATED).body(savedImage);
-        } catch (RuntimeException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            // Création d'un objet MedecinImage et sauvegarde
+            MedecinImage medecinImage = new MedecinImage();
+            medecinImage.setImageUrl(imageUrl);
+            medecinImage.setDescription(image.getOriginalFilename() + " - " + description + " - " + type + " - " + image.getSize());
+            medecinImage.setType(type);
+            medecinImage.setMedecin(medecin);
+            medecinImage.setActive(true); // Par défaut, l'image est active
+            medecinImageRepository.save(medecinImage);
+
+            return ResponseEntity.ok("Image uploadée avec succès.");
+        } catch (IOException e) {
+            return ResponseEntity.status(500).body("Erreur lors de l'upload de l'image.");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
+    //Endpoint pour uploader plusieurs images
+    @PostMapping("/upload-multi/connected")
+    public ResponseEntity<?> uploadImages(
+            @RequestParam("images") MultipartFile[] images,  // Tableau de fichiers
+            @RequestParam("description") String description,
+            @RequestParam("type") String type) {
+
+        try {
+            // Récupérer l'ID de l'utilisateur connecté
+            Long userId = globalVariables.getConnectedUser().getId();
+
+            // Vérification de l'existence du médecin
+            Medecin medecin = medecinService.getMedecinByUserId(userId);
+            if (medecin == null) {
+                return ResponseEntity.status(404).body("Médecin non trouvé.");
+            }
+
+            // Parcours des images pour les uploader une par une
+            for (MultipartFile image : images) {
+                // Upload de l'image sur Cloudinary
+                String imageUrl = cloudinaryService.uploadImage(image, "medecin_images");
+
+                // Création de l'objet MedecinImage et sauvegarde
+                MedecinImage medecinImage = new MedecinImage();
+                medecinImage.setImageUrl(imageUrl);
+                medecinImage.setDescription(image.getOriginalFilename() + " - " + description + " - " + type + " - " + image.getSize());
+                medecinImage.setType(type);
+                medecinImage.setMedecin(medecin);
+                medecinImage.setActive(true);
+                medecinImageRepository.save(medecinImage);
+            }
+
+            return ResponseEntity.ok("Images uploadées avec succès.");
+        } catch (IOException e) {
+            return ResponseEntity.status(500).body("Erreur lors de l'upload des images.");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // Endpoint pour supprimer une image associée à un médecin
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> deleteImage(@PathVariable Long id) {
+        try {
+            // Récupérer l'image par son ID
+            MedecinImage medecinImage = medecinImageService.getImageById(id)
+                    .orElseThrow(() -> new NotFoundException("Image non trouvée"));
+
+            String imageUrl = medecinImage.getImageUrl();
+            cloudinaryService.deleteImage(imageUrl);
+
+            // Supprimer l'image de la base de données
+            medecinImageRepository.deleteById(id);
+
+            return ResponseEntity.ok("Image supprimée avec succès.");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Erreur lors de la suppression de l'image.");
+        }
+    }
     /**
      * Mettre à jour les informations d'une image
      */

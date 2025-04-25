@@ -15,7 +15,8 @@ import jakarta.persistence.ManyToMany;
 
 @Entity(name = "expertises")
 @Data
-
+@NoArgsConstructor
+@AllArgsConstructor
 public class ExpertisesMedecin {
 
     @Id
@@ -28,12 +29,4 @@ public class ExpertisesMedecin {
     @JsonIgnore
     private List<Medecin> medecins;
 
-    public ExpertisesMedecin() {
-    }
-
-    public ExpertisesMedecin(Long id, String nom_exp, List<Medecin> medecins) {
-        this.id = id;
-        this.nom_exp = nom_exp;
-        this.medecins = medecins;
-    }
 }

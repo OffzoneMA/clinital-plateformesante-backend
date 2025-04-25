@@ -1,11 +1,13 @@
 package com.clinitalPlatform.models;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 @Entity
 @Table(name = "allergies")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Allergies {
 
     @Id
@@ -15,9 +17,6 @@ public class Allergies {
     
     @ManyToOne(cascade = CascadeType.ALL)
 	private DossierMedical dossier;
-    public Allergies(){
-        super();
-    }
 
     public Allergies(String name){
         super();

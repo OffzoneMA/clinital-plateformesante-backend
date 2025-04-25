@@ -1,6 +1,7 @@
 package com.clinitalPlatform.controllers;
 
 
+import java.io.IOException;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
@@ -164,7 +165,7 @@ public class MedecinController {
 
 	}
 
-//Recuperer touts les medecins de la plateforme en priorisant ceux de Casablanca
+	//Recuperer touts les medecins de la plateforme en priorisant ceux de Casablanca
 	@GetMapping("/allmedecins")
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
 	public Iterable<Medecin> allmedecins() throws Exception {
@@ -184,7 +185,6 @@ public class MedecinController {
 				})
 				.collect(Collectors.toList());
 	}
-
 
     @GetMapping("/allcabinet")
     public ResponseEntity<?> getAllCabinets() {
@@ -306,6 +306,31 @@ public class MedecinController {
 			return ResponseEntity.status(404).body("{\"error\": \"" + e.getMessage() + "\"}");
 		} catch (ResourceNotFoundException e) {
 			return ResponseEntity.status(404).body("{\"error\": \"" + e.getMessage() + "\"}");
+		} catch (Exception e) {
+			return ResponseEntity.status(500).body("{\"error\": \"Une erreur interne est survenue.\"}");
+		}
+	}
+
+	@PutMapping("/updateMed")
+	public ResponseEntity<?> updateMedecin(@RequestBody MedecinDTO medecinDTO) {
+		try {
+			// Récupérer l'utilisateur connecté
+			User connectedUser = globalVariables.getConnectedUser();
+			if (connectedUser == null) {
+				return ResponseEntity.badRequest().body("User not connected.");
+			}
+
+			// Récupérer le médecin associé à l'utilisateur
+			Medecin medecin = medecinService.getMedecinByUserId(connectedUser.getId());
+			if (medecin == null) {
+				return ResponseEntity.status(404).body("Médecin non trouvé pour cet utilisateur.");
+			}
+            LOGGER.info("Description : {}", medecinDTO);
+			// Mettre à jour le médecin
+			medecinService.updateMedecin(medecin.getId(), medecinDTO);
+
+			return ResponseEntity.ok(new ApiResponse(true, "Médecin mis à jour avec succès."));
+
 		} catch (Exception e) {
 			return ResponseEntity.status(500).body("{\"error\": \"Une erreur interne est survenue.\"}");
 		}
@@ -892,25 +917,6 @@ public class MedecinController {
 
 	}*/
 
-
-	//Recuperation de l'agenda********************************************
-	private int getSlotDurationInMinutes(String slotType) {
-		switch (slotType) {
-			case "MIN15": return 15;
-			case "MIN20": return 20;
-			case "MIN25": return 25;
-			case "MIN30": return 30;
-			case "MIN35": return 35;
-			case "MIN40": return 40;
-			case "MIN45": return 45;
-			case "MIN50": return 50;
-			case "MIN55": return 55;
-			case "MIN60": return 60;
-			default: return 20; // valeur par défaut
-		}
-	}
-
-
 	//AFFICHAGE DE L'AGENDA
 	@GetMapping("/agenda/{idmed}/{startDate}")
 	@JsonSerialize(using = LocalDateSerializer.class)
@@ -1085,14 +1091,11 @@ public class MedecinController {
 
 	//-------FIN
 
-
-
 	@GetMapping("/creneaux/{idmed}/{weeks}/{startDate}")
 	@JsonSerialize(using = LocalDateSerializer.class)
 	public List<AgendaResponse> GetCreneau(@Validated @PathVariable long idmed, @PathVariable long weeks,
 										   @PathVariable(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)  LocalDate startDate)
 			throws Exception {
-
 		try {
 
 			List<AgendaResponse> agendaResponseList = new ArrayList<AgendaResponse>();
@@ -1587,30 +1590,30 @@ public class MedecinController {
 
 		return ResponseEntity.ok(medecinsFiltres);
 	}
-/*@GetMapping("/medNetByVille")
-	public ResponseEntity<List<MedecinDTO>> findMedNetByVille(@RequestParam Long id_ville) throws Exception {
-		// Récupérer l'utilisateur connecté
-		User connectedUser = globalVariables.getConnectedUser();
+	/*@GetMapping("/medNetByVille")
+		public ResponseEntity<List<MedecinDTO>> findMedNetByVille(@RequestParam Long id_ville) throws Exception {
+			// Récupérer l'utilisateur connecté
+			User connectedUser = globalVariables.getConnectedUser();
 
-		// Récupérer le médecin correspondant à l'utilisateur connecté
-		Medecin medecin = medrepository.getMedecinByUserId(connectedUser.getId());
+			// Récupérer le médecin correspondant à l'utilisateur connecté
+			Medecin medecin = medrepository.getMedecinByUserId(connectedUser.getId());
 
-		// Récupérer les followers du réseau de l'utilisateur connecté et les convertir en DTO
-		List<MedecinDTO> followers = medecinNetworkService.getAllMedecinNetwork(medecin.getId()).stream()
-				.map(follower -> mapper.map(follower, MedecinDTO.class))
-				.collect(Collectors.toList());
+			// Récupérer les followers du réseau de l'utilisateur connecté et les convertir en DTO
+			List<MedecinDTO> followers = medecinNetworkService.getAllMedecinNetwork(medecin.getId()).stream()
+					.map(follower -> mapper.map(follower, MedecinDTO.class))
+					.collect(Collectors.toList());
 
-		// Filtrer les followers par ville
-		List<MedecinDTO> medecinsByVille = followers.stream()
-				.filter(follower -> follower.getVille() != null && follower.getVille().getId_ville().equals(id_ville))
-				.collect(Collectors.toList());
+			// Filtrer les followers par ville
+			List<MedecinDTO> medecinsByVille = followers.stream()
+					.filter(follower -> follower.getVille() != null && follower.getVille().getId_ville().equals(id_ville))
+					.collect(Collectors.toList());
 
-		// Enregistrer l'activité
-		//activityServices.createActivity(new Date(), "Read", "Consult Medecin Network by Ville", connectedUser);
-		LOGGER.info("Consult Medecin Network by Ville for Connected Medecin, User ID: " + connectedUser.getId());
+			// Enregistrer l'activité
+			//activityServices.createActivity(new Date(), "Read", "Consult Medecin Network by Ville", connectedUser);
+			LOGGER.info("Consult Medecin Network by Ville for Connected Medecin, User ID: " + connectedUser.getId());
 
-		return ResponseEntity.ok(medecinsByVille);
-	}*/
+			return ResponseEntity.ok(medecinsByVille);
+		}*/
 
 	//BYSPECIALITY
 	//Filtre multispecialité
@@ -1827,5 +1830,132 @@ public class MedecinController {
 	}
 
 
+	@PutMapping("/photo-profil")
+	public ResponseEntity<?> updatePhotoProfil(
+			@RequestParam("image") MultipartFile image) {
+		try {
+			Long userId = globalVariables.getConnectedUser().getId();
+
+			Medecin medecin = medrepository.getMedecinByUserId(userId);
+
+			Medecin updated = medecinService.updatePhotoProfil(medecin.getId(), image);
+			return ResponseEntity.ok(updated);
+		} catch (IOException e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Erreur lors de l'envoi de la photo : " + e.getMessage());
+		} catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Medecin not found: " + e.getMessage());
+        }
+    }
+
+	@PutMapping("/photo-couverture")
+	public ResponseEntity<?> updatePhotoCouverture(
+			@RequestParam("image") MultipartFile image) {
+		try {
+			Long userId = globalVariables.getConnectedUser().getId();
+			Medecin medecin = medrepository.getMedecinByUserId(userId);
+			if (medecin == null) {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Medecin not found");
+			}
+			Medecin updated = medecinService.updatePhotoCouverture(medecin.getId(), image);
+			return ResponseEntity.ok(updated);
+		} catch (IOException e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Erreur lors de l'envoi de la photo : " + e.getMessage());
+		} catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Medecin not found: " + e.getMessage());
+        }
+    }
+
+	@PutMapping("/photo-couverture/byId/{id}")
+	public ResponseEntity<?> updatePhotoCouvertureById(
+			@RequestParam("image") MultipartFile image, @PathVariable Long id) {
+		try {
+			Medecin medecin = medrepository.getMedecinById(id);
+			if (medecin == null) {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Medecin not found");
+			}
+			Medecin updated = medecinService.updatePhotoCouverture(medecin.getId(), image);
+			return ResponseEntity.ok(updated);
+		} catch (IOException e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Erreur lors de l'envoi de la photo : " + e.getMessage());
+		}
+	}
+
+	@PutMapping("/photo-profil/byId/{id}")
+	public ResponseEntity<?> updatePhotoProfilById(
+			@RequestParam("image") MultipartFile image, @PathVariable Long id) {
+		try {
+			Medecin medecin = medrepository.getMedecinById(id);
+			if (medecin == null) {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Medecin not found");
+			}
+			Medecin updated = medecinService.updatePhotoProfil(medecin.getId(), image);
+			return ResponseEntity.ok(updated);
+		} catch (IOException e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Erreur lors de l'envoi de la photo : " + e.getMessage());
+		}
+	}
+
+	@DeleteMapping("/delete/photo-profil/byId/{id}")
+	public ResponseEntity<?> deletePhotoProfil(@PathVariable Long id) {
+		try {
+			Medecin updatedMedecin = medecinService.deletePhotoProfil(id);
+			return ResponseEntity.ok(updatedMedecin);
+		} catch (NoSuchElementException e) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Médecin introuvable.");
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Erreur lors de la suppression de la photo de profil.");
+		}
+	}
+
+	@DeleteMapping("/delete/photo-couverture/byId/{id}")
+	public ResponseEntity<?> deletePhotoCouverture(@PathVariable Long id) {
+		try {
+			Medecin updatedMedecin = medecinService.deletePhotoCouverture(id);
+			return ResponseEntity.ok(updatedMedecin);
+		} catch (NoSuchElementException e) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Médecin introuvable.");
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Erreur lors de la suppression de la photo de couverture.");
+		}
+	}
+
+
+	@DeleteMapping("/delete/photo-couverture")
+	public ResponseEntity<?> deletePhotoCouverture() {
+		try {
+			Long userId = globalVariables.getConnectedUser().getId();
+			Medecin medecin = medrepository.getMedecinByUserId(userId);
+			if (medecin == null) {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Medecin not found");
+			}
+			medecinService.deletePhotoCouverture(medecin.getId());
+			return ResponseEntity.ok("Photo de couverture supprimée avec succès.");
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Erreur lors de la suppression de la photo de couverture : " + e.getMessage());
+		}
+	}
+
+	@DeleteMapping("/delete/photo-profil")
+	public ResponseEntity<?> deletePhotoProfil() {
+		try {
+			Long userId = globalVariables.getConnectedUser().getId();
+			Medecin medecin = medrepository.getMedecinByUserId(userId);
+			if (medecin == null) {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Medecin not found");
+			}
+			medecinService.deletePhotoProfil(medecin.getId());
+			return ResponseEntity.ok("Photo de profil supprimée avec succès.");
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Erreur lors de la suppression de la photo de profil : " + e.getMessage());
+		}
+	}
 
 }

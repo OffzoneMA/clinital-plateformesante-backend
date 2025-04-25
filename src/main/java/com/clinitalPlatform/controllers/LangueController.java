@@ -8,6 +8,7 @@ import com.clinitalPlatform.repository.LangueRepository;
 import com.clinitalPlatform.services.LangueserviceImpl;
 import com.clinitalPlatform.services.MedecinServiceImpl;
 import com.clinitalPlatform.services.interfaces.LangueService;
+import com.clinitalPlatform.util.GlobalVariables;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -32,6 +33,8 @@ public class LangueController {
     private MedecinServiceImpl medecinService;
     @Autowired
     private LangueRepository langueRepository;
+    @Autowired
+    private GlobalVariables globalVariables;
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getLangueById(@PathVariable Long id) {
@@ -109,11 +112,25 @@ public class LangueController {
         }
     }
 
+    @PutMapping("/assign-langues/connected")
+    public ResponseEntity<?> assignLanguesToConnectedMedecin(@RequestBody List<Long> langueIds) {
+        try {
 
+            Long userId = globalVariables.getConnectedUser().getId();
 
+            // Récupérer l'ID du médecin connecté
+            Medecin medecin = medecinService.getMedecinByUserId(userId);
 
+            // Assigner les langues au médecin
+            Medecin updatedMedecin = langueservice.assignLanguesToMedecin(langueIds, medecin.getId());
 
-
+            // Retourner la réponse avec le médecin mis à jour
+            return ResponseEntity.ok(updatedMedecin);
+        } catch (Exception e) {
+            log.error("Error while assigning langues to connected medecin", e);
+            return ResponseEntity.ok(new ApiResponse(false, "Erreur lors de l'attribution des langues au médecin"));
+        }
+    }
 
 
 }

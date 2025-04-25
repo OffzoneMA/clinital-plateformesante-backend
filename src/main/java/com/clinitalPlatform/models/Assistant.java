@@ -1,7 +1,7 @@
 package com.clinitalPlatform.models;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
@@ -14,6 +14,8 @@ import java.util.List;
 @Entity
 @Table(name = "assistants")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Assistant {
 
 	@Id
@@ -35,25 +37,5 @@ public class Assistant {
 	@OneToOne
 	@JoinColumn(name = "user_id", referencedColumnName= "id")
 	private User user;
-
-	public Assistant() {
-		super();
-	}
-
-	public Assistant(@NotBlank @Size(max = 50) @Email String email, @NotNull String telephone,
-                     @NotBlank @Size(max = 120) String password, String nom, String prenom, Date dateNaissance, String adresse,String service, User user)
-			 {
-		super();
-		this.nom = nom;
-		this.prenom = prenom;
-		this.dateNaissance = dateNaissance;
-		this.adresse = adresse;
-		this.service = service;
-		this.user = user;
-	}
-
-	
-
-	
 
 }

@@ -12,11 +12,13 @@ import org.hibernate.annotations.FetchMode;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 @JsonIgnoreProperties({"hibernateLazyInitializer","handler"})
 @Entity
 @Table(name = "cabinet")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Cabinet {
 
 	@Id
@@ -54,9 +56,6 @@ public class Cabinet {
 	//@JsonIgnore
 	@JsonManagedReference
 	private PaymentInfo paymentInfo;
-	public Cabinet() {
-		super();
-	}
 
 	public Cabinet(@NotNull String nom, @NotNull String adresse, @NotNull String code_post,String phoneNumber, @NotNull Ville ville,Medecin creator,Boolean state,@NotNull PaymentInfo paymentInfo
 			) {
@@ -69,7 +68,7 @@ public class Cabinet {
 		this.creator=creator;
 		this.state=state;
 		this.paymentInfo=paymentInfo;
-	
+
 	}
 
 }

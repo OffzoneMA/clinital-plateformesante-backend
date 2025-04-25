@@ -56,4 +56,14 @@ public class LangueserviceImpl implements LangueService {
         langueRepository.delete(langue);
     }
 
+    public Medecin assignLanguesToMedecin(List<Long> langueIds, Long medecinId) {
+        Medecin medecin = medecinRepository.findById(medecinId).orElse(null);
+        if (medecin != null) {
+            List<Langue> langues = langueRepository.findAllById(langueIds);
+            medecin.setLangues(langues);
+            return medecinRepository.save(medecin);
+        }
+        return null;
+    }
+
 }

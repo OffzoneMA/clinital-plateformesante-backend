@@ -20,18 +20,11 @@ public class MedecinImage {
     private String description;
     private String type; // "PROFILE", "CABINET", "DIPLOME", etc.
     private LocalDateTime dateAjout;
-    private boolean isActive;
+    private boolean isActive = true;
 
     @ManyToOne
     @JoinColumn(name = "medecin_id")
     @JsonIgnore
     private Medecin medecin;
-
-    public MedecinImage(String imageUrl, String type, String description, Medecin medecin) {
-        this.imageUrl = imageUrl;
-        this.type = type;
-        this.description = description;
-        this.medecin = medecin;
-    }
 
 }

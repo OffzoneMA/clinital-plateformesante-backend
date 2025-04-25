@@ -1,11 +1,13 @@
 package com.clinitalPlatform.services;
 
 
+import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 
+import com.clinitalPlatform.dto.MedecinDTO;
 import com.clinitalPlatform.enums.MotifConsultationEnum;
 import com.clinitalPlatform.enums.RdvStatutEnum;
 import com.clinitalPlatform.services.interfaces.MedecinScheduleService;
@@ -27,6 +29,7 @@ import com.clinitalPlatform.models.*;
 import com.clinitalPlatform.payload.response.AgendaResponse;
 import com.clinitalPlatform.payload.response.RendezvousResponse;
 import com.clinitalPlatform.repository.*;
+import org.springframework.web.multipart.MultipartFile;
 
 
 import java.time.LocalDateTime;
@@ -69,24 +72,46 @@ public class MedecinServiceImpl implements MedecinService {
     @Autowired
     MotifConsultationRepository motifConsultationRepository;
 
+    @Autowired
+    private CloudinaryService cloudinaryService;
+
 
     private final Logger LOGGER=LoggerFactory.getLogger(getClass());
-@Override
-public Medecin findById(Long id) throws Exception {
+
+    @Override
+        public Medecin findById(Long id) throws Exception {
 
         Medecin med = medecinRepository.findById(id).orElseThrow(() -> new Exception("Medecin not found"));
 
         return clinitalModelMapper.map(med, Medecin.class);
-        }
+    }
 
-@Override
-public Medecin getMedecinByUserId(long id) throws Exception {
+    @Override
+    public Medecin getMedecinByUserId(long id) throws Exception {
 
         Medecin med = medecinRepository.getMedecinByUserId(id);
 
         return clinitalModelMapper.map(med, Medecin.class);
+    }
+
+    public Medecin updateMedecin (Long id , MedecinDTO medecinDTO) {
+        Medecin medecin = medecinRepository.findById(id).orElseThrow(() -> new RuntimeException("Médecin introuvable"));
+        if(medecinDTO.getNom_med() != null && !medecinDTO.getNom_med().isEmpty()) {
+            medecin.setNom_med(medecinDTO.getNom_med());
+        }
+        if(medecinDTO.getPrenom_med() != null && !medecinDTO.getPrenom_med().isEmpty()) {
+            medecin.setPrenom_med(medecinDTO.getPrenom_med());
+        }
+        if(medecinDTO.getContact_urgence_med() != null && !medecinDTO.getContact_urgence_med().isEmpty()) {
+            medecin.setContact_urgence_med(medecinDTO.getContact_urgence_med());
+        }
+        if(medecinDTO.getDescription_med() != null && !medecinDTO.getDescription_med().isEmpty()) {
+            medecin.setDescription_med(medecinDTO.getDescription_med());
         }
 
+        return medecinRepository.save(medecin);
+
+    }
 
     // Creating a creno.
     public AgendaResponse CreateCreno(MedecinSchedule Medsch, AgendaResponse agenda, long idmed, long week,
@@ -252,7 +277,6 @@ public Medecin getMedecinByUserId(long id) throws Exception {
 
     }
 
-
    public List<Medecin> filterMedecinsByLangue(List<Long> medecinIds, List<String> langueNames) {
        // Récupérez les médecins correspondant aux IDs fournis
        List<Medecin> medecins = medecinRepository.findAllById(medecinIds);
@@ -266,8 +290,7 @@ public Medecin getMedecinByUserId(long id) throws Exception {
        return filteredMedecins;
    }
 
-
-//RECHERCHE DE MEDECIN PAR MOTIF
+    //RECHERCHE DE MEDECIN PAR MOTIF
 
     public List<Medecin> getMedecinsByMotif(List<String> libelles, List<Long> medecinIds) {
         // Récupérer les IDs des motifs à partir des libellés
@@ -290,12 +313,7 @@ public Medecin getMedecinByUserId(long id) throws Exception {
         return medecinRepository.findAllById(finalMedecinIds);
     }
 
-
-
-
-
-
-//FILTRE COMBINÉ
+    //FILTRE COMBINÉ
 
    /* public List<Medecin> filterMedecins(List<Long> medecinIds, List<String> langueNames, List<String> libellesMotifs, List<String> availabilityFilters) {
 
@@ -316,8 +334,57 @@ public Medecin getMedecinByUserId(long id) throws Exception {
         return filteredByAvailability;
     }
 */
+    public Medecin updatePhotoProfil(Long idMedecin, MultipartFile file) throws IOException {
+        Medecin medecin = medecinRepository.findById(idMedecin)
+                .orElseThrow(() -> new RuntimeException("Médecin introuvable"));
 
+        //Suppression de l'ancienne image
+        if (medecin.getPhoto_med() != null) {
+            cloudinaryService.deleteImage(medecin.getPhoto_med());
+        }
 
+        //Téléchargement de la nouvelle image
+        String imageUrl = cloudinaryService.uploadImage(file, "medecins/photo_profil");
+        medecin.setPhoto_med(imageUrl);
+        return medecinRepository.save(medecin);
+    }
+
+    public Medecin updatePhotoCouverture(Long idMedecin, MultipartFile file) throws IOException {
+        Medecin medecin = medecinRepository.findById(idMedecin)
+                .orElseThrow(() -> new RuntimeException("Médecin introuvable"));
+
+        //Suppression de l'ancienne image
+        if (medecin.getPhoto_couverture_med() != null) {
+            cloudinaryService.deleteImage(medecin.getPhoto_couverture_med());
+        }
+
+        //Téléchargement de la nouvelle image
+        String imageUrl = cloudinaryService.uploadImage(file, "medecins/photo_couverture");
+        medecin.setPhoto_couverture_med(imageUrl);
+        return medecinRepository.save(medecin);
+    }
+
+    public Medecin deletePhotoProfil(Long idMedecin) throws IOException {
+        Medecin medecin = medecinRepository.findById(idMedecin)
+                .orElseThrow(() -> new RuntimeException("Médecin introuvable"));
+
+        if (medecin.getPhoto_med() != null) {
+            cloudinaryService.deleteImage(medecin.getPhoto_med());
+            medecin.setPhoto_med(null);
+        }
+        return medecinRepository.save(medecin);
+    }
+
+    public Medecin deletePhotoCouverture(Long idMedecin) throws IOException {
+        Medecin medecin = medecinRepository.findById(idMedecin)
+                .orElseThrow(() -> new RuntimeException("Médecin introuvable"));
+
+        if (medecin.getPhoto_couverture_med() != null) {
+            cloudinaryService.deleteImage(medecin.getPhoto_couverture_med());
+            medecin.setPhoto_couverture_med(null);
+        }
+        return medecinRepository.save(medecin);
+    }
 
 }
 

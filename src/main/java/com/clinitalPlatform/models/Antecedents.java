@@ -5,11 +5,13 @@ import java.time.LocalDate;
 import com.clinitalPlatform.enums.AntecedentTypeEnum;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 @Entity
 @Table(name = "anticedents")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Antecedents {
 
     @Id
