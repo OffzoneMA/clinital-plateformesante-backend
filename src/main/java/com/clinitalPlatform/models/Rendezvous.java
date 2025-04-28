@@ -87,23 +87,5 @@ public class Rendezvous {
 		this.cabinet=cabinet;
 	}
 
-
-    public void setMotif(MotifConsultation motifConsultation) {
-		this.motifConsultation= motifConsultation;
-    }
-
-
-
-	public void setISnewPatient(Boolean isnewpatient) {
-		this.iSnewPatient=isnewpatient;
-	}
-
-	public void setIsnewPatient(Boolean isnewPatient) {
-		this.iSnewPatient = isnewPatient;
-	}
-
-	public Boolean getIsnewPatient() {
-		return iSnewPatient;
-	}
 }
 

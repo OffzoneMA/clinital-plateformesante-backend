@@ -424,7 +424,7 @@ public class RendezvousService implements IDao<Rendezvous>  {
 		response.setStatut(rendezvous.getStatut());
 		// Extraire les IDs des objets ModeConsultation et MotifConsultation
 		response.setModeconsultationId(rendezvous.getModeConsultation() != null ? rendezvous.getModeConsultation().getId_mode() : null);
-		response.setIsnewpatient(rendezvous.getIsnewPatient());
+		response.setIsnewpatient(rendezvous.getISnewPatient());
 		response.setCommantaire(rendezvous.getCommantaire());
 		MotifConsultation motifConsultation = rendezvous.getMotifConsultation();
 		response.setMotifId(rendezvous.getMotifConsultation() != null ? rendezvous.getMotifConsultation().getId_motif() : null);
@@ -549,7 +549,7 @@ public class RendezvousService implements IDao<Rendezvous>  {
 		rdv.setStart(rdvDTO.getStart());
 		rdv.setEnd(rdvDTO.getEnd());
 		rdv.setMedecin(medecin);
-		rdv.setMotif(motif);
+		rdv.setMotifConsultation(motif);
 		rdv.setPatient(patient);
 		rdv.setStatut(rdvDTO.getStatut());
 		rdv.setModeConsultation(mode);
