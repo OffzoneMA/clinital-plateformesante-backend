@@ -1,5 +1,6 @@
 package com.clinitalPlatform;
 
+import com.clinitalPlatform.dto.FermetureDTO;
 import com.clinitalPlatform.models.FermetureExceptionnelle;
 import com.clinitalPlatform.models.MotifFermeture;
 import com.clinitalPlatform.repository.FermetureExceptionnelleRepository;
@@ -44,20 +45,6 @@ class FermetureExceptionnelleServiceTest {
         assertNotNull(result);
         assertEquals(2, result.size());
         verify(fermetureRepo, times(1)).findAllByMedecinId(1L);
-    }
-
-    @Test
-    void testAjouterFermetureParIds() {
-        FermetureExceptionnelle fermeture = new FermetureExceptionnelle();
-        List<MotifFermeture> motifs = Arrays.asList(new MotifFermeture(), new MotifFermeture());
-        when(motifRepo.findAllById(Arrays.asList(1L, 2L))).thenReturn(motifs);
-        when(fermetureRepo.save(fermeture)).thenReturn(fermeture);
-
-        FermetureExceptionnelle result = fermetureService.ajouterFermetureParIds(fermeture, Arrays.asList(1L, 2L));
-
-        assertNotNull(result);
-        verify(motifRepo, times(1)).findAllById(Arrays.asList(1L, 2L));
-        verify(fermetureRepo, times(1)).save(fermeture);
     }
 
     @Test

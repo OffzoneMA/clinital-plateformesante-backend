@@ -1,10 +1,7 @@
 package com.clinitalPlatform;
 
 import com.clinitalPlatform.enums.RdvStatutEnum;
-import com.clinitalPlatform.models.Medecin;
-import com.clinitalPlatform.models.Patient;
-import com.clinitalPlatform.models.Rendezvous;
-import com.clinitalPlatform.models.User;
+import com.clinitalPlatform.models.*;
 import com.clinitalPlatform.repository.NotificationRepository;
 import com.clinitalPlatform.repository.RdvRepository;
 import com.clinitalPlatform.services.PushNotificationService;
@@ -31,6 +28,9 @@ class ScheduledNotificationServiceTest {
     @Mock
     private PushNotificationService pushNotificationService;
 
+    @Mock
+    private NotificationRepository notificationRepository;
+
     @InjectMocks
     private ScheduledNotificationService scheduledNotificationService;
 
@@ -47,11 +47,17 @@ class ScheduledNotificationServiceTest {
         patient.setUser(user);
         patient.setId(1L);
 
+        Specialite specialite = new Specialite();
+        specialite.setLibelle("Cardiologie");
+
+
         medecin = new Medecin();
         medecin.setNom_med("Dupont");
         medecin.setPrenom_med("Jean");
+        medecin.setSpecialite(specialite);
 
         rendezvous = new Rendezvous();
+        rendezvous.setId(1L);
         rendezvous.setPatient(patient);
         rendezvous.setMedecin(medecin);
         rendezvous.setStart(LocalDateTime.now().plusHours(12));
@@ -59,17 +65,20 @@ class ScheduledNotificationServiceTest {
 
     @Test
     void testSendAppointmentReminders() {
-        // Simuler un RDV dans moins de 24h
         when(rendezvousRepository.findByStartBetween(any(), any())).thenReturn(List.of(rendezvous));
 
-        // Exécuter la méthode
         scheduledNotificationService.sendAppointmentReminders();
 
-        // Vérifier que la notification est bien envoyée
         verify(pushNotificationService, times(1)).sendAppointmentReminder(
-                eq(1L), anyString() , anyString(), anyString() , LocalDateTime.now() , 1L
+                eq(1L),
+                anyString(),
+                anyString(),
+                anyString(),
+                any(LocalDateTime.class),
+                eq(rendezvous.getId())
         );
     }
+
 
     @Test
     void testNotifyCanceledAppointments() {
@@ -77,12 +86,18 @@ class ScheduledNotificationServiceTest {
         rendezvous.setCanceledAt(LocalDateTime.now());
 
         when(rendezvousRepository.findByStatutAndCanceledAtAfter(eq(RdvStatutEnum.ANNULE), any()))
-                .thenReturn(Arrays.asList(rendezvous));
+                .thenReturn(List.of(rendezvous));
 
         scheduledNotificationService.notifyCanceledAppointments();
 
         verify(pushNotificationService, times(1)).sendAppointmentCancellation(
-                eq(1L), anyString() , anyString() , anyString() , LocalDateTime.now() , 1L
+                eq(1L),
+                anyString(),
+                anyString(),
+                anyString(),
+                any(LocalDateTime.class),
+                eq(rendezvous.getId())
         );
     }
+
 }

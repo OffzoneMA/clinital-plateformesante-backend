@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.clinitalPlatform.enums.CiviliteEnum;
 import com.clinitalPlatform.models.CabinetMedecinsSpace;
+import com.clinitalPlatform.models.ExperienceMedecin;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 
@@ -29,7 +30,7 @@ public class MedecinDTO {
 	
 	private List<DiplomeMedecinDTO> diplome_med;
 	
-	private List<ExperienceMedecinDTO> experience_med;
+	private List<ExperienceMedecin> experience_med;
 
 	private  List<LangueDTO> langues;
 	private List<TarifDTO> tarifs;

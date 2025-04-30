@@ -1,5 +1,6 @@
 package com.clinitalPlatform.models;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -37,7 +38,6 @@ public class Medecin {
 
 	private Date dateNaissance;//new attribut
 
-
 	@ManyToMany
 	@JoinTable(
 			name = "expertises_medecins",
@@ -48,9 +48,11 @@ public class Medecin {
 
 	@OneToMany(mappedBy = "medecin")
 	private List<DiplomeMedecin> diplome_med;
+
 	@Lob
 	@Column(name = "description_med", columnDefinition = "TEXT")
 	private String description_med;
+
 	private String contact_urgence_med;
 	
 	@Enumerated(value = EnumType.STRING)
@@ -92,8 +94,6 @@ public class Medecin {
 	@JsonIgnore
 	private List<Document> Meddoc = new ArrayList<>();
 
-
-
 	// in this we create a Bridge table between Medecin and DossierMedical to link them together
 	@ManyToMany
 	@JoinTable(name = "DossierMedecin",
@@ -102,14 +102,12 @@ public class Medecin {
 	@JsonIgnore
 	private List<DossierMedical> Meddossiers;
 
-
 	// in this we create a Bridge table between Medecin and Cabinet to link them together
 	@OneToMany(mappedBy = "medecin",cascade = CascadeType.ALL,fetch = FetchType.EAGER)
 	//@JsonIgnore
 	private List<CabinetMedecinsSpace> cabinets;
 
 	private Boolean isActive;
-
 
 	/*@OneToMany(cascade = CascadeType.ALL, mappedBy = "follower")
 	@Fetch(FetchMode.JOIN)
@@ -161,6 +159,13 @@ public class Medecin {
 	@JsonIgnore
 	private List<VirementBancaire> virementsBancaires;
 
+	//Métadonnées utiles
+	@Column(name = "created_at")
+	private LocalDateTime createdAt;
+
+	@Column(name = "updated_at")
+	private LocalDateTime updatedAt;
+
 	public void removeCabinet(Cabinet cabinet) {
         for (Iterator<CabinetMedecinsSpace> iterator = cabinets.iterator(); 
 			iterator.hasNext();) {
@@ -208,5 +213,16 @@ public class Medecin {
 			return cabinets.get(0).getCabinet().getId_cabinet();
 		}
 		return null;
+	}
+
+	@PrePersist
+	protected void onCreate() {
+		this.createdAt = LocalDateTime.now();
+		this.updatedAt = LocalDateTime.now();
+	}
+
+	@PreUpdate
+	protected void onUpdate() {
+		this.updatedAt = LocalDateTime.now();
 	}
 }

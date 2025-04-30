@@ -26,6 +26,9 @@ public class Document {
 	private String auteur;
 	private String fichier_doc;
 
+	@Column(name = "date_modif_doc", nullable = true)
+	private Date date_modif_doc;
+
 	@ManyToOne
 	@JoinColumn(name = "patient_id", nullable = false, referencedColumnName = "id", insertable = true, updatable = true)
 	@JsonIgnore
@@ -71,6 +74,16 @@ public class Document {
 		this.fichier_doc = fichier_doc;
 		this.patient = patient;
 		this.dossier = dossier;
+	}
+
+	@PrePersist
+	protected void onCreate() {
+		this.date_ajout_doc = new Date();
+	}
+
+	@PreUpdate
+	protected void onUpdate() {
+		this.date_modif_doc = new Date();
 	}
 
 }

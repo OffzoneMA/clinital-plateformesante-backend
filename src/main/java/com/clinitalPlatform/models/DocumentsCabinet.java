@@ -19,7 +19,7 @@ public class DocumentsCabinet {
     private CabinetDocuemtsEnum type_doc;
     private LocalDate date_ajout_doc;
 	private String fichier_doc;
-
+    private LocalDate date_modif_doc;
     private String nom_fichier;
     
     @ManyToOne(fetch = FetchType.LAZY)
@@ -44,5 +44,16 @@ public class DocumentsCabinet {
         this.fichier_doc=file;
         this.validationState=state;
         this.medecin = medecin;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        this.date_ajout_doc = LocalDate.now();
+        this.date_modif_doc = LocalDate.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.date_modif_doc = LocalDate.now();
     }
 }

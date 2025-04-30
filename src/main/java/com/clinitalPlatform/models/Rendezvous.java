@@ -37,7 +37,6 @@ public class Rendezvous {
 	private Boolean iSnewPatient;
 	private String Commantaire;
 	private String LinkVideoCall;
-	
 
 	@ManyToOne
 	@JoinColumn(name = "medecin", nullable = false, referencedColumnName = "id", insertable = true, updatable = true)
@@ -52,7 +51,6 @@ public class Rendezvous {
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	private List<Document> documents;
 
-
 	@OneToOne(cascade = CascadeType.ALL)
 
 	@JoinColumn(name = "id_mode", referencedColumnName= "id_mode")
@@ -65,6 +63,15 @@ public class Rendezvous {
 	@ManyToOne
 	@JoinColumn(name = "cabinet", nullable = true, referencedColumnName = "id_cabinet", insertable = true, updatable = true)
 	private Cabinet cabinet;
+
+	//Metadonnees utiles
+	@Column(name = "created_at")
+	private LocalDateTime createdAt;
+
+	@Column(name = "updated_at")
+	private LocalDateTime updatedAt;
+
+
 	public Rendezvous() {
 		super();
 	}
@@ -85,6 +92,17 @@ public class Rendezvous {
 		this.Commantaire=Commantaire;
 		this.LinkVideoCall=LinkVideoCall;
 		this.cabinet=cabinet;
+	}
+
+	@PrePersist
+	protected void onCreate() {
+		this.createdAt = LocalDateTime.now();
+		this.updatedAt = LocalDateTime.now();
+	}
+
+	@PreUpdate
+	protected void onUpdate() {
+		this.updatedAt = LocalDateTime.now();
 	}
 
 }

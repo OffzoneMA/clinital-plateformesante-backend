@@ -1,5 +1,6 @@
 package com.clinitalPlatform.models;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -36,6 +37,13 @@ public class Secretaire{
 	@JoinColumn(name = "user_id", referencedColumnName= "id")
 	private User user;
 
+	//Metadata
+	@Column(name = "created_at")
+	private LocalDateTime created_at;
+
+	@Column(name = "updated_at")
+	private LocalDateTime updated_at;
+
 	public Secretaire() {
 		super();
 	}
@@ -53,7 +61,14 @@ public class Secretaire{
 	}
 
 	
+	@PrePersist
+	protected void onCreate() {
+		this.created_at = LocalDateTime.now();
+		this.updated_at = LocalDateTime.now();
+	}
 
-	
-
+	@PreUpdate
+	protected void onUpdate() {
+		this.updated_at = LocalDateTime.now();
+	}
 }

@@ -1,5 +1,6 @@
 package com.clinitalPlatform.models;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -75,6 +76,12 @@ public class Patient {
 	@JsonIgnore
 	private List<Rendezvous> rendezvous;
 
+	// Metadonnees
+	@Column(name = "created_at")
+	private LocalDateTime createdAt;
+
+	@Column(name = "updated_at")
+	private LocalDateTime updatedAt;
 
 	public Patient() {
 		super();
@@ -97,5 +104,16 @@ public class Patient {
 		this.patient_type = patient_type;
 		this.user = user;
 		this.rendezvous = lesrdvs;
+	}
+
+	@PrePersist
+	protected void onCreate() {
+		this.createdAt = LocalDateTime.now();
+		this.updatedAt = LocalDateTime.now();
+	}
+
+	@PreUpdate
+	protected void onUpdate() {
+		this.updatedAt = LocalDateTime.now();
 	}
 }

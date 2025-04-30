@@ -1,5 +1,6 @@
 package com.clinitalPlatform.models;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.clinitalPlatform.enums.PatientTypeEnum;
@@ -56,6 +57,11 @@ public class DossierMedical {
       mappedBy = "Meddossiers")
   	@JsonIgnore
   	private List<Medecin> medecins;
+
+	//Metadonnees
+	private LocalDateTime createdAt;
+
+	private LocalDateTime updatedAt;
 	
 	
 	public DossierMedical() {
@@ -79,4 +85,14 @@ public class DossierMedical {
 		
 	}
 
+	@PrePersist
+	protected void onCreate() {
+		this.createdAt = LocalDateTime.now();
+		this.updatedAt = LocalDateTime.now();
+	}
+
+	@PreUpdate
+	protected void onUpdate() {
+		this.updatedAt = LocalDateTime.now();
+	}
 }

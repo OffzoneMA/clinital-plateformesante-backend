@@ -27,6 +27,13 @@ public class MedecinNetwork {
 
     private String Comment;
 
+    //Metadata
+    @Column(name = "created_at")
+    private String created_at;
+
+    @Column(name = "updated_at")
+    private String updated_at;
+
     public MedecinNetwork() {
         super();
     }
@@ -37,38 +44,6 @@ public class MedecinNetwork {
         this.medecin = medecin;
         this.follower = follower;
         this.Comment = comment;
-    }
-
-    public MedecinFollowersID getId() {
-        return id;
-    }
-
-    public void setId(MedecinFollowersID id) {
-        this.id = id;
-    }
-
-    public Medecin getMedecin() {
-        return medecin;
-    }
-
-    public void setMedecin(Medecin medecin) {
-        this.medecin = medecin;
-    }
-
-    public Medecin getFollower() {
-        return follower;
-    }
-
-    public void setFollower(Medecin follower) {
-        this.follower = follower;
-    }
-
-    public String getComment() {
-        return Comment;
-    }
-
-    public void setComment(String comment) {
-        Comment = comment;
     }
 
     @Override
@@ -89,5 +64,16 @@ public class MedecinNetwork {
         result = 31 * result + (medecin != null ? medecin.hashCode() : 0);
         result = 31 * result + (follower != null ? follower.hashCode() : 0);
         return result;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        this.created_at = String.valueOf(System.currentTimeMillis());
+        this.updated_at = String.valueOf(System.currentTimeMillis());
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updated_at = String.valueOf(System.currentTimeMillis());
     }
 }

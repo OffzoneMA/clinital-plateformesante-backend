@@ -11,11 +11,10 @@ public class DiplomeMedecinDTO {
     
     private String nom_diplome;
 
-    
-    private Date date_debut;
+    private String annee_obtention;
 
-    
-    private Date date_fin;
+    //private Date date_debut;
+    //private Date date_fin;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private MedecinDTO medecinDTO;

@@ -19,12 +19,25 @@ public class MedecinImage {
     private String imageUrl;
     private String description;
     private String type; // "PROFILE", "CABINET", "DIPLOME", etc.
-    private LocalDateTime dateAjout;
+    private LocalDateTime created_at;
+    private LocalDateTime updated_at;
+
     private boolean isActive = true;
 
     @ManyToOne
     @JoinColumn(name = "medecin_id")
     @JsonIgnore
     private Medecin medecin;
+
+    @PrePersist
+    protected void onCreate() {
+        this.created_at = LocalDateTime.now();
+        this.updated_at = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updated_at = LocalDateTime.now();
+    }
 
 }

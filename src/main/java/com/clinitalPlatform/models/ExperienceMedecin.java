@@ -4,15 +4,16 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import jakarta.persistence.*;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "experience_medecin")
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class ExperienceMedecin {
 
     @Id
@@ -21,25 +22,37 @@ public class ExperienceMedecin {
 
     private String nom_experience;
 
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
-    private Date date_debut;
+    private String etablissement;
 
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
-    private Date date_fin;
+    private String annee_debut;
+
+    private String annee_fin;
+
+    private boolean post_actuel = false;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    private Ville emplacement;
 
     @ManyToOne
     @JoinColumn(name = "medecin_id")
     @JsonIgnore
     private Medecin medecin;
 
-    public ExperienceMedecin() {
+    //Metadonnées utiles
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
-    public ExperienceMedecin(Long id, String nom_experience, Date date_debut, Date date_fin, Medecin medecin) {
-        this.id = id;
-        this.nom_experience = nom_experience;
-        this.date_debut = date_debut;
-        this.date_fin = date_fin;
-        this.medecin = medecin;
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 }

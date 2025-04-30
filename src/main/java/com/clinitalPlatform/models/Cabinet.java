@@ -1,5 +1,6 @@
 package com.clinitalPlatform.models;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import javax.validation.constraints.NotNull;
@@ -57,8 +58,14 @@ public class Cabinet {
 	@JsonManagedReference
 	private PaymentInfo paymentInfo;
 
+	//Métadonnées utiles
+	@Column(name = "created_at")
+	private LocalDateTime createdAt;
+	@Column(name = "updated_at")
+	private LocalDateTime updatedAt;
+
 	public Cabinet(@NotNull String nom, @NotNull String adresse, @NotNull String code_post,String phoneNumber, @NotNull Ville ville,Medecin creator,Boolean state,@NotNull PaymentInfo paymentInfo
-			) {
+	) {
 		super();
 		this.nom = nom;
 		this.adresse = adresse;
@@ -69,6 +76,17 @@ public class Cabinet {
 		this.state=state;
 		this.paymentInfo=paymentInfo;
 
+	}
+
+	@PrePersist
+	protected void onCreate() {
+		this.createdAt = LocalDateTime.now();
+		this.updatedAt = LocalDateTime.now();
+	}
+
+	@PreUpdate
+	protected void onUpdate() {
+		this.updatedAt = LocalDateTime.now();
 	}
 
 }

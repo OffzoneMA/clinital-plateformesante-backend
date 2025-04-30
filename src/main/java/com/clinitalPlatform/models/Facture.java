@@ -2,11 +2,17 @@ package com.clinitalPlatform.models;
 
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "factures")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Facture {
 	
 	@Id
@@ -25,24 +31,11 @@ public class Facture {
 	@JoinColumn(name = "moyen", nullable = false, referencedColumnName = "id_mp", insertable = true, updatable = true)
 	private MoyenPaiement moyenPaiement;
 
-	public Facture() {
-		super();
-	}
+	//Metadonnees utiles
+	@Column(name = "created_at")
+	private LocalDateTime createdAt;
 
-	public Facture(String num_facture, float montant, String libelle, boolean etat, Consultation consultation,
-			MoyenPaiement moyenPaiement) {
-		super();
-		this.num_facture = num_facture;
-		this.montant = montant;
-		this.libelle = libelle;
-		this.etat = etat;
-		this.consultation = consultation;
-		this.moyenPaiement = moyenPaiement;
-	}
-
-	
-	
-	
-	
+	@Column(name = "updated_at")
+	private LocalDateTime updatedAt;
 
 }

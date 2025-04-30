@@ -1,6 +1,7 @@
 package com.clinitalPlatform.models;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -27,6 +28,13 @@ public class Ordonnance{
     @JoinColumn(name = "rdv_id", referencedColumnName= "id")
     private Rendezvous rendezvous;
 
+    //Metadonnees utiles
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     public Ordonnance(){
         super();
     }
@@ -36,6 +44,17 @@ public class Ordonnance{
         this.medecin=med;
         this.dossier=dossier;
         this.rendezvous=rendezvous;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 
 }

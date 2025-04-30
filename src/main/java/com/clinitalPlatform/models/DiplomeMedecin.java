@@ -8,6 +8,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Entity
@@ -23,14 +24,35 @@ public class DiplomeMedecin {
 
     private String nom_diplome;
 
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
-    private Date date_debut;
+    private String annee_obtention;
 
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
-    private Date date_fin;
+    //@DateTimeFormat(pattern = "yyyy-MM-dd")
+    //private Date date_debut;
+
+    //@DateTimeFormat(pattern = "yyyy-MM-dd")
+    //private Date date_fin;
+
+    // Métadonnées utiles
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @ManyToOne
     @JoinColumn(name = "medecin_id")
     @JsonIgnore
     private Medecin medecin;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+    
 }
