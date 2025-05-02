@@ -1,5 +1,6 @@
 package com.clinitalPlatform.services;
 
+import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.models.Tarif;
 import com.clinitalPlatform.payload.request.TarifRequest;
 import com.clinitalPlatform.repository.TarifRepository;
@@ -31,12 +32,13 @@ public class TarifServiceImpl implements TartifService {
         return tarifRepository.findByMedecinId(medecinId);
     }
 
-    public Tarif save(TarifRequest tarifRequest) {
+    public Tarif save(TarifRequest tarifRequest , Medecin medecin) {
 
         Tarif tarif = new Tarif();
         tarif.setDescription(tarifRequest.getDescription());
         tarif.setPrice(tarifRequest.getPrice());
-        tarif.setMedecin(tarifRequest.getMedecin());
+        tarif.setMedecin(medecin);
+        tarif.setActive(tarifRequest.getActive());
         return tarifRepository.save(tarif);
     }
 
@@ -44,13 +46,14 @@ public class TarifServiceImpl implements TartifService {
         tarifRepository.deleteById(tarifId);
     }
 
-    public Tarif updateTarif(Long tarifId, TarifRequest updatedTarifRequest) {
+    public Tarif updateTarif(Long tarifId, TarifRequest updatedTarifRequest , Medecin medecin) {
         Optional<Tarif> existingTarif = tarifRepository.findById(tarifId);
         if (existingTarif.isPresent()) {
             Tarif tarif = existingTarif.get();
             tarif.setDescription(updatedTarifRequest.getDescription());
             tarif.setPrice(updatedTarifRequest.getPrice());
-            tarif.setMedecin(updatedTarifRequest.getMedecin());
+            tarif.setMedecin(medecin);
+            tarif.setActive(updatedTarifRequest.getActive());
             return tarifRepository.save(tarif);
         } else {
 

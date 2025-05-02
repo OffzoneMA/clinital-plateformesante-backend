@@ -8,5 +8,5 @@ public class TarifRequest {
     private Long id;
     private String description;
     private double price;
-    private Medecin medecin;
+    private Boolean active = true;
 }

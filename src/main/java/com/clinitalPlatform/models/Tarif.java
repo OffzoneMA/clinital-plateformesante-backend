@@ -13,6 +13,10 @@ public class Tarif {
    private Long id;
    private String description;
    private double price;
+
+   private boolean active = true;
+
+
     @ManyToOne
     @JoinColumn(name = "medecin_id", referencedColumnName = "id")
     @JsonIgnore
@@ -20,12 +24,5 @@ public class Tarif {
 
     public Tarif() {
         super();
-    }
-
-    public Tarif(Long id, String descprtion, double price, Medecin medecin) {
-        this.id = id;
-        description = descprtion;
-        this.price = price;
-        this.medecin = medecin;
     }
 }

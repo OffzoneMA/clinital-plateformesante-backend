@@ -7,6 +7,7 @@ import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.models.MedecinSchedule;
 import com.clinitalPlatform.payload.request.FilterRequest;
 import com.clinitalPlatform.payload.request.MedecinMultiScheduleRequest;
+import com.clinitalPlatform.payload.request.MedecinScheduleConfigRequest;
 import com.clinitalPlatform.payload.request.MedecinScheduleRequest;
 import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.repository.MedecinScheduleRepository;
@@ -98,6 +99,22 @@ public class MedecinScheduleController {
     public ResponseEntity<?> updateMultiSchedule(@Valid @RequestBody MedecinMultiScheduleRequest request) {
         try {
             List<MedecinSchedule> updated = medecinScheduleService.updateOrDuplicateSchedule(request);
+            return ResponseEntity.ok(Map.of(
+                    "message", "Mise à jour effectuée avec succès.",
+                    "updatedSchedules", updated
+            ));
+        } catch (BadRequestException | NotFoundException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Erreur serveur interne."));
+        }
+    }
+
+    @PutMapping("/multi-update-config")
+    public ResponseEntity<?> updateMultiScheduleConfig(@Valid @RequestBody List<MedecinScheduleConfigRequest> request) {
+        try {
+            Long userId = globalVariables.getConnectedUser().getId();
+            List<MedecinSchedule> updated = medecinScheduleService.updateMultipliScheduleConfig(request , userId);
             return ResponseEntity.ok(Map.of(
                     "message", "Mise à jour effectuée avec succès.",
                     "updatedSchedules", updated

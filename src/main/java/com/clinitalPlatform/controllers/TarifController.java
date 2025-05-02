@@ -1,9 +1,12 @@
 package com.clinitalPlatform.controllers;
 
+import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.models.Tarif;
 import com.clinitalPlatform.payload.request.TarifRequest;
 import com.clinitalPlatform.payload.response.ApiResponse;
+import com.clinitalPlatform.services.MedecinServiceImpl;
 import com.clinitalPlatform.services.TarifServiceImpl;
+import com.clinitalPlatform.util.GlobalVariables;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,11 +20,22 @@ import org.springframework.web.bind.annotation.*;
 public class TarifController {
     @Autowired
     private TarifServiceImpl tarifService;
+    @Autowired
+    private GlobalVariables globalVariables;
+
+    @Autowired
+    MedecinServiceImpl medecinService;
 
     @PostMapping("/add")
-    public ResponseEntity<Tarif> addTarif(@RequestBody TarifRequest tarifRequest) {
+    public ResponseEntity<?> addTarif(@RequestBody TarifRequest tarifRequest) {
         try {
-            Tarif newTarif = tarifService.save(tarifRequest);
+            Long userId = globalVariables.getConnectedUser().getId();
+            Medecin medecin = medecinService.getMedecinByUserId(userId);
+            if (medecin == null) {
+                return ResponseEntity.status(404).body("Médecin non trouvé");
+            }
+
+            Tarif newTarif = tarifService.save(tarifRequest , medecin);
             return ResponseEntity.ok(newTarif);
         } catch (Exception e) {
             log.error("Error while adding tarif", e);
@@ -29,10 +43,41 @@ public class TarifController {
         }
     }
 
-    @PutMapping("/update/{tarifId}")
-    public ResponseEntity<Tarif> updateTarif(@PathVariable Long tarifId, @RequestBody TarifRequest updatedTarifRequest) {
+    @PostMapping("/add/connected")
+    public ResponseEntity<?> addTarifForConnectedMedecin(@RequestBody TarifRequest tarifRequest) {
         try {
-            Tarif updated = tarifService.updateTarif(tarifId, updatedTarifRequest);
+            log.info("Adding tarif for connected medecin" + tarifRequest);
+            Long userId = globalVariables.getConnectedUser().getId();
+            Medecin medecin = medecinService.getMedecinByUserId(userId);
+
+            if (medecin == null) {
+                return ResponseEntity.status(404).body("Médecin non trouvé");
+            }
+
+            Tarif newTarif = tarifService.save(tarifRequest , medecin);
+            return ResponseEntity.ok(newTarif);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Erreur : " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/update/{tarifId}")
+    public ResponseEntity<?> updateTarif(@PathVariable Long tarifId, @RequestBody TarifRequest updatedTarifRequest) {
+        try {
+            Long userId = globalVariables.getConnectedUser().getId();
+            Medecin medecin = medecinService.getMedecinByUserId(userId);
+            if (medecin == null) {
+                return ResponseEntity.status(404).body("Médecin non trouvé");
+            }
+            Tarif existingTarif = tarifService.findById(tarifId);
+            if (existingTarif == null) {
+                return ResponseEntity.status(404).body("Tarif non trouvé");
+            }
+            if (!existingTarif.getMedecin().getId().equals(medecin.getId())) {
+                return ResponseEntity.status(403).body("Vous n'êtes pas autorisé à modifier ce tarif");
+            }
+            Tarif updated = tarifService.updateTarif(tarifId, updatedTarifRequest , medecin);
             if (updated != null) {
                 return ResponseEntity.ok(updated);
             } else {
@@ -56,8 +101,6 @@ public class TarifController {
         }
     }
 
-
-
     @DeleteMapping("/delete/{tarifId}")
     public ResponseEntity<?> deleteTarif(@PathVariable Long tarifId) {
         try {
@@ -69,5 +112,39 @@ public class TarifController {
         }
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllTarifs() {
+        try {
+            return ResponseEntity.ok(tarifService.getAllTarifs());
+        } catch (Exception e) {
+            log.error("Error while fetching all tarifs", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/byMedecin/{medecinId}")
+    public ResponseEntity<?> getTarifsByMedecinId(@PathVariable Long medecinId) {
+        try {
+            return ResponseEntity.ok(tarifService.getTarifsByMedecinId(medecinId));
+        } catch (Exception e) {
+            log.error("Error while fetching tarifs for medecin ID: {}", medecinId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/byConnectedMedecin")
+    public ResponseEntity<?> getTarifsByConnectedMedecin() {
+        try {
+            Long userId = globalVariables.getConnectedUser().getId();
+            Medecin medecin = medecinService.getMedecinByUserId(userId);
+            if (medecin == null) {
+                return ResponseEntity.status(404).body("Médecin non trouvé");
+            }
+            return ResponseEntity.ok(tarifService.getTarifsByMedecinId(medecin.getId()));
+        } catch (Exception e) {
+            log.error("Error while fetching tarifs for connected medecin", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 
 }

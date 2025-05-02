@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface TarifRepository extends JpaRepository<Tarif,Long> {
     List<Tarif> findByMedecinId(Long medecinId);
+
+    List<Tarif> findByMedecinIdAndActiveTrue(Long medecinId);
 }

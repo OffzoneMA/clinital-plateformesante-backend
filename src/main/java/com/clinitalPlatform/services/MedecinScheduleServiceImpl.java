@@ -4,6 +4,7 @@ import com.clinitalPlatform.exception.BadRequestException;
 import com.clinitalPlatform.exception.ConflictException;
 import com.clinitalPlatform.models.*;
 import com.clinitalPlatform.payload.request.MedecinMultiScheduleRequest;
+import com.clinitalPlatform.payload.request.MedecinScheduleConfigRequest;
 import com.clinitalPlatform.payload.request.MedecinScheduleRequest;
 import com.clinitalPlatform.repository.CabinetRepository;
 import com.clinitalPlatform.repository.MedecinScheduleRepository;
@@ -191,6 +192,56 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
                         globalVariables.getConnectedUser());
                 LOGGER.info("Create New Schedule ID:" + schedule.getId() +
                         ", UserID:" + (globalVariables.getConnectedUser() instanceof User ?
+                        globalVariables.getConnectedUser().getId() : ""));
+            }
+        }
+
+        return createdSchedules;
+    }
+
+    public List<MedecinSchedule> updateMultipliScheduleConfig(List<MedecinScheduleConfigRequest> requests , Long userId) throws Exception {
+        Medecin medecin = medecinservices.getMedecinByUserId(userId);
+        Cabinet cabinet = cabinetrepo.findById(medecin.getFirstCabinetId())
+                .orElseThrow(() -> new Exception("No Matching Cabinet found"));
+
+        List<MedecinSchedule> createdSchedules = new ArrayList<>();
+
+        // Process each available day
+        for (MedecinScheduleConfigRequest request : requests) {
+            // Process each time slot for this day
+            if(request.getId() != null && request.getId() != 0) {
+                //Update existing schedule
+                MedecinSchedule existingSchedule = medecinScheduleRepository.findById(request.getId())
+                        .orElseThrow(() -> new NotFoundException("Aucun planning trouvé avec cet ID."));
+
+                existingSchedule.setAvailabilityStart(request.getAvailabilityStart());
+                existingSchedule.setAvailabilityEnd(request.getAvailabilityEnd());
+
+                medecinScheduleRepository.save(existingSchedule);
+                createdSchedules.add(existingSchedule);
+            }
+            else {
+                // Create new schedule
+                MedecinSchedule schedule = new MedecinSchedule();
+                schedule.setDay(DayOfWeek.valueOf(request.getDay()));
+                schedule.setAvailabilityStart(request.getAvailabilityStart());
+                schedule.setAvailabilityEnd(request.getAvailabilityEnd());
+                schedule.setModeconsultation(request.getModeconsultation());
+                schedule.setMotifConsultation(request.getMotifconsultation());
+                schedule.setPeriod(request.getPeriod());
+                schedule.setMedecin(medecin);
+                schedule.setCabinet(cabinet);
+                schedule.setIsnewpatient(request.getAllowNewPatients());
+                schedule.setIsFollowUpPatients(request.getAllowFollowUpPatients());
+
+                medecinScheduleRepository.save(schedule);
+                createdSchedules.add(schedule);
+
+                activityServices.createActivity(new Date(), "Add", "Create New Schedule ID :" + schedule.getId(),
+                        globalVariables.getConnectedUser());
+
+                LOGGER.info("Create New Schedule ID:" + schedule.getId() +
+                        ", UserID:" + (globalVariables.getConnectedUser() != null ?
                         globalVariables.getConnectedUser().getId() : ""));
             }
         }
