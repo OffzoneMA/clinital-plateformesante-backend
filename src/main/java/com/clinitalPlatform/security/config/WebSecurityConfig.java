@@ -98,7 +98,7 @@ public class WebSecurityConfig {
                 "/api/specialites_recherche/**",
                 "/api/langues/**",
                 "/api/tarifmed/**",
-               "/api/medecinSchedule/fromCreno/**",
+                "/api/medecinSchedule/fromCreno/**",
                 "/api/rdv/rdvs/patient",
                 "/api/rdv/patient/rdvbyday",
                 "/api/cabinet/medecin/**",
@@ -130,7 +130,7 @@ public class WebSecurityConfig {
                 "/api/rdv/patient/**","/api/rdv/today/**","/api/rdv/med/**", "/api/rdv/rdvs/medecin","/api/users/**", "/api/rdv/**",
                 "/api/medecinSchedule/fromCreno/**", "/api/documents-cabinet/**",
                 "/api/rdv/rdvs/patient","/api/rdv/patient/rdvbyday", "/api/med/equipe","api/med/getAllPatients", "/api/subscriptions/**",
-                "/api/fermetures/**" , "/api/diplome/**" , "/api/experiences/**"
+                "/api/fermetures/**" , "/api/diplome/**" , "/api/experiences/**" , "/api/antecedents/**" , "/api/observations/**"
         };
 
 

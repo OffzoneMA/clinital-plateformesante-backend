@@ -76,18 +76,14 @@ public class DocumentController {
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     Iterable<DocumentResponse> documents() throws Exception {
-
-
         Optional<Patient> patient = patientRepo.findByUserIdAndPatientType(globalVariables.getConnectedUser().getId());
-
-
         // Verify if the list of patient is empty
         if (!patient.isPresent()) {
             return Collections.emptyList();
         } else {
 
             activityServices.createActivity(new Date(), "Read", "Consulting all Documents", globalVariables.getConnectedUser());
-            LOGGER.info("Consulting All documents By User ID : " + (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
+            LOGGER.info("Consulting All documents By User ID : {}", globalVariables.getConnectedUser() != null ? globalVariables.getConnectedUser().getId() : "");
             return docrepository.getMyDocs(globalVariables.getConnectedUser().getId())
                     .stream().map(document -> mapper.map(document, DocumentResponse.class)).collect(Collectors.toList());
         }
@@ -268,8 +264,6 @@ public class DocumentController {
         }
     }
 
-
-
     // Returning a list of documents by Rendez-vous id.
     @GetMapping("/docByIdRdv")
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
@@ -296,7 +290,7 @@ public class DocumentController {
 
     // Returning a list of documents by patient id.
     @GetMapping("/allDocsByPatientId/{id}")
-    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_PATIENT' , 'ROLE_MEDECIN', 'ROLE_ADMIN')")
     public ResponseEntity<?> findAllDocsByPatientId(@PathVariable("id") long id) {
         try {
             // Log la requête
@@ -347,7 +341,7 @@ public class DocumentController {
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     Iterable<TypeDocumentResponse> getTypeDocuments() throws Exception {
         activityServices.createActivity(new Date(),"Read","Consulting All Type documents",globalVariables.getConnectedUser());
-        LOGGER.info("Consulting All Types documents By User ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+        LOGGER.info("Consulting All Types documents By User ID : {}", globalVariables.getConnectedUser() != null ? globalVariables.getConnectedUser().getId() : "");
         return typeDocumentRepo.findAll().stream().map(typeDoc -> mapper.map(typeDoc, TypeDocumentResponse.class))
                 .collect(Collectors.toList());
     }

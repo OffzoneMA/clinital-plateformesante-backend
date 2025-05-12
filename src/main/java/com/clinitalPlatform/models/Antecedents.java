@@ -21,7 +21,8 @@ public class Antecedents {
 
     private AntecedentTypeEnum type;
 
-    private String descreption;
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
     private LocalDate date;
 

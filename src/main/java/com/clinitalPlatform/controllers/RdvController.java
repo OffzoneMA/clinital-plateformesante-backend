@@ -236,10 +236,6 @@ public class RdvController {
 		}
 	}
 
-
-
-
-
 	/*@GetMapping("patient/rdvById/{id}")
 	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
 	public ResponseEntity<?> getRdvByIdBypatient(@PathVariable Long id) throws Exception {
@@ -285,12 +281,39 @@ public class RdvController {
 				.collect(Collectors.toList());
 	}
 
+	@GetMapping("/patient/rdvbypatient/{id}")
+	public ResponseEntity<?> findRdvByPatient(@PathVariable Long id) throws Exception {
+		try {
+			Optional<Patient> pat = patientService.findById(id);
+			Patient patient = null;
+			if (pat.isPresent()) {
+				activityServices.createActivity(new Date(), "Read", "Consulting rdv by Patient ID : " + id,
+						globalVariables.getConnectedUser());
+				patient = pat.get();
+			}
+
+			if (patient != null) {
+                LOGGER.info("Consulting Rdv  by Patient ID : {}, UserID : {}", id, globalVariables.getConnectedUser().getId());
+				List<Rendezvous> rendezvousList = rdvrepository.findAllRdvByPatient(patient.getId());
+
+				activityServices.createActivity(new Date(), "Read", "Consulting rdv by Patient ID : " + id,
+						globalVariables.getConnectedUser());
+				return ResponseEntity.ok(rendezvousList);
+			} else {
+                LOGGER.warn("No patient found with ID: {}", id);
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse(false, "Patient not found"));
+			}
+		} catch (Exception e) {
+			LOGGER.error("Error fetching RDV by Patient ID", e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+		}
+	}
+
 
 	// Get RDV By patient Name : %OK% getRdvByNomPatientByMedecin
 	@GetMapping("patient/rdvByNomPatient/{nompat}")
 	@ResponseBody
 	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
-
 	public List<Rendezvous> findRdvByNomPatient(@PathVariable(value = "nompat") @NotNull String nomPatient) throws Exception {
 		// UserDetailsImpl userDetails = (UserDetailsImpl)
 		// SecurityContextHolder.getContext().getAuthentication()
@@ -394,7 +417,6 @@ public class RdvController {
 			throw new Exception(e.getMessage());
 		}}
 
-
     // DELETE AN RDV By Medecin : %ok%
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
     @DeleteMapping("/patient/delete/{id}")
@@ -480,7 +502,6 @@ public class RdvController {
 	 * }
 	 */
 	// cancel RDV for connected Medecin : %OK% les autres status.
-
 
 	// cancel Rdv For connected Patient : %OK%
 	@PutMapping("/patient/cancelRdv/{id}")
@@ -582,7 +603,6 @@ public class RdvController {
 		return rdvpatient;
 	}
 	// Get Rdv For connected Patient : %OK%
-
 
 	// RDV FOR Patient BY WEEK :
 	@GetMapping("/patient/rdvbyweek/{week}")
@@ -705,7 +725,6 @@ public class RdvController {
 	}
 
 	// Change start date of a RDV.
-
 	@PostMapping("/MoveRdv/{id}")
 	@ResponseBody
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
