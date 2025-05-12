@@ -16,7 +16,7 @@ import org.springframework.stereotype.Repository;
 public interface PatientRepository extends JpaRepository<Patient, Long> {
   
 	@Query("from Patient p where p.id = ?1")
-	public Patient findPatientByAccount(Long userID) throws Exception;
+    Patient findPatientByAccount(Long userID) throws Exception;
 
 	@Query(value = "SELECT p.* FROM patients p WHERE p.user_id=?1 AND p.id=?2",nativeQuery = true)
 	Optional<Patient> getPatientByUserId(long id,long idpatient);

@@ -80,10 +80,6 @@ public class RendezvousService implements IDao<Rendezvous>  {
 		rdvrepo.save(o);
 	}
 
-
-
-
-
 	@Override
 	public void delete(Rendezvous o) {
 		rdvrepo.delete(o);
@@ -243,8 +239,6 @@ public class RendezvousService implements IDao<Rendezvous>  {
 
 	}
 
-
-
 	//RDV BY DATE (DAR,WEEK,MONTH,YEAR) For A DOCTOR :
 	//Get Rdv By Day :
 	public List<Rendezvous> getRdvMedByDay(@Valid long day,long id){
@@ -291,6 +285,13 @@ public class RendezvousService implements IDao<Rendezvous>  {
 	//RDV by Id User and Patient ID :
 	public List<Rendezvous> findRdvByIdUserandPatient(long iduser,long idpatient){
 		return rdvrepo.findRdvByIduserandPatient(iduser, idpatient)
+				.stream().map(pat->mapper.map(pat, Rendezvous.class))
+				.collect(Collectors.toList());
+
+	}
+
+	public List<Rendezvous> findRvdByPatientId(long idpatient){
+		return rdvrepo.getRdvByIdPatient(idpatient)
 				.stream().map(pat->mapper.map(pat, Rendezvous.class))
 				.collect(Collectors.toList());
 

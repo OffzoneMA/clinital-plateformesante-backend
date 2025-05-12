@@ -1,14 +1,15 @@
 package com.clinitalPlatform.services;
 
 import com.clinitalPlatform.dao.IDao;
-import com.clinitalPlatform.models.DossierMedical;
-import com.clinitalPlatform.models.Medecin;
-import com.clinitalPlatform.models.Patient;
-import com.clinitalPlatform.models.User;
+import com.clinitalPlatform.dto.DossierMedicalDTO;
+import com.clinitalPlatform.dto.PatientDTO;
+import com.clinitalPlatform.enums.RdvStatutEnum;
+import com.clinitalPlatform.models.*;
 import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.repository.*;
 import com.clinitalPlatform.util.ClinitalModelMapper;
 import com.clinitalPlatform.util.GlobalVariables;
+import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -196,7 +198,45 @@ public class PatientService implements IDao<Patient> {
 
 	}
 
+	public DossierMedical getDossierMedicalByPatientId(Long patientId) {
+		Patient patient = patientRepository.findById(patientId)
+				.orElseThrow(() -> new EntityNotFoundException("Patient introuvable avec l'id : " + patientId));
+		return patient.getDossierMedical();
+	}
 
+	public PatientDTO getPatientByIdAndDossierInfos(Long patientId) {
+		Patient patient = patientRepository.findById(patientId)
+				.orElseThrow(() -> new EntityNotFoundException("Patient introuvable avec l'id : " + patientId));
+
+		PatientDTO patientDTO = modelMapper.map(patient, PatientDTO.class);
+		DossierMedical dossierMedical = patient.getDossierMedical();
+		if (dossierMedical != null) {
+			DossierMedicalDTO dossierMedicalDTO = modelMapper.map(dossierMedical, DossierMedicalDTO.class);
+			patientDTO.setDossierMedical(dossierMedicalDTO);
+		}
+
+		return patientDTO;
+	}
+
+
+	public Map<String , Integer> getStatistiquesByPatientId(Long id) {
+		List<Rendezvous> rdvs = rendezvousService.findRvdByPatientId(id);
+		int totalRendezvous = rdvs.size();
+		//Count Rdv annules
+		int totalRendezvousAnnules = (int) rdvs.stream().filter(rdv -> rdv.getStatut() == RdvStatutEnum.ANNULE).count();
+
+		//Count distinct Medecin
+		int totalMedecin = (int) rdvs.stream().map(Rendezvous::getMedecin).distinct().count();
+		Long totalDocuments = documentRepository.countByPatientId(id);
+
+		return Map.of(
+				"totalRendezvous", totalRendezvous,
+				"totalRendezvousAnnules", totalRendezvousAnnules,
+				"totalMedecin", totalMedecin,
+				"totalDocuments", totalDocuments.intValue()
+		);
+
+	}
 
 //GENERATE FICHE PATIENT BY DOCTOR :
 	

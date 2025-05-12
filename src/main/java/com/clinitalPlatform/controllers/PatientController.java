@@ -8,6 +8,8 @@ import java.util.Optional;
 
 import javax.validation.Valid;
 
+import com.clinitalPlatform.dto.PatientDTO;
+import com.clinitalPlatform.models.DossierMedical;
 import com.clinitalPlatform.services.EmailSenderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,14 +85,32 @@ public class PatientController {
   
 
 	// Get patient by ID :
-	@GetMapping("/getPatientById/{account}")
-	@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_PATIENT')")
+	@GetMapping("/getPatientById/{id}")
+	@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_PATIENT' ,'ROLE_MEDECIN')")
 	@ResponseBody
-	public PatientResponse findPatientByAccount(@PathVariable("account") Long userID) throws Exception {
+	public ResponseEntity<?> findPatientById(@PathVariable Long id) {
+		try {
+			// Vérifier si le patient existe
+			Patient patient = patientRepo.findById(id)
+					.orElseThrow(() -> new IllegalArgumentException("Patient introuvable avec l'ID : " + id));
 
-		activityServices.createActivity(new Date(),"Read","Consulting Info of Patient ID : "+userID,globalVariables.getConnectedUser());
-		LOGGER.info("Consulting Info of Patient ID : "+userID+", UserID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
-		return mapper.map(patientRepo.findPatientByAccount(userID), PatientResponse.class);
+			// Journaliser l'activité
+			activityServices.createActivity(new Date(), "Read", "Consulting Info of Patient ID : " + id, globalVariables.getConnectedUser());
+			LOGGER.info("Consulting Info of Patient ID : {}, UserID : {}", id, globalVariables.getConnectedUser().getId());
+
+			// Retourner la réponse
+			return ResponseEntity.ok(mapper.map(patient, PatientResponse.class));
+
+		} catch (IllegalArgumentException e) {
+			// Gestion des erreurs spécifiques
+			LOGGER.error("Erreur : {}", e.getMessage());
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+
+		} catch (Exception e) {
+			// Gestion des erreurs inattendues
+			LOGGER.error("Erreur inattendue lors de la consultation du patient ID : {}", id, e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Une erreur inattendue est survenue."));
+		}
 	}
 	
 	// A method that is used to add a patient to the database. %OK%
@@ -244,7 +264,7 @@ public class PatientController {
 	}*/
 
 	/*public Map<String, Boolean> deletePatient(@PathVariable Long id) throws Exception {
-		
+
 		Map<String, Boolean> response = new HashMap<>();
 		Optional<Patient> patient = patientRepo.getPatientByUserId(globalVariables.getConnectedUser().getId(), id);
 		if (patient.isPresent()) {
@@ -337,6 +357,7 @@ public class PatientController {
 		return ResponseEntity.ok(patientService.findALLProchByUserId(globalVariables.getConnectedUser().getId()));
 
 	}
+
   	// share folder with a doctor :
   @PostMapping("/sharedoc/{idmed}/{iddoss}")
 	@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_PATIENT')")
@@ -385,6 +406,35 @@ public class PatientController {
 		}
 	}
 
+	@GetMapping("/{id}/dossier")
+	public ResponseEntity<?> getDossierByPatientId(@PathVariable("id") Long patientId) {
+		try {
+			DossierMedical dossier = patientService.getDossierMedicalByPatientId(patientId);
+			if (dossier != null) {
+				return ResponseEntity.ok(dossier);
+			} else {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Dossier médical non trouvé pour le patient avec ID : " + patientId);
+			}
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de la récupération du dossier médical : " + e.getMessage());
+		}
+	}
+
+	@GetMapping("/infos/{id}/dossier")
+	public ResponseEntity<?> getPatientByIdAndDossierInfos(@PathVariable("id") Long patientId) {
+		try {
+			PatientDTO patient = patientService.getPatientByIdAndDossierInfos(patientId);
+			if (patient != null) {
+				return ResponseEntity.ok(patient);
+			} else {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Aucun dossier médical trouvé pour le patient avec ID : " + patientId);
+			}
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de la récupération du dossier médical : " + e.getMessage());
+		}
+
+	}
+
 
 	@GetMapping("/getall")
 	public List<Patient> findALLPatientByUserId() throws Exception {
@@ -392,6 +442,32 @@ public class PatientController {
 		activityServices.createActivity(new Date(),"Read","Consulting All Patient Account",globalVariables.getConnectedUser());
 		LOGGER.info("Consulting All Patient Account, UserID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
 		return patientService.findALLPatientByUserId(globalVariables.getConnectedUser().getId());
+	}
+
+	@GetMapping("/{id}/statistics")
+	public ResponseEntity<?> getStatistique(@PathVariable Long id) {
+		try {
+			// Vérifier si le patient existe
+			Patient patient = patientRepo.findById(id)
+					.orElseThrow(() -> new IllegalArgumentException("Patient introuvable avec l'ID : " + id));
+
+			// Journaliser l'activité
+			activityServices.createActivity(new Date(), "Read", "Consulting Statistique of Patient ID : " + id, globalVariables.getConnectedUser());
+			LOGGER.info("Consulting Statistique of Patient ID : {}, UserID : {}", id, globalVariables.getConnectedUser().getId());
+
+			// Retourner la réponse
+			return ResponseEntity.ok(patientService.getStatistiquesByPatientId(patient.getId()));
+
+		} catch (IllegalArgumentException e) {
+			// Gestion des erreurs spécifiques
+			LOGGER.error("Erreur : {}", e.getMessage());
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+
+		} catch (Exception e) {
+			// Gestion des erreurs inattendues
+			LOGGER.error("Erreur inattendue lors de la consultation du patient ID : {}", id, e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Une erreur inattendue est survenue."));
+		}
 	}
 
 }

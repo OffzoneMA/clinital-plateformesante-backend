@@ -8,7 +8,4 @@ import com.clinitalPlatform.models.DossierMedical;
 
 @Repository
 public interface DossierMedicalRepository extends JpaRepository<DossierMedical, Long> {
-
-
-
 }

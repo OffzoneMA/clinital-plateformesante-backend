@@ -42,7 +42,7 @@ public class DossierMedical {
 	private List<Consultation> consulations;
 
 	@OneToMany(mappedBy = "dossier")
-	@JsonIgnore
+	//@JsonIgnore
 	private List<Antecedents> antecedents;
 
 	@OneToMany(mappedBy = "dossier")
@@ -62,28 +62,6 @@ public class DossierMedical {
 	private LocalDateTime createdAt;
 
 	private LocalDateTime updatedAt;
-	
-	
-	public DossierMedical() {
-		super();
-	}
-
-	public DossierMedical(String numDossier, boolean traitement,PatientTypeEnum dossierType, List<Document> documents,List<Medecin> medecins,List<Consultation> consulations,List<Antecedents> antecedents,List<Ordonnance> ordonnance,List<Allergies>  allergies,boolean fumeur,boolean alchole,String accesscode) {
-		super();
-		this.numDossier = numDossier;
-		this.traitement = traitement;
-		this.dossierType=dossierType;
-		this.fumeur=fumeur;
-		this.alchole=alchole;
-		this.accesscode=accesscode;
-		this.documents = documents;
-		this.medecins=medecins;
-		this.Ordonnance=ordonnance;
-		this.allergies=allergies;
-		this.consulations=consulations;
-		this.antecedents=antecedents;
-		
-	}
 
 	@PrePersist
 	protected void onCreate() {

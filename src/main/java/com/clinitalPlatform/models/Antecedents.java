@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 import com.clinitalPlatform.enums.AntecedentTypeEnum;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,6 +26,7 @@ public class Antecedents {
     private LocalDate date;
 
     @ManyToOne(cascade = CascadeType.ALL)
+    @JsonIgnore
 	private DossierMedical dossier;
     
 }

@@ -49,9 +49,6 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 	@Query(value = "DELETE FROM document_medecin WHERE document_id = :documentId", nativeQuery = true)
 	void deleteByDocumentId(@Param("documentId") Long documentId);
 
-
-
-
 	@Modifying
 	@Transactional
 	@Query(value = "DELETE FROM documents WHERE patient_id = ?1", nativeQuery = true)
@@ -61,7 +58,6 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 	@Transactional
 	@Query(value = "DELETE FROM documents WHERE rdv_id IN (SELECT id FROM rendezvous WHERE patient = ?1)", nativeQuery = true)
 	void deleteDocumentsByPatient(long patientId);
-
 
 	List<Document> findAll();
 
@@ -96,4 +92,8 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 
 	@Query(value = "SELECT d FROM Document d JOIN FETCH d.patient p WHERE p.patient_type = 'MOI' AND p.user.id = ?1")
 	List<Document> getMyDocs(Long userId);
+
+	@Query("SELECT COUNT(d) FROM Document d JOIN d.patient p WHERE p.id = ?1")
+	Long countByPatientId(Long id);
+
 }
