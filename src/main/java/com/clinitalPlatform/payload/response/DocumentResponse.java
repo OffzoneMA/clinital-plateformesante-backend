@@ -1,5 +1,6 @@
 package com.clinitalPlatform.payload.response;
 
+import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.models.Patient;
 import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -20,5 +21,6 @@ public class DocumentResponse {
 	private TypeDocumentResponse typeDoc;
 	private Boolean archived;
 	private DossierMedicalResponse dossier;
+	private Medecin medecinAuteur;
 
 }

@@ -1,6 +1,7 @@
 package com.clinitalPlatform.payload.request;
 
 import lombok.Data;
+import com.clinitalPlatform.enums.AuteurDocumentType;
 
 @Data
 public class DocumentRequest {
@@ -10,5 +11,8 @@ public class DocumentRequest {
 	private Long patientId;
 	private Long rdvId;
 	private Long typeDocId;
+	private AuteurDocumentType auteurDocumentType = AuteurDocumentType.PATIENT;
+	private Long medecinId;
+	private String categorie = "patient-docs";
 
 }

@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.validation.constraints.NotBlank;
 
+import com.clinitalPlatform.enums.AuteurDocumentType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -26,8 +27,8 @@ public class Document {
 	private String auteur;
 	private String fichier_doc;
 
-	@Column(name = "date_modif_doc", nullable = true)
-	private Date date_modif_doc;
+	@Column(name = "date_modif_doc", nullable = true )
+	private Date date_modif_doc = new Date();
 
 	@ManyToOne
 	@JoinColumn(name = "patient_id", nullable = false, referencedColumnName = "id", insertable = true, updatable = true)
@@ -45,11 +46,21 @@ public class Document {
 	@JoinColumn(name = "type_doc", nullable = false, referencedColumnName = "id_typedoc", insertable = true, updatable = true)
 	private TypeDocument typeDoc;
 
+	@Column(name = "categorie", nullable = true)
+	private String categorie = "patient-docs";
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "auteur_document_type", nullable = true)
+	private AuteurDocumentType auteurDocumentType = AuteurDocumentType.PATIENT;
+
+	@ManyToOne
+	@JoinColumn(name = "id_medecin_auteur", referencedColumnName = "id", nullable = true)
+	private Medecin medecinAuteur;
+
 	@ManyToOne
 	@JoinColumn(name = "rdv_id", nullable = true, referencedColumnName = "id", insertable = true, updatable = true)
 	@JsonIgnore
 	private Rendezvous rendezvous;
-
 
 	@ManyToMany(fetch = FetchType.LAZY,
       cascade = {

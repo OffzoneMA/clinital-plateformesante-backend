@@ -13,6 +13,7 @@ import com.clinitalPlatform.repository.RdvRepository;
 import com.clinitalPlatform.repository.TypeDocumentRepository;
 import com.clinitalPlatform.services.ActivityServices;
 import com.clinitalPlatform.services.DocumentPatientServices;
+import com.clinitalPlatform.services.MedecinServiceImpl;
 import com.clinitalPlatform.util.ClinitalModelMapper;
 import com.clinitalPlatform.util.GlobalVariables;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -70,6 +71,8 @@ public class DocumentController {
     private ActivityServices activityServices;
 
     private final Logger LOGGER= LoggerFactory.getLogger(getClass());
+    @Autowired
+    private MedecinServiceImpl medecinServiceImpl;
 
     // Returning a list of documents.
     @GetMapping("/documents")
@@ -144,6 +147,52 @@ public class DocumentController {
 
             activityServices.createActivity(new Date(),"Add","Add New document ID:"+finalSavedDoc.getId_doc(),globalVariables.getConnectedUser());
             LOGGER.info("Add new document with ID "+finalSavedDoc.getId_doc()+" By User with ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+            return ResponseEntity.ok(new ApiResponse(true, "Document created successfully!",finalSavedDoc));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.ok(new ApiResponse(false, "Document not created!"+e.getMessage()));
+
+        }
+    }
+
+    @PostMapping(path = "/addDoc/by-medecin")
+    @PreAuthorize("hasAuthority('ROLE_MEDECIN')")
+    @ResponseBody
+    public ResponseEntity<?> addDocByMedecin(@RequestParam String document,
+                                    @RequestParam MultipartFile docFile) throws Exception {
+
+        try {
+
+            Long userId = globalVariables.getConnectedUser().getId();
+
+            Medecin medecin = medecinServiceImpl.getMedecinByUserId(userId);
+
+            if (medecin == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse(false, "Medecin not found!"));
+            }
+            // Add MedecinId to the document String
+            document = document.replace("}", ",\"medecinId\":" + medecin.getId() + "}");
+
+            // ------ Save Doc
+            Document savedDoc = docservices.create(document);
+
+            // --------------------- Initial doc Upload
+            String extension = FilenameUtils.getExtension(docFile.getOriginalFilename());
+            String fileName = savedDoc.getTitre_doc()+ "." + extension;
+
+            // --------------- return file name after Uploading
+            //String UploadedFile = azureAdapter.upload(docFile,fileName,"Patientdoc");
+            String uploadedFile = "this is the URL of uploaded file: "+fileName+" in azure";//just for test until we have azure account
+
+            savedDoc.setFichier_doc(uploadedFile);
+
+            savedDoc.setNumero_doc(savedDoc.getId_doc());//Numero doc is doc id
+            // --------------- update saved doc
+            Document finalSavedDoc = docrepository.save(savedDoc);
+
+            activityServices.createActivity(new Date(),"Add","Add New document ID:"+finalSavedDoc.getId_doc(),globalVariables.getConnectedUser());
             return ResponseEntity.ok(new ApiResponse(true, "Document created successfully!",finalSavedDoc));
 
         } catch (Exception e) {
@@ -337,7 +386,7 @@ public class DocumentController {
 
     // Returning all the types of the document.
     @GetMapping("/typeDocuments")
-    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    //@PreAuthorize("hasAuthority('ROLE_PATIENT')")
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     Iterable<TypeDocumentResponse> getTypeDocuments() throws Exception {
         activityServices.createActivity(new Date(),"Read","Consulting All Type documents",globalVariables.getConnectedUser());

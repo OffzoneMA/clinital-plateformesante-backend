@@ -38,6 +38,9 @@ public class DocumentPatientServices {
 			
             DocumentRequest documentReq = om.readValue(document, DocumentRequest.class);
             Patient patient = patientRepo.findById(documentReq.getPatientId()).orElseThrow(()->new Exception("No Matching Patient found"));
+
+            Medecin medecin = null;
+
             //Rendezvous rendezvous =  rdvRepository.findById(documentReq.getRdvId()).orElseThrow(()->new Exception("No Matching RDV found"));
             Rendezvous rendezvous =  null;
             if (documentReq.getRdvId() != null && documentReq.getRdvId() != 0) {
@@ -55,6 +58,18 @@ public class DocumentPatientServices {
             documentEntity.setDate_ajout_doc(new Date());
             documentEntity.setRendezvous(rendezvous);
             documentEntity.setAuteur(documentReq.getAuteur());
+            documentEntity.setCategorie(documentReq.getCategorie());
+            if(documentReq.getAuteurDocumentType() != null){
+                documentEntity.setAuteurDocumentType(documentReq.getAuteurDocumentType());
+            }
+            if (documentReq.getMedecinId() != null && documentReq.getMedecinId() != 0) {
+                Optional<Medecin> optionalMedecin = medecinRepo.findById(documentReq.getMedecinId());
+                if (optionalMedecin.isPresent()) {
+                    medecin = optionalMedecin.get();
+                    documentEntity.setMedecinAuteur(medecin);
+                    documentEntity.setAuteur(medecin.getNom_med() + " " + medecin.getPrenom_med());
+                }
+            }
             docrepo.save(documentEntity);
             return documentEntity;
         } catch (Exception e) {
