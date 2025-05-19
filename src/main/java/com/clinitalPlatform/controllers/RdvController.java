@@ -97,8 +97,21 @@ public class RdvController {
 
 	private final Logger LOGGER = LoggerFactory.getLogger(getClass());
 
+	@GetMapping("/rdv-byId/{id}")
+	public ResponseEntity<?> getRdvById(@PathVariable Long id) throws NotFoundException {
+		try {
+			Rendezvous rdv = rdvrepository.getById(id);
+            activityServices.createActivity(new Date(), "Read", "Show rdv ID : " + id, globalVariables.getConnectedUser());
+			LOGGER.info("Show rdv ID : " + id + ", UserID : " + globalVariables.getConnectedUser().getId());
+			return ResponseEntity.ok(mapToRendezvousResponse(rdv));
+		} catch (Exception e) {
+			LOGGER.error("Error fetching RDV by ID", e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+		}
+	}
+
 	@GetMapping("medcin/patientId/{id}")
-	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	//@PreAuthorize("hasAuthority('ROLE_PATIENT')")
 	public ResponseEntity<Set<Medecin>> findMedecinsWithRendezvousForPatient(@PathVariable Long id) {
 	    try {
 	        Long userId = globalVariables.getConnectedUser().getId();
@@ -128,7 +141,7 @@ public class RdvController {
 	}
 
 	@GetMapping("medcin/findByPatients")
-	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	//@PreAuthorize("hasAuthority('ROLE_PATIENT')")
 	public ResponseEntity<Set<Medecin>> findMedecinsWithRendezvousForPatients(@RequestParam List<Long> patientIds) {
 		try {
 			Long userId = globalVariables.getConnectedUser().getId();
@@ -208,7 +221,7 @@ public class RdvController {
 	}
 
 	@GetMapping("patient/rdvById/{id}")
-	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	//@PreAuthorize("hasAuthority('ROLE_PATIENT')")
 	public ResponseEntity<?> getRdvByIdBypatient(@PathVariable Long id) throws Exception {
 		try {
 			Patient pat = patientService.getPatientMoiByUserId(globalVariables.getConnectedUser().getId());
@@ -264,7 +277,7 @@ public class RdvController {
     }*/
 
 	@GetMapping("/patient/rdvByIdMedecin")
-	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	@PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN' , 'ROLE_ADMIN')")
 	@ResponseBody
 	public List<RendezvousResponse> findRdvByIdMedecin(@RequestParam Long id) throws Exception {
 		// UserDetailsImpl userDetails = (UserDetailsImpl)
@@ -313,7 +326,7 @@ public class RdvController {
 	// Get RDV By patient Name : %OK% getRdvByNomPatientByMedecin
 	@GetMapping("patient/rdvByNomPatient/{nompat}")
 	@ResponseBody
-	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	//@PreAuthorize("hasAuthority('ROLE_PATIENT')")
 	public List<Rendezvous> findRdvByNomPatient(@PathVariable(value = "nompat") @NotNull String nomPatient) throws Exception {
 		// UserDetailsImpl userDetails = (UserDetailsImpl)
 		// SecurityContextHolder.getContext().getAuthentication()
@@ -505,14 +518,8 @@ public class RdvController {
 
 	// cancel Rdv For connected Patient : %OK%
 	@PutMapping("/patient/cancelRdv/{id}")
-	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	//@PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN')")
 	public ResponseEntity<?> cancelRdvByPatient(@Valid @PathVariable Long id) throws Exception {
-		// Rendezvous rdv = rdvrepository.findById(id)
-		// .orElseThrow(() -> new BadRequestException("Rendez-vous not found for this id
-		// :: " + id));
-		// UserDetailsImpl userDetails = (UserDetailsImpl)
-		// SecurityContextHolder.getContext().getAuthentication()
-		// .getPrincipal();
 		Patient pat = patientService.getPatientMoiByUserId(globalVariables.getConnectedUser().getId());
 
 		if(pat == null) {
@@ -543,6 +550,28 @@ public class RdvController {
 		return ResponseEntity.badRequest().body(new ApiResponse(false, "RDV Not Found" + id));
 
 	}
+
+	@PutMapping("/patient/cancelRdvById/{id}")
+	//@PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN')")
+	public ResponseEntity<?> cancelRdvById(@Valid @PathVariable Long id) throws Exception {
+
+		Rendezvous rdv = rdvrepository.getById(id);
+        rdv.setCanceledAt(LocalDateTime.now());
+        rdv.setStatut(RdvStatutEnum.ANNULE);
+        Rendezvous updatedrdv = rdvrepository.save(rdv);
+        activityServices.createActivity(new Date(), "Update", "Patient Cancel Rdv ID : " + id,
+                globalVariables.getConnectedUser());
+        LOGGER.info("Patient Cancel Rdv ID : " + id + ", UserID : " + globalVariables.getConnectedUser().getId());
+        pushNotificationService.sendAppointmentCancellation(
+                rdv.getPatient().getUser().getId(), rdv.getMedecin().getSpecialite().getLibelle() ,
+                "Votre rendez-vous du " + rdv.getStart().toLocalDate() + " a été annulé." ,
+                "Dr" + " " + rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med() ,
+                rdv.getStart() , updatedrdv.getId()
+        );
+        LOGGER.info("cancel rdv" + updatedrdv.getId());
+        return ResponseEntity.ok(mapper.map(updatedrdv, RendezvousResponse.class));
+
+    }
 
 	// CHANGE RDV Status for connected Medecin : %OK% les autres status.
 	@PutMapping("/patient/changestatu/{id}")
@@ -728,21 +757,16 @@ public class RdvController {
 	@PostMapping("/MoveRdv/{id}")
 	@ResponseBody
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
-	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
-	public ResponseEntity<?> MoveRDV(@Valid @RequestBody RendezvousRequest rdvDetails,
-			@Valid @PathVariable(value = "id") long idrdv)
-			throws BadRequestException {
+	//@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	public ResponseEntity<?> MoveRDV(@Valid @RequestBody RendezvousRequest rdvDetails, @Valid @PathVariable(value = "id") long idrdv) throws BadRequestException {
 		try {
 			Rendezvous isRdv = rdvrepository.getById(idrdv);
 			if (isRdv != null) {
 				// update
 				return ResponseEntity.ok(rdvservice.UpdateRdvdate(rdvDetails, idrdv));
-
 			} else
-
 				return ResponseEntity.badRequest().body(new ApiResponse(false, "RDV Not Found" + rdvDetails.getDay()));
 		} catch (Exception e) {
-			e.printStackTrace();
 			return ResponseEntity.badRequest().body(e.getMessage());
 		}
 	}
