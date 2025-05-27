@@ -29,6 +29,8 @@ public class Cabinet {
 	private String adresse;
 	private String code_post;
 	private String phoneNumber;
+	private Double longitude;
+	private Double latitude;
 
 	@ManyToOne(cascade = CascadeType.ALL)
 	private Ville ville;

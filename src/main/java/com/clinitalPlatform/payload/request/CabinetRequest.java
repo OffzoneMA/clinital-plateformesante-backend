@@ -20,6 +20,10 @@ public class CabinetRequest {
 	@NotNull
 	private String phoneNumber;
 
+	private Double longitude;
+
+	private Double latitude;
+
     private CabinetMedecinsSpaceRequest cabinetmedecin;
 
 	@NotNull

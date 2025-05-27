@@ -78,6 +78,8 @@ public class CabinetServiceImpl implements CabinetService{
 		cabinet.setCode_post(cabinetreq.getCode_post());
 		cabinet.setVille(ville);
 		cabinet.setPhoneNumber(cabinetreq.getPhoneNumber());
+		cabinet.setLongitude(cabinetreq.getLongitude());
+		cabinet.setLatitude(cabinetreq.getLatitude());
 		cabinet.setCreator(med);
 		cabinet.setState(false);
 		cabinet.setPaymentInfo(paymentInfo);

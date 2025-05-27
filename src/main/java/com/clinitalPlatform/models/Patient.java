@@ -76,6 +76,10 @@ public class Patient {
 	@JsonIgnore
 	private List<Rendezvous> rendezvous;
 
+	@OneToMany(mappedBy = "patient")
+	@JsonIgnore
+	private List<CompteRenduRdv> compteRenduRdvs;
+
 	// Metadonnees
 	@Column(name = "created_at")
 	private LocalDateTime createdAt;

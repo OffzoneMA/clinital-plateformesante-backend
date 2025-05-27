@@ -1,6 +1,7 @@
 package com.clinitalPlatform.models;
 
 import com.clinitalPlatform.enums.RdvStatutEnum;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -52,7 +53,6 @@ public class Rendezvous {
 	private List<Document> documents;
 
 	@OneToOne(cascade = CascadeType.ALL)
-
 	@JoinColumn(name = "id_mode", referencedColumnName= "id_mode")
 	private ModeConsultation modeConsultation;
 
@@ -63,6 +63,12 @@ public class Rendezvous {
 	@ManyToOne
 	@JoinColumn(name = "cabinet", nullable = true, referencedColumnName = "id_cabinet", insertable = true, updatable = true)
 	private Cabinet cabinet;
+
+	@OneToMany(mappedBy = "rdv" ,cascade = CascadeType.ALL, orphanRemoval = true)
+	@LazyCollection(LazyCollectionOption.FALSE)
+	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+	@JsonIgnore
+	private List<CompteRenduRdv> compteRenduRdv;
 
 	//Metadonnees utiles
 	@Column(name = "created_at")

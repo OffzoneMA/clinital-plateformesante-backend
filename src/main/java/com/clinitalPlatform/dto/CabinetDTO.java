@@ -22,6 +22,10 @@ public class CabinetDTO {
 	
 	private String phoneNumber;
 
+	private Double longitude;
+
+	private Double latitude;
+
 	private PaymentInfoDTO paymentInfo;
 
 	@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)

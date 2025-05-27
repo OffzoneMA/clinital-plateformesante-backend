@@ -134,6 +134,12 @@ public class Medecin {
 	@OneToMany(mappedBy = "medecin")
 	@JsonIgnore
 	private List<Ordonnance> Ordonnance;
+
+	@OneToMany(mappedBy = "medecin")
+	@JsonIgnore
+	private List<CompteRenduRdv> CompteRenduRdvs;
+
+
 //-------------------------------------------
 
 	//in this we create a Bridge table between Medecin and langue to link them together
