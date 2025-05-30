@@ -203,7 +203,7 @@ public class DocumentController {
     }
 
     @PostMapping(path = "/addAndShareDoc")
-    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    @PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN')")
     @ResponseBody
     public ResponseEntity<?> addAndShareDoc(
             @RequestParam String document,
