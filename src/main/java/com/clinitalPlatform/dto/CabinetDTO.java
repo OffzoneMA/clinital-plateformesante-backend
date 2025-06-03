@@ -28,6 +28,8 @@ public class CabinetDTO {
 
 	private PaymentInfoDTO paymentInfo;
 
+	private VilleDTO ville;
+
 	@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
 	private List<MedecinDTO> medecins;
 

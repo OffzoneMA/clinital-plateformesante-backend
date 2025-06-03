@@ -85,9 +85,17 @@ public class ExperienceMedecinController {
     }
 
 
-    @PutMapping("/{id}")
-    public ExperienceMedecinDTO update(@PathVariable Long id, @RequestBody ExperienceMedecinDTO dto) {
-        return service.updateExperience(id, dto);
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody ExperienceMedecinDTO dto) {
+        try {
+            ExperienceMedecinDTO updatedExperience = service.updateExperience(id, dto);
+            if (updatedExperience == null) {
+                return ResponseEntity.status(404).body("Expérience non trouvée");
+            }
+            return ResponseEntity.ok(updatedExperience);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Erreur : " + e.getMessage());
+        }
     }
 
     @DeleteMapping("/delete/{id}")

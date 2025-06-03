@@ -114,5 +114,22 @@ public class CabinetServiceImpl implements CabinetService{
 	}
 
 
+	public Cabinet updateCabinet(CabinetRequest cabinetRequest, Long id) throws Exception {
+	Cabinet cabinet = cabinetRepository.findById(id)
+			.orElseThrow(() -> new Exception("Cabinet not found"));
+
+	Ville ville = villerepo.findById(cabinetRequest.getId_ville())
+			.orElseThrow(() -> new Exception("Ville not found"));
+
+	cabinet.setNom(cabinetRequest.getNom());
+	cabinet.setAdresse(cabinetRequest.getAdresse());
+	cabinet.setCode_post(cabinetRequest.getCode_post());
+	cabinet.setPhoneNumber(cabinetRequest.getPhoneNumber());
+	cabinet.setLongitude(cabinetRequest.getLongitude());
+	cabinet.setLatitude(cabinetRequest.getLatitude());
+	cabinet.setVille(ville);
+
+	return cabinetRepository.save(cabinet);
+  }
 
 }

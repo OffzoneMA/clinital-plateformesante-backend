@@ -76,12 +76,12 @@ public class DiplomeMedecinController {
     }
 
     @PutMapping("/update/{id}")
-        public ResponseEntity<?> updateDiplome(@PathVariable Long id, @RequestBody DiplomeMedecin diplomeMedecin) {
+        public ResponseEntity<?> updateDiplome(@PathVariable Long id, @RequestBody DiplomeMedecinDTO diplomeMedecinDTO) {
         try{
             Optional<DiplomeMedecin> diplomeMedecin1 = diplomeMedecinRepository.findById(id);
             if(diplomeMedecin1.isPresent()){
-                DiplomeMedecin diploMedecin = diplomeMedecinService.updateDiplomeMedecin(id ,diplomeMedecin);
-                return new ResponseEntity<>(diplomeMedecin, HttpStatus.OK);
+                DiplomeMedecin diploMedecin = diplomeMedecinService.updateDiplomeMedecin(id ,diplomeMedecinDTO);
+                return new ResponseEntity<>(diploMedecin, HttpStatus.OK);
             }
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } catch (Exception e) {

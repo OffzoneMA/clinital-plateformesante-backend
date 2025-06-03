@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,16 +40,20 @@ public class DiplomeMedecinService {
         return diplomeMedecinRepository.findById(id).get();
     }
 
-    public DiplomeMedecin updateDiplomeMedecin(Long id , DiplomeMedecin dip){
-        DiplomeMedecin diplomeMedecin = diplomeMedecinRepository.findById(id).get();
-        if(diplomeMedecin != null){
-            if(diplomeMedecin.getNom_diplome() == dip.getNom_diplome()){
-                diplomeMedecin.setNom_diplome(dip.getNom_diplome());
-            }
+    public DiplomeMedecin updateDiplomeMedecin(Long id , DiplomeMedecinDTO dip){
 
-            if(diplomeMedecin.getAnnee_obtention() == dip.getAnnee_obtention()){
-                diplomeMedecin.setAnnee_obtention(dip.getAnnee_obtention());
-            }
+        Optional<DiplomeMedecin> diplomeMedecinopt = diplomeMedecinRepository.findById(id);
+        if (!diplomeMedecinopt.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Diplôme non trouvé avec l'ID: " + id);
+        }
+        DiplomeMedecin diplomeMedecin = diplomeMedecinopt.get();
+
+        if(dip.getNom_diplome() != null && !dip.getNom_diplome().isEmpty()) {
+            diplomeMedecin.setNom_diplome(dip.getNom_diplome());
+        }
+
+        if(dip.getAnnee_obtention() != null) {
+            diplomeMedecin.setAnnee_obtention(dip.getAnnee_obtention());
         }
 
         return diplomeMedecinRepository.save(diplomeMedecin);

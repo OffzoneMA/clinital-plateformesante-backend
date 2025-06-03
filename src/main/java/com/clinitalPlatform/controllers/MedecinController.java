@@ -525,6 +525,22 @@ public class MedecinController {
 
 	}
 
+	@PutMapping("/updatecabinet/{id}")
+	@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_MEDECIN')")
+	public ResponseEntity<?> UpdateCabinet(@Valid @RequestBody CabinetRequest cabinetreq, @PathVariable long id) throws Exception {
+
+		Medecin med = medecinService.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+		Optional<CabinetMedecinsSpace> isAdminMed = cabmedrep.isAdmin(med.getId(), id);
+
+		if (isAdminMed.isPresent()) {
+			cabservice.updateCabinet(cabinetreq , id);
+			activityServices.createActivity(new Date(),"Update","Update Cabinet ID: "+ id +" By Connected Medecin Admin",globalVariables.getConnectedUser());
+			return ResponseEntity.ok("Cabinet has been updated successefully");
+		} else
+			throw new BadRequestException("You are Not Allowed");
+
+	}
+
 	// delete a cabinet :
 	@DeleteMapping(path = "/deletecabinet/{id}")
 	@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_MEDECIN')")

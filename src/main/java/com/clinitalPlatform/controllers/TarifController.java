@@ -62,6 +62,24 @@ public class TarifController {
         }
     }
 
+    @PostMapping("/add-multiple/connected")
+    public ResponseEntity<?> addMultipleTarifsForConnectedMedecin(@RequestBody TarifRequest[] tarifRequests) {
+        try {
+            Long userId = globalVariables.getConnectedUser().getId();
+            Medecin medecin = medecinService.getMedecinByUserId(userId);
+            if (medecin == null) {
+                return ResponseEntity.status(404).body("Médecin non trouvé");
+            }
+            for (TarifRequest tarifRequest : tarifRequests) {
+                tarifService.save(tarifRequest , medecin);
+            }
+            return ResponseEntity.ok("Tarifs ajoutés avec succès");
+        } catch (Exception e) {
+            log.error("Error while adding multiple tarifs for connected medecin", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     @PutMapping("/update/{tarifId}")
     public ResponseEntity<?> updateTarif(@PathVariable Long tarifId, @RequestBody TarifRequest updatedTarifRequest) {
         try {

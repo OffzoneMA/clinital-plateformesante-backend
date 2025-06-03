@@ -72,10 +72,4 @@ public class CabinetController {
 		List<Cabinet> cabinets = cabservice.getAllCabinetsByMedecinId(id);
 		return ResponseEntity.ok(cabinets);
 	}
-
-
-
-
-
-
 }
