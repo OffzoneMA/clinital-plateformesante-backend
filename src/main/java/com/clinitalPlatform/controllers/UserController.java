@@ -78,6 +78,7 @@ public class UserController {
 		}
 
 	}
+
 	@PostMapping("/sendconfirmationcode")
 	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
 	public ResponseEntity<?> enableUserWithConfirmation(@Valid @RequestBody String enableUserEmail) {

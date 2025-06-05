@@ -49,32 +49,30 @@ public class MedecinServiceImpl implements MedecinService {
     private ClinitalModelMapper clinitalModelMapper;
 
     @Autowired
-        ActivityServices activityServices;
-
-
-    @Autowired
-        EmailSenderService emailSenderService;
+    private ActivityServices activityServices;
 
     @Autowired
-        DemandeServiceImpl demandeServiceImpl;
+    private EmailSenderService emailSenderService;
 
     @Autowired
-        GlobalVariables globalVariables;
+    private DemandeServiceImpl demandeServiceImpl;
+
+    @Autowired
+    private GlobalVariables globalVariables;
 
     @Autowired
     private PatientRepository patientRepository;
 
     @Autowired
-    RendezvousService rendezvousService;
+    private RendezvousService rendezvousService;
 
     @Autowired
-    MedecinScheduleRepository medecinScheduleRepository;
+    private MedecinScheduleRepository medecinScheduleRepository;
     @Autowired
-    MotifConsultationRepository motifConsultationRepository;
+    private MotifConsultationRepository motifConsultationRepository;
 
     @Autowired
     private CloudinaryService cloudinaryService;
-
 
     private final Logger LOGGER=LoggerFactory.getLogger(getClass());
 

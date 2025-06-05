@@ -107,11 +107,16 @@ public class DemandeController {
 	// Valider la demande : 
 	@PostMapping("validerdmd/{id}")
 	@PreAuthorize("hasAuthority('ROLE_ADMIN')")
-	public ResponseEntity<Demande> ValidateDemande(@Validated @RequestBody DemandeDTO valide,@PathVariable Long id) throws Exception{
-		
-		Demande demande2 = demandeService.validate(valide.getValidation(),id);
-		
-		return ResponseEntity.accepted().body(demande2);
+	public ResponseEntity<?> ValidateDemande(@Validated @RequestBody DemandeDTO valide,@PathVariable Long id) throws Exception{
+		try {
+			LOGGER.info("Validation de la demande d'inscription...");
+			Demande demande2 = demandeService.validate(valide.getValidation(),id);
+			return ResponseEntity.accepted().body(demande2);
+		} catch (Exception e) {
+			LOGGER.error("Erreur lors de la validation de la demande: {}", e.getMessage(), e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new MessageResponse(e.getMessage()));
+		}
 	}
 	
 	@PutMapping("updateDemandeStateByUserId/{newState}")

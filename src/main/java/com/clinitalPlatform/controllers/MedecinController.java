@@ -134,7 +134,7 @@ public class MedecinController {
 	@Autowired
 	private RdvRepository rdvRepository;
 
-//start zakia
+	//start zakia
 	@Autowired
 	RendezvousService rendezvousService;
 
@@ -162,7 +162,6 @@ public class MedecinController {
 	public Iterable<Medecin> medecins() throws Exception {
 		
 		return medrepository.findAll().stream().filter(med->med.getIsActive()==true).collect(Collectors.toList());
-
 	}
 
 	//Recuperer touts les medecins de la plateforme en priorisant ceux de Casablanca
@@ -335,15 +334,6 @@ public class MedecinController {
 			return ResponseEntity.status(500).body("{\"error\": \"Une erreur interne est survenue.\"}");
 		}
 	}
-
-	// Get Medecin y his name : %OK%
-	/*@GetMapping("/medByName")
-	@ResponseBody
-	public List<Medecin> findMedByName(@RequestParam String nomMed) throws Exception {
-
-
-			return medrepository.getMedecinByName(nomMed).stream().filter(med->med.getIsActive()==true).collect(Collectors.toList());
-	}*/
 
 	@GetMapping("/medByName")
 	@ResponseBody
@@ -611,7 +601,6 @@ public class MedecinController {
 
 	@PostMapping("/addordonnance")
 		public ResponseEntity<?> AddNewOrdonnance(@Valid @RequestBody OrdonnanceRequest creq){
-
 			try {
 				
 				Medecin med = medecinService.getMedecinByUserId(globalVariables.getConnectedUser().getId());
@@ -1423,7 +1412,6 @@ public class MedecinController {
         return ResponseEntity.ok().body(medecins);
     }
 
-
     //-----------------------------------------------NETWORK---------------------------------------------------
 	// Add a New Doctor to the Network : %OK%
 	@PostMapping("/addNewNetwork")
@@ -1535,7 +1523,6 @@ public class MedecinController {
 					.body("Erreur interne lors de la suppression du lien : " + ex.getMessage());
 		}
 	}
-
 
 	// Show all Network of a doc : %OK%
 	@GetMapping("/getAllMedNetWork")

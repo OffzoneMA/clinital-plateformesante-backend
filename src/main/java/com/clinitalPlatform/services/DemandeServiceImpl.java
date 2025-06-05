@@ -1,5 +1,7 @@
 package com.clinitalPlatform.services;
 
+import com.clinitalPlatform.models.*;
+import com.clinitalPlatform.repository.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,15 +26,11 @@ import com.clinitalPlatform.util.GlobalVariables;
 
 import jakarta.persistence.EntityNotFoundException;
 
-import com.clinitalPlatform.repository.UserRepository;
 import com.clinitalPlatform.enums.DemandeStateEnum;
 import com.clinitalPlatform.enums.ERole;
-import com.clinitalPlatform.models.User;
 import com.clinitalPlatform.util.ApiError;
 import com.clinitalPlatform.dto.DemandeDTO;
-import com.clinitalPlatform.models.Demande;
 import com.clinitalPlatform.payload.response.MessageResponse;
-import com.clinitalPlatform.repository.DemandeRepository;
 import com.clinitalPlatform.services.interfaces.DemandeService;
 
 @Transactional
@@ -61,6 +59,12 @@ public class DemandeServiceImpl implements DemandeService{
 	UserService userservice;
 
 	public final Logger LOGGER=LoggerFactory.getLogger(this.getClass());
+    @Autowired
+    private SpecialiteRepository specialiteRepository;
+    @Autowired
+    private VilleRepository villeRepository;
+    @Autowired
+    private MedecinRepository medecinRepository;
 
 	@Override
 	public ResponseEntity<?> create(DemandeDTO demande) {
@@ -138,32 +142,32 @@ public class DemandeServiceImpl implements DemandeService{
 	
 	@Override
 	public Demande validate(DemandeStateEnum valide, Long id) throws Exception {
-		
 		try {	
 			Optional<Demande> demandeOptional = demandeRepository.findByIDemande(id);
 			
 		if(demandeOptional.isPresent()) {
-
 			Demande demande = demandeOptional.get();
 			demande.setValidation(valide);
 			Demande updated = demandeRepository.save(demande);
-			LOGGER.info("Demande  has been Validated email : "+demande.getMail());
-			if(valide==DemandeStateEnum.VALIDER){
-				String pw=this.SecretCode();
-				User user=new User();
+            LOGGER.info("Demande  has been Validated email : {}", demande.getMail());
+			if(valide == DemandeStateEnum.VALIDER){
+				String pw = this.SecretCode();
+				User user = new User();
 				user.setEmail(demande.getMail());
 				user.setPassword(passwordEncoder.encode(pw));
-				user.setTelephone("0600000000");
+				user.setTelephone(demande.getPhonenumber() != null ? demande.getPhonenumber() : "0600000000");
 				user.setRole(ERole.ROLE_MEDECIN);
 				userRepository.save(user);
 				demande.setUser(user);
-				demande.setState(1);
+				//demande.setState(1);
 				demandeRepository.save(demande);
-				LOGGER.info("New User is Created, Email : "+demande.getMail());			
+                LOGGER.info("New User is Created, Email : {}", demande.getMail());
 				User registred = userRepository.findById(user.getId()).orElseThrow(()->new Exception("this User is not found !"));
 				userservice.save(registred,demande);
+
+				// Send email to the new Medecin
 				emailSenderService.sendMailDemandeValidation(demande,pw);
-				System.out.println(registred.getId());
+
 			}
 			return modelMapper.map(updated, Demande.class);
 		}

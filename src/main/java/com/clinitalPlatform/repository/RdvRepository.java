@@ -181,9 +181,9 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 
 	//	@Query(value = "SELECT COUNT(DISTINCT patient) FROM rendezvous WHERE medecin = :idmed", nativeQuery = true)
 //	int findPatientsByMedcin(@Param("idmed") long idmed);
-	@Query(value = "SELECT COUNT(DISTINCT dc.patient_id) AS nombre_patients FROM dossier_medecin d JOIN documents dc ON d.dossier_id = dc.id_dossier  WHERE d.medecin_id = :idmed GROUP BY d.medecin_id", nativeQuery = true)
-	int findPatientsByMedcin(@Param("idmed") long idmed);
 
+	@Query(value = "SELECT COUNT(DISTINCT dc.patient_id) AS nombre_patients FROM dossier_medecin d JOIN documents dc ON d.dossier_id = dc.id_dossier WHERE d.medecin_id = :idmed GROUP BY d.medecin_id", nativeQuery = true)
+	Integer findPatientsByMedcin(@Param("idmed") long idmed);
 
 	//List<Rendezvous> findByMedecinId(long id);
 

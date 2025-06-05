@@ -711,8 +711,10 @@ public class RendezvousService implements IDao<Rendezvous>  {
 	public int getMonthlyStatisticsByMed(int year, int month, long idmed) throws Exception {
 		return rdvrepo.findRdvByMedcinInMonth(year, month, idmed);
 	}
-	public int getTotalPatientsByMed(long idmed) throws Exception {
-		return rdvrepo.findPatientsByMedcin(idmed);
+
+	public int getTotalPatientsByMed(long idmed) {
+		Integer result = rdvrepo.findPatientsByMedcin(idmed);
+		return result != null ? result : 0;
 	}
 
 	public List<Rendezvous> getRendezVousByMed(long idmed){

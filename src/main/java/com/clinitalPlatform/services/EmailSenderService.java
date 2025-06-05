@@ -122,7 +122,7 @@ public class EmailSenderService {
 	        SimpleMailMessage mailMessage = new SimpleMailMessage();
 	        mailMessage.setTo(userEmail);
 	        mailMessage.setFrom("clinitalcontact@gmail.com");
-	        mailMessage.setSubject("Code de confirmation du suppression   de   votre compte clinital!");
+	        mailMessage.setSubject("Changement du mot de passe de votre compte clinital!");
 	        mailMessage.setText(message);
 	        javaMailSender.send(mailMessage);
             LOGGER.info("Un email de notification de changement de mot de passe a été envoyé à l'adresse : {}", userEmail);
@@ -160,7 +160,7 @@ public class EmailSenderService {
 	public void sendResetPasswordMail(String userEmail, String resetToken) {
 		try {
 			SimpleMailMessage mailMessage = new SimpleMailMessage();
-			String resetPasswordUrl =frontUrl+ "/login/reinitialize-password?reset=" + resetToken;
+			String resetPasswordUrl =frontUrl+ "login/reinitialize-password?reset=" + resetToken;
 
 			mailMessage.setTo(userEmail);
 			mailMessage.setFrom("clinitalcontact@gmail.com");

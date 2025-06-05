@@ -2,6 +2,7 @@ package com.clinitalPlatform.services;
 
 import java.util.Date;
 
+import com.clinitalPlatform.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,12 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.clinitalPlatform.repository.SecretaireRepository;
-import com.clinitalPlatform.repository.MedecinRepository;
 import com.clinitalPlatform.util.ClinitalModelMapper;
-import com.clinitalPlatform.repository.PatientRepository;
-import com.clinitalPlatform.repository.DossierMedicalRepository;
-import com.clinitalPlatform.repository.SpecialiteRepository;
 import com.clinitalPlatform.enums.PatientTypeEnum;
 import com.clinitalPlatform.models.Demande;
 import com.clinitalPlatform.models.DossierMedical;
@@ -29,7 +25,6 @@ import com.clinitalPlatform.enums.ProviderEnum;
 import com.clinitalPlatform.models.User;
 import com.clinitalPlatform.payload.request.SignupRequest;
 import com.clinitalPlatform.payload.response.MessageResponse;
-import com.clinitalPlatform.repository.UserRepository;
 import com.clinitalPlatform.security.jwt.ConfirmationToken;
 
 @Service
@@ -69,9 +64,11 @@ public class UserService {
 		private AutService authService;
 	    
 	    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
+    @Autowired
+    private VilleRepository villeRepository;
 
-	    
-		public User findById(Long id) {
+
+	public User findById(Long id) {
 		        return userRepository.findById(id).get();        
 		    }
 	    public User findByEmail(String email) {
@@ -121,10 +118,12 @@ public class UserService {
 					case ROLE_MEDECIN:
 						Demande demande = mapper.map(obj, Demande.class);
 						Specialite specialite=specialiterepo.getSpecialiteByName(demande.getSpecialite());
+						Ville ville_med = villeRepository.findByNom_ville(demande.getVille());
 						Medecin medecin = new Medecin();
 						medecin.setNom_med(demande.getNom_med());
 						medecin.setPrenom_med(demande.getPrenom_med());
 						medecin.setInpe(demande.getInpe());
+						medecin.setMatricule_med(demande.getInpe());
 						medecin.setPhoto_med(null);
 						medecin.setPhoto_couverture_med(null);
 						medecin.setDescription_med(null);
@@ -133,7 +132,7 @@ public class UserService {
 						medecin.setUser(user);
 						medecin.setIsActive(false);
 						medecin.setDiplome_med(null);
-						medecin.setVille(null);
+						medecin.setVille(ville_med);
 						medecin.setSpecialite(specialite);
 						medecin.setStepsValidation(1L);
 						medecinrepo.save(medecin);//Sauvergarde des infos du Médecins

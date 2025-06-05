@@ -60,7 +60,6 @@ import javax.validation.Valid;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-
     @Value("${base.url}")
     private String baseUrl;
 
@@ -113,6 +112,8 @@ public class AuthController {
 	
     //Jounalisation
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
+    @Autowired
+    private MedecinServiceImpl medecinServiceImpl;
 
 
     //CONNEXION--------------------------------------------------
@@ -155,6 +156,7 @@ public class AuthController {
             autService.updateLastLoginDate(userDetails.getId());
             activityServices.createActivity(new Date(), "Login", "Authentication reussi", user);
             LOGGER.info("Authentication reussi");
+
             if (userDetails.getRole().equals(ERole.ROLE_MEDECIN)) {
                 // Récupérer la demande et le médecin en toute sécurité
                 Demande demande = demandeService.findDemandeByConnectedUser(userDetails.getId());
@@ -208,9 +210,11 @@ public class AuthController {
             return ResponseEntity.ok(new ApiResponse(false, "no_account"));
         } catch (BadCredentialsException e) {
             System.out.println("incorrect");
+            LOGGER.error("SignIn error" , e);
             // Mot de passe incorrect
             return ResponseEntity.ok(new ApiResponse(false, "incorrect_password"));
         } catch (Exception e) {
+            LOGGER.error("An error occurred during authentication: {}", e.getMessage());
             throw new RuntimeException(e);
         }
     }
@@ -400,8 +404,6 @@ public class AuthController {
         }
     }
 
-
-
     //MOT DE PASSE OUBLIÉ-------------------------------------------------------------------
     @PostMapping("/forgotpassword")
     public ResponseEntity<?> forgotPassword(@RequestBody ForgetpwdRequest forgetpwdRequest) {
@@ -520,16 +522,13 @@ public class AuthController {
 
                 if (user!=null) {
                     Date dateNaissance = null;
-
                     switch (user.getRole()) {
                         case ROLE_MEDECIN :
-
-                            Medecin medecin= medecinSevice.findById(user.getId());
+                            Medecin medecin= medecinServiceImpl.getMedecinByUserId(user.getId());
                             dateNaissance= medecin.getDateNaissance();
                             break;
 
                         case ROLE_SECRETAIRE:
-
                             Secretaire secretaire= secretaireService.findById(user.getId());
                             dateNaissance= secretaire.getDateNaissance();
                             break;
@@ -539,8 +538,6 @@ public class AuthController {
                         default:
                             break;
                     }
-
-
 
                     if (dateNaissance != null) {
                         //Formattage de la date de naissance du Patient
@@ -573,8 +570,6 @@ public class AuthController {
                         // La date de naissance du patient n'est pas disponible, retourner un message d'erreur
                         return ResponseEntity.ok(new ApiResponse(false, "La date de naissance pour l'utilisateur associé à l'e-mail fourni n'est pas disponible. Veuillez contacter le support."));
                     }
-
-
                 } else {
                     System.out.println("Aucun utilisateur n'a été retrouvé avec l'email: " + forgetPwdProRequest.getProEmail());
                     return ResponseEntity.ok(new ApiResponse(false, "Aucun user trouvé pour l'e-mail: " + forgetPwdProRequest.getProEmail()));
@@ -585,11 +580,38 @@ public class AuthController {
 
             }
         } catch (Exception e) {
-            System.out.println("Erreur de traitement. Veuillez réessayer plus tard");
+            System.out.println(e.getMessage());
             return ResponseEntity.ok(new ApiResponse(false, "Erreur de traitement. Veuillez réessayer plus tard."));
 
         }
     }
+
+    @PostMapping("/choose-password")
+    public ResponseEntity<?> choosePassword(@Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
+        try {
+            // Log password
+            // Récupérer l'utilisateur connecté
+            User user = userRepository.getById(globalVariables.getConnectedUser().getId());
+
+            // Vérifier si le nouveau mot de passe est valide et différent de l'ancien
+            if (resetPasswordRequest.getNewPassword() == null || resetPasswordRequest.getNewPassword().isEmpty()) {
+                return ResponseEntity.badRequest().body(new ApiError(false, "Le mot de passe ne peut pas être vide."));
+            }
+            if (encoder.matches(resetPasswordRequest.getNewPassword(), user.getPassword())) {
+                return ResponseEntity.badRequest().body(new ApiError(false, "Le nouveau mot de passe ne peut pas être identique à l'ancien."));
+            }
+            // Mettre à jour le mot de passe de l'utilisateur
+            user.setPassword(encoder.encode(resetPasswordRequest.getNewPassword()));
+            userRepository.save(user);
+            // Envoyer un e-mail de confirmation de changement de mot de passe
+            emailSenderService.sendMailChangePassword(user.getEmail());
+
+            return ResponseEntity.ok(new ApiResponse(true, "Mot de passe mis à jour avec succès."));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiError(false, "Une erreur s'est produite lors de la mise à jour du mot de passe."));
+        }
+    }
+
 	@PostMapping("/checkPassword")
 	@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_PATIENT')")
 	public ResponseEntity<?> checkPassword(@Valid @RequestBody String password)throws Exception {
@@ -635,7 +657,6 @@ public class AuthController {
             return ResponseEntity.ok(new ApiResponse(false, "Erreur de traitement. Veuillez réessayer plus tard."));
         }
     }
-
 
     //Pour le cas du lien expirer
    @PostMapping("/resendresetlink")

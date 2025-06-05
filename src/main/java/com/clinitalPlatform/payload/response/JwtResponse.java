@@ -15,7 +15,7 @@ public class JwtResponse {
 	private String email;
 	private String telephone;
 	private ERole role;
-	@JsonInclude(JsonInclude.Include.NON_DEFAULT)
+	//@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 	private int state;
 
 	@JsonInclude(JsonInclude.Include.NON_DEFAULT)
