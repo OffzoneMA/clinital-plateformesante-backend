@@ -5,10 +5,7 @@ import com.clinitalPlatform.dto.PatientCountsDTO;
 import com.clinitalPlatform.dto.RendezvousDTO;
 import com.clinitalPlatform.enums.RdvStatutEnum;
 import com.clinitalPlatform.exception.BadRequestException;
-import com.clinitalPlatform.models.Cabinet;
-import com.clinitalPlatform.models.Medecin;
-import com.clinitalPlatform.models.Patient;
-import com.clinitalPlatform.models.Rendezvous;
+import com.clinitalPlatform.models.*;
 import com.clinitalPlatform.payload.request.RendezvousRequest;
 import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.payload.response.PatientResponse;
@@ -340,7 +337,7 @@ public class RdvController {
 	}
 
 	// a revoire
-	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	@PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN' , 'ROLE_ADMIN')")
 	@GetMapping("/patient/rdvByDate")
 	@ResponseBody
 	public List<RendezvousResponse> rdvByDate(
@@ -367,13 +364,12 @@ public class RdvController {
 
 	// ADD an RDV by Medecin : %OK%
 
-	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	@PreAuthorize("hasAnyRole('ROLE_MEDECIN' , 'ROLE_ADMIN' , 'ROLE_SECRETAIRE')")
 	@PostMapping("patient/addRdvgestion")
 	@ResponseBody
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
 	public ResponseEntity<?> addRendezvousgesttion(@Valid @RequestBody RendezvousDTO c)
 			throws Exception {
-
 		try {
 
 			System.err.println(c);
@@ -392,7 +388,7 @@ public class RdvController {
 	}
 
 	// ADD an RDV by Patient : %OK%
-	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	@PreAuthorize("hasAnyRole('ROLE_MEDECIN' , 'ROLE_PATIENT' , 'ROLE_SECRETAIRE')")
 	@PostMapping("patient/addRdv")
 	@ResponseBody
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
@@ -431,17 +427,17 @@ public class RdvController {
 		}}
 
     // DELETE AN RDV By Medecin : %ok%
-    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    @PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN' , 'ROLE_ADMIN')")
     @DeleteMapping("/patient/delete/{id}")
     public ResponseEntity<ApiResponse> deleteRdvbyPatient(@Valid @PathVariable Long id) {
          try {
-             Patient pat = patientService.getPatientMoiByUserId(globalVariables.getConnectedUser().getId());
-			 if(pat == null) {
-				 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-						 .body(new ApiResponse(false, "Patient non trouvé pour user :: " + globalVariables.getConnectedUser().getId()));
+             User connectedUser = globalVariables.getConnectedUser();
+			 if (connectedUser == null) {
+				 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+						 .body(new ApiResponse(false, "User not authenticated"));
 			 }
 
-             Rendezvous rdv = rdvrepository.findRdvByIdUserandId(globalVariables.getConnectedUser().getId(), id);
+             Rendezvous rdv = rdvrepository.getById(id);
 
              if (rdv == null) {
                  activityServices.createActivity(new Date(), "Warning",
@@ -575,7 +571,7 @@ public class RdvController {
 
 	// CHANGE RDV Status for connected Medecin : %OK% les autres status.
 	@PutMapping("/patient/changestatu/{id}")
-	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	@PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN' , 'ROLE_ADMIN')")
 	public ResponseEntity<?> ChangeRdvSttByPatient(@Valid @PathVariable Long id,
 			@Valid @RequestBody RendezvousRequest requestrdv) throws Exception {
 		// Rendezvous rdv = rdvrepository.findById(id)
@@ -612,7 +608,7 @@ public class RdvController {
 	 * Patient : RDV FOR Patient BY DAY :
 	 */
 	@GetMapping("/patient/rdvbyday/{day}")
-	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	@PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN' , 'ROLE_ADMIN')")
 	List<Rendezvous> rendezvousPatientByday(@Valid @PathVariable long day) throws Exception {
 		// UserDetailsImpl userDetails = (UserDetailsImpl)
 		// SecurityContextHolder.getContext().getAuthentication()
@@ -635,7 +631,7 @@ public class RdvController {
 
 	// RDV FOR Patient BY WEEK :
 	@GetMapping("/patient/rdvbyweek/{week}")
-	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	@PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN' , 'ROLE_ADMIN')")
 	List<Rendezvous> rendezvousPatientByweek(@Valid @PathVariable long week) throws Exception {
 		// UserDetailsImpl userDetails = (UserDetailsImpl)
 		// SecurityContextHolder.getContext().getAuthentication()
@@ -657,7 +653,7 @@ public class RdvController {
 
 	// RDV FOR Patient BY MONTH :
 	@GetMapping("/patient/rdvbymonth/{month}")
-	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	@PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN' , 'ROLE_ADMIN')")
 	List<Rendezvous> rendezvousPatientBymonth(@Valid @PathVariable long month) throws Exception {
 		// UserDetailsImpl userDetails = (UserDetailsImpl)
 		// SecurityContextHolder.getContext().getAuthentication()
@@ -679,7 +675,7 @@ public class RdvController {
 
 	// RDV FOR Patient BY YEAR :
 	@GetMapping("/patient/rdvbyyear/{year}")
-	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	@PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN' , 'ROLE_ADMIN')")
 	List<Rendezvous> rendezvousPatientByyear(@Valid @PathVariable long year) throws Exception {
 		// UserDetailsImpl userDetails = (UserDetailsImpl)
 		// SecurityContextHolder.getContext().getAuthentication()
@@ -704,7 +700,7 @@ public class RdvController {
 	 * and id patient
 	 */
 	@GetMapping("/patient/rdvbyday/{id}/{day}")
-	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	@PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN' , 'ROLE_ADMIN')")
 	List<Rendezvous> rdvforSpecificPatientByday(@Valid @PathVariable long day,
 			@Valid @PathVariable long id) throws Exception {
 		activityServices.createActivity(new Date(), "Read", "Consult Rdv for Patient ID : " + id + " By Day ",
@@ -716,7 +712,8 @@ public class RdvController {
 	}
 
 	// RDV FOR Patient BY WEEK :and id patient
-	@GetMapping("/patient/rdvbyweek/{id}/{week}")	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	@GetMapping("/patient/rdvbyweek/{id}/{week}")
+	@PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN' , 'ROLE_ADMIN')")
 	List<Rendezvous> rdvforSpecificPatientByweek(@Valid @PathVariable long week,
 			@Valid @PathVariable long id) throws Exception {
 		activityServices.createActivity(new Date(), "Read", "Consult Rdv for Patient ID : " + id + " By Week ",
@@ -729,7 +726,7 @@ public class RdvController {
 
 	// RDV FOR Patient BY MONTH and id patient:
 	@GetMapping("/patient/rdvbymonth/{id}/{month}")
-	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	@PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN' , 'ROLE_ADMIN')")
 	List<Rendezvous> rdvforSpecificPatientBymonth(@Valid @PathVariable long month,
 			@Valid @PathVariable long id) throws Exception {
 		activityServices.createActivity(new Date(), "Read", "Consult Rdv for Patient ID : " + id + " By Month ",
@@ -742,7 +739,7 @@ public class RdvController {
 
 	// RDV FOR Patient BY YEAR :and id patient
 	@GetMapping("/patient/rdvbyyear/{id}/{year}")
-	@PreAuthorize("hasAuthority('ROLE_PATIENT')")
+	@PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN' , 'ROLE_ADMIN')")
 	List<Rendezvous> rdvforSpecificPatientByyear(@Valid @PathVariable long year,
 			@Valid @PathVariable long id) throws Exception {
 		activityServices.createActivity(new Date(), "Read", "Consult Rdv for Patient ID : " + id + " By Year ",

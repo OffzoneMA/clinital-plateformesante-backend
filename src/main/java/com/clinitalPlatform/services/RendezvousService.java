@@ -1,6 +1,7 @@
 package com.clinitalPlatform.services;
 
 import com.clinitalPlatform.dao.IDao;
+import com.clinitalPlatform.dto.ConflictCheckResult;
 import com.clinitalPlatform.dto.RendezvousDTO;
 import com.clinitalPlatform.enums.ERole;
 import com.clinitalPlatform.enums.RdvStatutEnum;
@@ -458,86 +459,68 @@ public class RendezvousService implements IDao<Rendezvous>  {
 
 
 	public ResponseEntity<?> AddnewRdv(User user, RendezvousDTO c, Medecin medecin, Patient patient) throws Exception {
-
 		try {
 			// Récupération des entités nécessaires
-
 			MotifConsultation motif = mRepository.findById(c.getMotif())
 					.orElseThrow(() -> new Exception("No such Id exists for MotifConsultation"));
-
 			ModeConsultation mode = moderespo.findById(c.getModeconsultation())
 					.orElseThrow(() -> new Exception("No such Id exists for ModeConsultation"));
-
 			Cabinet cabinet = null;
-
 			LOGGER.info("Cabinet id value , {}" , c.getCabinet());
 			if (c.getCabinet() != null && c.getCabinet() != 0) {
 				cabinet = cabrepo.findById(c.getCabinet())
 						.orElseThrow(() -> new Exception("No such Id exist for a cabinet"));
 			}
 
-			// Vérification de la réservation
-			//Boolean isReserved = this.isHasRdvToday(medecin.getSpecialite().getId_spec(), c.getStart().toLocalDate(), patient.getId());
-			Boolean isReserved = false,ModeMedecin=false;
-
-			isReserved= this.isHasRdvToday( medecin.getSpecialite().getId_spec(), c.getStart().toLocalDate(),patient.getId());
-
-			if (!isReserved ||ModeMedecin) {
-
-				// Création du nouveau rendez-vous
-				Rendezvous rendezvous = new Rendezvous();
-				rendezvous.setMedecin(medecin);
-				rendezvous.setMotifConsultation(motif);
-				rendezvous.setPatient(patient);
-				rendezvous.setDay(c.getDay());
-				rendezvous.setStart(c.getStart());
-				rendezvous.setEnd(c.getEnd());
-				rendezvous.setStatut(c.getStatut());
-				rendezvous.setCanceledAt(c.getCanceledat());
-				rendezvous.setModeConsultation(mode);
-				rendezvous.setISnewPatient(c.getIsnewpatient());
-				if (user != null && rendezvous != null) {
-					ERole userRole = user.getRole();
-					if (userRole == ERole.ROLE_MEDECIN && c != null && c.getCommantaire() != null) {
-						rendezvous.setCommantaire(c.getCommantaire());
-					}
-				}
-				rendezvous.setLinkVideoCall(urlVideoCallGenerator.joinConference());
-				if(cabinet != null) {
-					rendezvous.setCabinet(cabinet);
-				}
-				LOGGER.info("id=" + rendezvous.getId());
-
-				entityManger.persist(rendezvous);
-				ActivityServices.createActivity(new Date(), "Add", "Add New Rdv ", user);
-				LOGGER.info("Add new Rdv, UserID : " + user.getId());
-				return ResponseEntity.ok(mapper.map(rendezvous, Rendezvous.class));
-
-			} else {
-				// Récupérer les détails du rendez-vous existant
-				Rendezvous existingRdv = rdvrepo.findRdvByPatientandSpecInDate(patient.getId(), medecin.getSpecialite().getId_spec(), c.getStart().toLocalDate())
-						.stream()
-						.findFirst()
-						.orElse(null);
-
-				// Convertir en RendezvousResponse
-				RendezvousResponseother response = existingRdv != null ? mapToRendezvousResponseother(existingRdv) : null;
-
-				return ResponseEntity.ok(new ApiResponse(false, "You have already an other RDV ", response));
-				/*Rendezvous existingRdv = rdvrepo.findRdvByPatientandSpecInDate(patient.getId(), medecin.getSpecialite().getId_spec(), c.getStart().toLocalDate())
-						.stream()
-						.findFirst()
-						.orElse(null);
-
-
-				return ResponseEntity.ok(new ApiResponse(false, "You have already an other RDV ", existingRdv));*/
+			if (c.getCabinet() == null || c.getCabinet() == 0) {
+				Long defaultCabId = medecin.getFirstCabinetId();
+				cabinet = cabrepo.findById(defaultCabId)
+						.orElseThrow(() -> new Exception("No such Id exist for a cabinet"));
 			}
+
+			// Vérification des conflits de rendez-vous
+			ConflictCheckResult conflictResult = checkRdvConflicts(medecin, patient, c.getStart(), c.getEnd());
+
+			if (conflictResult.isHasConflict()) {
+				// Convertir en RendezvousResponse
+				RendezvousResponseother response = conflictResult.getConflictingRdv() != null ? mapToRendezvousResponseother(conflictResult.getConflictingRdv()) : null;
+				return ResponseEntity.ok(new ApiResponse(false, conflictResult.getConflictMessage(), response));
+			}
+
+			// Création du nouveau rendez-vous
+			Rendezvous rendezvous = new Rendezvous();
+			rendezvous.setMedecin(medecin);
+			rendezvous.setMotifConsultation(motif);
+			rendezvous.setPatient(patient);
+			rendezvous.setDay(c.getDay());
+			rendezvous.setStart(c.getStart());
+			rendezvous.setEnd(c.getEnd());
+			rendezvous.setStatut(c.getStatut());
+			rendezvous.setCanceledAt(c.getCanceledat());
+			rendezvous.setModeConsultation(mode);
+			rendezvous.setISnewPatient(c.getIsnewpatient());
+			if (user != null && rendezvous != null) {
+				ERole userRole = user.getRole();
+				if (userRole == ERole.ROLE_MEDECIN && c != null && c.getCommantaire() != null) {
+					rendezvous.setCommantaire(c.getCommantaire());
+				}
+			}
+			rendezvous.setLinkVideoCall(urlVideoCallGenerator.joinConference());
+			if(cabinet != null) {
+				rendezvous.setCabinet(cabinet);
+			}
+            LOGGER.info("id={}", rendezvous.getId());
+
+			entityManger.persist(rendezvous);
+			ActivityServices.createActivity(new Date(), "Add", "Add New Rdv ", user);
+            LOGGER.info("Add new Rdv, UserID : {}", user.getId());
+
+			return ResponseEntity.ok(mapper.map(rendezvous, Rendezvous.class));
 
 		} catch (Exception e) {
 			throw new Exception(e.getMessage());
 		}
 	}
-
 	public Rendezvous updateerdv(long rdvId,RendezvousDTO rdvDTO, Medecin medecin, Patient patient) throws Exception{
 		Rendezvous rdv = rdvrepo.findById(rdvId).orElseThrow(() -> new Exception("RDV not found"));
 
@@ -668,6 +651,58 @@ public class RendezvousService implements IDao<Rendezvous>  {
 //		}
 //	}
 
+	/**
+	 * Trouve les conflits de rendez-vous pour un patient
+	 */
+	private List<Rendezvous> findPatientConflicts(Long patientId, LocalDateTime startTime, LocalDateTime endTime) {
+		return rdvrepo.findPatientRdvInTimeRange(patientId, startTime, endTime , RdvStatutEnum.ANNULE)
+				.stream()
+				.filter(rdv -> rdv.getStatut() != RdvStatutEnum.ANNULE)
+				.filter(rdv -> hasTimeOverlap(rdv.getStart(), rdv.getEnd(), startTime, endTime))
+				.collect(Collectors.toList());
+	}
+
+	/**
+	 * Trouve les conflits de rendez-vous pour un médecin
+	 */
+	private List<Rendezvous> findMedecinConflicts(Long medecinId, LocalDateTime startTime, LocalDateTime endTime) {
+		return rdvrepo.findMedecinRdvInTimeRange(medecinId, startTime, endTime , RdvStatutEnum.ANNULE)
+				.stream()
+				.filter(rdv -> rdv.getStatut() != RdvStatutEnum.ANNULE)
+				.filter(rdv -> hasTimeOverlap(rdv.getStart(), rdv.getEnd(), startTime, endTime))
+				.collect(Collectors.toList());
+	}
+
+	private boolean hasTimeOverlap(LocalDateTime existingStart, LocalDateTime existingEnd,
+								   LocalDateTime newStart, LocalDateTime newEnd) {
+		// Deux créneaux se chevauchent si :
+		// - Le nouveau créneau commence avant la fin de l'existant ET
+		// - Le nouveau créneau se termine après le début de l'existant
+		return newStart.isBefore(existingEnd) && newEnd.isAfter(existingStart);
+	}
+
+	public ConflictCheckResult checkRdvConflicts(Medecin medecin, Patient patient, LocalDateTime startTime, LocalDateTime endTime) throws Exception {
+		try {
+			// Vérification des conflits pour le patient
+			List<Rendezvous> patientConflicts = findPatientConflicts(patient.getId(), startTime, endTime);
+			if (!patientConflicts.isEmpty()) {
+				Rendezvous conflictingRdv =patientConflicts.get(0);
+				return new ConflictCheckResult(true, "Patient have already an other RDV ", conflictingRdv);
+			}
+
+			// Vérification des conflits pour le médecin
+			List<Rendezvous> medecinConflicts = findMedecinConflicts(medecin.getId(), startTime, endTime);
+			if (!medecinConflicts.isEmpty()) {
+				Rendezvous conflictingRdv = medecinConflicts.get(0);
+				return new ConflictCheckResult(true, "Medecin have already an other RDV ", conflictingRdv);
+			}
+
+			return new ConflictCheckResult(false, null, null);
+
+		} catch (Exception e) {
+			throw new Exception("Erreur lors de la vérification des conflits: " + e.getMessage());
+		}
+	}
 
 	// Checking if a patient has a rendezvous with a doctor today.
 	public Boolean isHasRdvToday(Long spec, LocalDate date, Long idpat) throws Exception {

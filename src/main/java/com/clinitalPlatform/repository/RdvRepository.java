@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -28,7 +29,6 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 
 	@Query(value = "SELECT p.* from rendezvous p , medecins m where p.medecin=m.id and m.specialite_id_spec=:spec and DATE(p.start)=:date", nativeQuery = true)
 	List<Rendezvous> findRdvBySpecInDate(@Param(value = "spec") Long spec, @Param(value = "date") LocalDate date) throws Exception;
-
 
 	// get Rdv By Day :
 	@Query(value = "SELECT r.* FROM Rendezvous r , patients p where r.patient=p.id   and  DATE(r.start)= ?1 and p.user_id=?2", nativeQuery = true)
@@ -57,7 +57,6 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 	@Query(value = "SELECT * FROM rendezvous WHERE year(start)=:year and medecin=:id", nativeQuery = true)
 	List<Rendezvous> getRendezvousMedByYear(@Param(value = "year") long day, @Param(value = "id") long id);
 
-
 	//RDV BY DATE (DAR,WEEK,MONTH,YEAR) For A Patient :
 	// Get Rdv By day :
 	@Query(value = "SELECT * FROM rendezvous WHERE day=:day and patient= :id", nativeQuery = true)
@@ -78,7 +77,6 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 
 	@Query(value = "SELECT * FROM rendezvous WHERE year(start)=:year and patient= :id", nativeQuery = true)
 	List<Rendezvous> getRendezvousPatientByYear(@Param(value = "year") long week, @Param(value = "id") long id);
-
 
 	// get RDV by ID :
 	@Query(value = "select * from Rendezvous  where id= :id", nativeQuery = true)
@@ -141,7 +139,6 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 	List<Rendezvous> findAllRdvByPatient(Long id);
 
 	// List<Rendezvous> findByMedecinCabinetSecretairesId(Long id);
-
 	@Modifying
 	@Query(value = "DELETE FROM rendezvous WHERE id = :idrdv", nativeQuery = true)
 	void DeletRdvByIdProfile(@Param("idrdv") Long idrdv) throws Exception;
@@ -149,10 +146,7 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 	@Modifying
 	@Query(value = "UPDATE rendezvous SET day = :#{#day_of_week.getValue()-1}, start = :start , statut = :statut, medecin = :medecinId, patient = :patientId, motif = :motif , end=:end,mode_consultation=:idmode WHERE id = :id", nativeQuery = true)
 	void UpdateRdvByIdProfile(@Param("day_of_week") DayOfWeek day_of_week, @Param("start") LocalDateTime start, @Param("statut") String statut, @Param("medecinId") Long medecinId,
-
 							  @Param("patientId") Long patientId, @Param("motif") String motif, @Param("end") LocalDateTime end, @Param("id") long Id, @Param("idmode") long idmode) throws Exception;
-	// get RDV by Id and id speciate in a date :
-
 
 	// get RDV by Id and id Medecin :
 	@Query(value = "select p.* from rendezvous p , medecins m where p.medecin=m.id AND  m.specialite_id_spec=:spec and DATE(start)=:date AND p.medecin=:idmed", nativeQuery = true)
@@ -198,6 +192,37 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 
 	List<Rendezvous> findByStatutAndCanceledAtAfter(RdvStatutEnum rdvStatutEnum, LocalDateTime lastCheck);
 
-	List<Rendezvous> findByStartBefore(LocalDateTime sixMonthsAgo);
+	@Query("SELECT r FROM Rendezvous r WHERE r.patient.id = :patientId " +
+			"AND r.start >= :startTime AND r.start <= :endTime " +
+			"AND r.statut != :cancelledStatus")
+	List<Rendezvous> findPatientRdvInTimeRange(@Param("patientId") Long patientId,
+											   @Param("startTime") LocalDateTime startTime,
+											   @Param("endTime") LocalDateTime endTime,
+											   @Param("cancelledStatus") RdvStatutEnum cancelledStatus);
+
+	/**
+	 * Trouve tous les rendez-vous d'un médecin dans une plage horaire donnée
+	 */
+	@Query("SELECT r FROM Rendezvous r WHERE r.medecin.id = :medecinId " +
+			"AND ((r.start <= :endTime AND r.end >= :startTime))" +
+			"AND r.statut != :cancelledStatus")
+	List<Rendezvous> findMedecinRdvInTimeRange(@Param("medecinId") Long medecinId,
+											   @Param("startTime") LocalDateTime startTime,
+											   @Param("endTime") LocalDateTime endTime ,
+											   @Param("cancelledStatus") RdvStatutEnum cancelledStatus);
+
+	/**
+	 * Méthode alternative pour vérifier les conflits de façon plus simple
+	 */
+	@Query("SELECT COUNT(r) FROM Rendezvous r WHERE " +
+			"(r.patient.id = :patientId OR r.medecin.id = :medecinId) " +
+			"AND r.statut != :cancelledStatus " +
+			"AND ((r.start <= :endTime AND r.end >= :startTime))")
+	Long countConflictingRdv(@Param("patientId") Long patientId,
+							 @Param("medecinId") Long medecinId,
+							 @Param("startTime") LocalDateTime startTime,
+							 @Param("endTime") LocalDateTime endTime,
+							 @Param("cancelledStatus") RdvStatutEnum cancelledStatus);
+
 }
 

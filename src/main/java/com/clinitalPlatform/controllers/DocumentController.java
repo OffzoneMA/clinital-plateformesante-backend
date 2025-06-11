@@ -114,13 +114,11 @@ public class DocumentController {
 
     // Add a document of a patient
     @PostMapping(path = "/addDoc")
-    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    @PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN' , 'ROLE_ADMIN')")
     @ResponseBody
     public ResponseEntity<?> addDoc(@RequestParam String document,
                                     @RequestParam MultipartFile docFile) throws Exception {
-
         try {
-
             // ------ Save Doc
             Document savedDoc = docservices.create(document);
 
@@ -298,24 +296,24 @@ public class DocumentController {
 
     // Returning a document by id.
     @GetMapping("/docById/{id}")
-    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    @PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN' , 'ROLE_ADMIN')")
     public ResponseEntity<DocumentResponse> getDocById(@PathVariable long id) throws Exception {
         Optional<Document> doc = docrepository.findById(id);
 
         if (doc.isPresent()) {
             activityServices.createActivity(new Date(),"Read","Consulting Document with ID : "+id,globalVariables.getConnectedUser());
-            LOGGER.info("Consulting  document ID "+id+" ,By User ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+            LOGGER.info("Consulting  document ID {} ,By User ID : {}", id, globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : "");
             return new ResponseEntity<>(mapper.map(doc.get(), DocumentResponse.class), HttpStatus.OK);
         } else {
 
-            LOGGER.warn("Can't Found Doc ID : "+id+",Consulting By User ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
+            LOGGER.warn("Can't Found Doc ID : {},Consulting By User ID : {}", id, globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : "");
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 
     // Returning a list of documents by Rendez-vous id.
     @GetMapping("/docByIdRdv")
-    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    @PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN' , 'ROLE_ADMIN')")
     @ResponseBody
     public List<DocumentResponse> findDocByIdRdv(@RequestParam Long rdvId) throws Exception {
 
@@ -327,7 +325,7 @@ public class DocumentController {
 
     // Returning a list of documents by patient name.
     @GetMapping("/docByNomPatient")
-    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    @PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN' , 'ROLE_ADMIN')")
     @ResponseBody
     public List<DocumentResponse> findDocByNomPatient(@RequestParam String nomPatient) throws Exception {
 
@@ -467,7 +465,7 @@ public class DocumentController {
 
     // Archive or unarchive a document specified by its ID
     @PutMapping(path = "/archiveDoc")
-    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    @PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN' , 'ROLE_ADMIN')")
     public ResponseEntity<?> archiveDoc(@RequestParam Long docId, @RequestParam boolean archive)
             throws Exception {
 
@@ -498,11 +496,10 @@ public class DocumentController {
 
         }
         return ResponseEntity.ok(new ApiResponse(false, "No Document found!"));
-
     }
 
     @DeleteMapping(path = "/deleteDoc")
-    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    @PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN' , 'ROLE_ADMIN')")
     @Transactional
     public ResponseEntity<?> deleteDoc(@RequestParam Long docId) {
         try {
@@ -549,12 +546,9 @@ public class DocumentController {
         }
     }
 
-
-
     // Generating a SAS token for the Azure Blob Storage.
     /*@GetMapping("/getSasToken")
     public ResponseEntity<?> getSAS() throws InvalidKeyException, URISyntaxException, StorageException {
-
         String storageConnectionString = "DefaultEndpointsProtocol=https;AccountName=documentspatient;AccountKey="
                 + azureStorageToken + ";EndpointSuffix=core.windows.net";
         CloudStorageAccount storageAccount = CloudStorageAccount.parse(storageConnectionString);
@@ -574,7 +568,7 @@ public class DocumentController {
 
     // Returning a list of archived documents by patient id.
     @GetMapping("/allArchivedDocByPatientId/{id}")
-    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    @PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN' , 'ROLE_ADMIN')")
     @ResponseBody
     public List<DocumentDTO> findAllArchivedDocsByPatientId(@PathVariable("id") long id) throws Exception {
 
@@ -589,14 +583,12 @@ public class DocumentController {
 
     // Download a file of a patient
     @GetMapping("/download")
-    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    @PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN' , 'ROLE_ADMIN')")
     public ResponseEntity<?> getFile(@RequestParam String fileName) throws Exception {
-
         //ByteArrayResource resource= new ByteArrayResource(azureAdapter.getFile(fileName));//until we have azure account
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"");
-
         activityServices.createActivity(new Date(),"Read","Download document ID:",globalVariables.getConnectedUser());
         //LOGGER.info("Download document with Name: "+resource.getFilename()+" By a User with ID : "+(globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId():""));
 
@@ -607,7 +599,7 @@ public class DocumentController {
 
 
     @PostMapping("/share-documents-to-medecin")
-    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    @PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN' , 'ROLE_ADMIN')")
     @ResponseBody
     public ResponseEntity<?> shareDocumentsWithMedecin(
             @RequestParam Long medecinId,
@@ -639,7 +631,7 @@ public class DocumentController {
 
     // Endpoint to share a single document with multiple medecins
     @PostMapping("/share-document-to-medecins")
-    @PreAuthorize("hasAuthority('ROLE_PATIENT')")
+    @PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN' , 'ROLE_ADMIN')")
     @ResponseBody
     public ResponseEntity<?> shareDocumentWithMedecins(
             @RequestParam Long documentId,
@@ -677,8 +669,5 @@ public class DocumentController {
                     .body(new ApiResponse(false, "Erreur lors du partage du document : " + e.getMessage(), null));
         }
     }
-
-
-
 
 }

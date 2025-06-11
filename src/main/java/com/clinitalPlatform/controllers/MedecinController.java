@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import javax.validation.Valid;
 
 import com.clinitalPlatform.dto.*;
+import com.clinitalPlatform.enums.ConsultationPeriodEnum;
 import com.clinitalPlatform.exception.BadRequestException;
 import com.clinitalPlatform.exception.ResourceNotFoundException;
 import com.clinitalPlatform.models.*;
@@ -956,7 +957,7 @@ public class MedecinController {
 				LocalDate finalDay = day;
 				List<MedecinSchedule> dailySchedules = schedules.stream()
 						.filter(sch -> sch.getDay().getValue() == finalDay.getDayOfWeek().getValue())
-						.collect(Collectors.toList());
+						.toList();
 
 				AgendaResponse agenda = new AgendaResponse();
 				agenda.setDay(day.getDayOfWeek());
@@ -970,12 +971,15 @@ public class MedecinController {
 
 				List<String> allSlots = new ArrayList<>();
 				List<HorairesResponse> horairesList = new ArrayList<>();
+                ConsultationPeriodEnum period = null;
+                List<ModeConsultation> modeconsultation = new ArrayList<>();
 
 				for (MedecinSchedule sch : dailySchedules) {
 					AgendaResponse partialAgenda = medecinService.CreateCreno(sch, new AgendaResponse(), idmed, 1, day.atStartOfDay());
 
 					allSlots.addAll(partialAgenda.getAvailableSlot());
-
+                    period = partialAgenda.getPeriod();
+                    modeconsultation = partialAgenda.getModeconsultation();
 					// Ajout des horaires pour info
 					String startTime = sch.getAvailabilityStart().getHour() + ":" + String.format("%02d", sch.getAvailabilityStart().getMinute());
 					String endTime = sch.getAvailabilityEnd().getHour() + ":" + String.format("%02d", sch.getAvailabilityEnd().getMinute());
@@ -1016,6 +1020,8 @@ public class MedecinController {
 				agenda.setWorkingDate(day.atStartOfDay());
 				agenda.setDay(day.getDayOfWeek());
 				agenda.setWorkingHours(horairesList);
+                agenda.setPeriod(period);
+                //agenda.setModeconsultation(modeconsultation);
 
 				agendaResponseList.add(agenda);
 			}
