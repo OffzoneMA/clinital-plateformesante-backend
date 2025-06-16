@@ -350,11 +350,17 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
                     }
                 }
 
+                LOGGER.info("Creating or Update new schedule for day: {}, start: {}, end: {}", day, slot.getStartTime(), slot.getEndTime());
+
+
+                LocalDateTime startTime = slot.getStartTime();
+                LocalDateTime endTime = slot.getEndTime();
+
                 // Création du nouveau planning
                 MedecinSchedule newSchedule = new MedecinSchedule();
                 newSchedule.setDay(day);
-                newSchedule.setAvailabilityStart(slot.getStartTime());
-                newSchedule.setAvailabilityEnd(slot.getEndTime());
+                newSchedule.setAvailabilityStart(startTime);
+                newSchedule.setAvailabilityEnd(endTime);
                 newSchedule.setPeriod(slot.getPeriod());
                 newSchedule.setModeconsultation(request.getModesConsultation());
                 newSchedule.setMotifConsultation(request.getMotifsConsultation());

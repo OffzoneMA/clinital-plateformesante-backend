@@ -547,6 +547,32 @@ public class RdvController {
 
 	}
 
+	@PutMapping("/medecin/cancelRdv/{id}")
+	//@PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN')")
+	public ResponseEntity<?> cancelRdvByMedecin(@Valid @PathVariable Long id) throws Exception {
+		Medecin medecin = medecinService.getMedecinByUserId(globalVariables.getConnectedUser().getId());
+		if(medecin == null) {
+			return ResponseEntity.badRequest().body(new ApiResponse(false, "Medecin not found by userId : " + globalVariables.getConnectedUser().getId()));
+		}
+
+		Rendezvous rdv = rdvrepository.getById(id);
+        rdv.setCanceledAt(LocalDateTime.now());
+        rdv.setStatut(RdvStatutEnum.ANNULE);
+        Rendezvous updatedrdv = rdvrepository.save(rdv);
+        activityServices.createActivity(new Date(), "Update", "Patient Cancel Rdv ID : " + id,
+                globalVariables.getConnectedUser());
+        LOGGER.info("Medecin Cancel Rdv ID : {}, UserID : {}", id, globalVariables.getConnectedUser().getId());
+        pushNotificationService.sendAppointmentCancellation(
+                rdv.getMedecin().getUser().getId() , rdv.getMedecin().getSpecialite().getLibelle() ,
+                "Votre rendez-vous du " + rdv.getStart().toLocalDate() + " a été annulé." ,
+                "Dr" + " " + rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med() ,
+                rdv.getStart() , updatedrdv.getId()
+        );
+        return ResponseEntity.ok(mapper.map(updatedrdv, RendezvousResponse.class));
+
+    }
+
+
 	@PutMapping("/patient/cancelRdvById/{id}")
 	//@PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN')")
 	public ResponseEntity<?> cancelRdvById(@Valid @PathVariable Long id) throws Exception {

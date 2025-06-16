@@ -51,6 +51,7 @@ public class MedecinDTO {
 	//@JsonProperty(access = Access.WRITE_ONLY)
 	//private CabinetDTO cabinet;
 	private List<CabinetDTO> cabinet;
+	private List<CabinetMedecinsSpace> cabinets;
 	//@JsonProperty(access = Access.WRITE_ONLY)
 	private List<MoyenPaiementDTO> moyenPaiement;
 

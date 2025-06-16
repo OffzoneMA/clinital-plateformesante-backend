@@ -129,48 +129,53 @@ public class MedecinServiceImpl implements MedecinService {
         agenda.setIsnewpatient(Medsch.getIsnewpatient());
         agenda.setMotifconsultation(Medsch.getMotifConsultation());
         agenda.setModeconsultation(Medsch.getModeconsultation());
+
         List<Rendezvous> rendezvous = rendezvousService.findRendezvousByMedAndDate(idmed, date);
         List<RendezvousResponse> rdvrespo = rendezvous.stream()
                 .map(rdv -> clinitalModelMapper.map(rdv, RendezvousResponse.class)).collect(Collectors.toList());
 
-        //new
+        // Obtenir l'heure actuelle pour la comparaison
+        LocalDateTime now = LocalDateTime.now();
+        boolean isToday = date.toLocalDate().isEqual(now.toLocalDate());
+
         for (int j = 0; j < totalSlots; j++) {
             boolean isReserved = false;
             LocalDateTime slotTime = timer; // Créneau actuel
 
-                for (RendezvousResponse rdv : rdvrespo) {
-                    //rdv.getStart().isEqual(slotTime)
-                    LocalDateTime rdvStart = rdv.getStart();
-                    LocalDateTime rdvEnd = rdv.getEnd();
-                    // Vérifier si le créneau actuel se situe entre l'heure de début et de fin du rendez-vous
-//                    if ((slotTime.isEqual(rdvStart) || (slotTime.isAfter(rdvStart) && slotTime.isBefore(rdvEnd)))
-//                            && rdvStart.toLocalDate().isEqual(date.toLocalDate()))
-//                    {
-//                        LOGGER.info("isReserved ");
+            // Vérifier si le créneau est déjà passé (seulement pour aujourd'hui)
+            if (isToday && slotTime.isBefore(now)) {
+                // Exclure les créneaux passés pour aujourd'hui
+                timer = timer.plusMinutes(Medsch.getPeriod().getValue());
+                continue;
+            }
 
-//                        isReserved = true;
-//                        break;
-//                    }
-                    if(rdv.getStatut().equals(RdvStatutEnum.ANNULE)){
-                        isReserved=false;
-                        continue;
-                    }
-                    //cas conge longue duree
-                    if(rdv.getStatut().equals(RdvStatutEnum.CONJE)) {
-                        if (rdvStart.toLocalDate().isBefore(date.toLocalDate()) && rdvEnd.toLocalDate().isAfter(date.toLocalDate()) || rdvStart.toLocalDate().isEqual(date.toLocalDate()) || rdvEnd.toLocalDate().isEqual(date.toLocalDate())) {
-                            isReserved = true;
-                            break;
-                        }
-                    }
-                    if ((slotTime.getHour() == rdvStart.getHour() && slotTime.getMinute() == rdvStart.getMinute())
-                            || (slotTime.toLocalTime().isAfter(rdvStart.toLocalTime()) && slotTime.toLocalTime().isBefore(rdvEnd.toLocalTime()))
-                            && date.toLocalDate().isEqual(rdvStart.toLocalDate()) ) {
+            for (RendezvousResponse rdv : rdvrespo) {
+                LocalDateTime rdvStart = rdv.getStart();
+                LocalDateTime rdvEnd = rdv.getEnd();
+
+                if(rdv.getStatut().equals(RdvStatutEnum.ANNULE)){
+                    isReserved = false;
+                    continue;
+                }
+
+                // Cas congé longue durée
+                if(rdv.getStatut().equals(RdvStatutEnum.CONJE)) {
+                    if (rdvStart.toLocalDate().isBefore(date.toLocalDate()) && rdvEnd.toLocalDate().isAfter(date.toLocalDate())
+                            || rdvStart.toLocalDate().isEqual(date.toLocalDate())
+                            || rdvEnd.toLocalDate().isEqual(date.toLocalDate())) {
                         isReserved = true;
                         break;
                     }
-
-//
                 }
+
+                // Vérifier si le créneau chevauche avec un rendez-vous existant
+                if ((slotTime.getHour() == rdvStart.getHour() && slotTime.getMinute() == rdvStart.getMinute())
+                        || (slotTime.toLocalTime().isAfter(rdvStart.toLocalTime()) && slotTime.toLocalTime().isBefore(rdvEnd.toLocalTime()))
+                        && date.toLocalDate().isEqual(rdvStart.toLocalDate()) ) {
+                    isReserved = true;
+                    break;
+                }
+            }
 
             if (!isReserved) {
                 agenda.getAvailableSlot().add((timer.getHour() < 10 ? "0" : "") + timer.getHour() + ":" +
@@ -179,10 +184,8 @@ public class MedecinServiceImpl implements MedecinService {
 
             timer = timer.plusMinutes(Medsch.getPeriod().getValue());
         }
-        //end new
 
         return agenda;
-
     }
 
     // It's returning the number of days in a month.
