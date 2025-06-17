@@ -16,6 +16,10 @@ public class PaymentInfo {
     private String rib;
     private String codeSwift;
 
+    @OneToOne
+    @JsonBackReference
+    private Cabinet cabinet;
+
    //@OneToOne(mappedBy = "paymentInfo")
    //@JsonBackReference
    // private Cabinet cabinet;
