@@ -159,7 +159,6 @@ public class DocumentController {
     @ResponseBody
     public ResponseEntity<?> addDocByMedecin(@RequestParam String document,
                                     @RequestParam MultipartFile docFile) throws Exception {
-
         try {
 
             Long userId = globalVariables.getConnectedUser().getId();

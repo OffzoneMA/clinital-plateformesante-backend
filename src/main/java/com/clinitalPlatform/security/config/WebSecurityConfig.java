@@ -128,7 +128,7 @@ public class WebSecurityConfig {
       
         String[] authenticatedRoutes = {"/api/demandes/**", "/api/med/**", "/api/med/checkIfInNetwork/**" , "/api/doc/**", "/api/shares/**","/api/medecinSchedule/**","/api/patient/**",
                 "/api/rdv/patient/**","/api/rdv/today/**","/api/rdv/med/**", "/api/rdv/rdvs/medecin","/api/users/**", "/api/rdv/**",
-                "/api/medecinSchedule/fromCreno/**", "/api/documents-cabinet/**",
+                "/api/medecinSchedule/fromCreno/**", "/api/documents-cabinet/**", "/api/documents-medecin/**" ,
                 "/api/rdv/rdvs/patient","/api/rdv/patient/rdvbyday", "/api/med/equipe","api/med/getAllPatients", "/api/subscriptions/**",
                 "/api/fermetures/**" , "/api/diplome/**" , "/api/experiences/**" , "/api/antecedents/**" , "/api/observations/**" , "/api/compte-rendu/**",
         };
