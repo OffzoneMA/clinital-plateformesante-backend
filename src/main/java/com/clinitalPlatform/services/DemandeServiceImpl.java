@@ -1,7 +1,9 @@
 package com.clinitalPlatform.services;
 
+import com.clinitalPlatform.enums.ProviderEnum;
 import com.clinitalPlatform.models.*;
 import com.clinitalPlatform.repository.*;
+import com.clinitalPlatform.security.jwt.ConfirmationToken;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -9,6 +11,9 @@ import static net.andreinc.mockneat.types.enums.StringType.ALPHA_NUMERIC;
 import static net.andreinc.mockneat.types.enums.StringType.HEX;
 import static net.andreinc.mockneat.unit.text.Strings.strings;
 
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -39,6 +44,9 @@ public class DemandeServiceImpl implements DemandeService{
 	
 	@Autowired
 	private DemandeRepository demandeRepository;
+
+	@Autowired
+	private AutService authService;
 	
 	@Autowired
 	private ClinitalModelMapper modelMapper;
@@ -66,6 +74,13 @@ public class DemandeServiceImpl implements DemandeService{
     @Autowired
     private MedecinRepository medecinRepository;
 
+	private static final String UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	private static final String LOWER = "abcdefghijklmnopqrstuvwxyz";
+	private static final String DIGITS = "0123456789";
+	private static final String SPECIAL = "@$!%*?&";
+	private static final String ALL = UPPER + LOWER + DIGITS + SPECIAL;
+	private static final SecureRandom random = new SecureRandom();
+
 	@Override
 	public ResponseEntity<?> create(DemandeDTO demande) {
 		try {
@@ -81,6 +96,22 @@ public class DemandeServiceImpl implements DemandeService{
 
 			Demande d = modelMapper.map(demande, Demande.class);
 			Demande saved = demandeRepository.save(d);
+
+			// Create à new User from the Demande
+			User user = new User();
+			user.setEmail(saved.getMail());
+			user.setTelephone(saved.getPhonenumber() != null ? saved.getPhonenumber() : "+212600000000");
+			user.setRole(ERole.ROLE_MEDECIN);
+			user.setProvider(ProviderEnum.LOCAL);
+			User userSaved = userRepository.save(user);
+
+			saved.setUser(userSaved);
+			demandeRepository.save(saved);
+
+			ConfirmationToken token = authService.createToken(user);
+
+			//Envoie du mail de confirmation
+			emailSenderService.sendMailConfirmation(user.getEmail(), token.getConfirmationToken());
 
 			LOGGER.info("Demande d'inscription créée par un Médecin. Email : {}", d.getMail());
 			return ResponseEntity.ok(modelMapper.map(saved, Demande.class));
@@ -151,19 +182,16 @@ public class DemandeServiceImpl implements DemandeService{
 			Demande updated = demandeRepository.save(demande);
             LOGGER.info("Demande  has been Validated email : {}", demande.getMail());
 			if(valide == DemandeStateEnum.VALIDER){
-				String pw = this.SecretCode();
-				User user = new User();
-				user.setEmail(demande.getMail());
+				User user = userRepository.findById(updated.getUser().getId()).orElseThrow(()->new Exception("this User is not found !"));
+				String pw = this.generateSecurePassword(8);
 				user.setPassword(passwordEncoder.encode(pw));
-				user.setTelephone(demande.getPhonenumber() != null ? demande.getPhonenumber() : "0600000000");
-				user.setRole(ERole.ROLE_MEDECIN);
-				userRepository.save(user);
+				User savedUser = userRepository.save(user);
 				demande.setUser(user);
+
 				//demande.setState(1);
 				demandeRepository.save(demande);
                 LOGGER.info("New User is Created, Email : {}", demande.getMail());
-				User registred = userRepository.findById(user.getId()).orElseThrow(()->new Exception("this User is not found !"));
-				userservice.save(registred,demande);
+				userservice.save(savedUser , demande);
 
 				// Send email to the new Medecin
 				emailSenderService.sendMailDemandeValidation(demande,pw);
@@ -181,7 +209,37 @@ public class DemandeServiceImpl implements DemandeService{
 	public String SecretCode(){
 		 String code = strings().size(10).types(ALPHA_NUMERIC, HEX).get();
 		 return code;
-      }
+	}
+
+	public String generateSecurePassword(int length) {
+		if (length < 8) {
+			throw new IllegalArgumentException("Le mot de passe doit avoir au moins 8 caractères.");
+		}
+
+		List<Character> password = new ArrayList<>();
+
+		// Ajout obligatoire de chaque type
+		password.add(UPPER.charAt(random.nextInt(UPPER.length())));
+		password.add(LOWER.charAt(random.nextInt(LOWER.length())));
+		password.add(DIGITS.charAt(random.nextInt(DIGITS.length())));
+		password.add(SPECIAL.charAt(random.nextInt(SPECIAL.length())));
+
+		// Remplissage du reste avec des caractères aléatoires
+		for (int i = 4; i < length; i++) {
+			password.add(ALL.charAt(random.nextInt(ALL.length())));
+		}
+
+		// Mélange
+		Collections.shuffle(password, random);
+
+		// Conversion en chaîne
+		StringBuilder sb = new StringBuilder();
+		for (char c : password) {
+			sb.append(c);
+		}
+
+		return sb.toString();
+	}
 	
 	 @Override
 	 public Demande findDemandeByConnectedUser(Long userId) {

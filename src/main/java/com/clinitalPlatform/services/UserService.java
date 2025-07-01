@@ -114,6 +114,12 @@ public class UserService {
 						patient.setUser(user);
 						patientRepository.save(patient); // sauvergarde des infos du patiens
 						LOGGER.info("New Patient has been add ");
+
+						ConfirmationToken token = authService.createToken(user);
+
+						//Envoie du mail de confirmation
+						emailSenderService.sendMailConfirmation(user.getEmail(), token.getConfirmationToken());
+
 						break;
 					case ROLE_MEDECIN:
 						Demande demande = mapper.map(obj, Demande.class);
@@ -149,14 +155,15 @@ public class UserService {
 						Secretairepos.save(secrit); //Sauvegarde des infos sur la sécretaire
 						LOGGER.info("New Secetaire has been add ");
 
+						ConfirmationToken tokenS = authService.createToken(user);
+
+						//Envoie du mail de confirmation
+						emailSenderService.sendMailConfirmation(user.getEmail(), tokenS.getConfirmationToken());
+
 					default:
 						break;
 				}
 
-				ConfirmationToken token = authService.createToken(user);
-
-				//Envoie du mail de confirmation
-				emailSenderService.sendMailConfirmation(user.getEmail(), token.getConfirmationToken());
 				//
 				LOGGER.info("User informations has been Add seccessfully");
 				return user;
