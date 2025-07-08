@@ -960,6 +960,21 @@ public class RdvController {
 
 	}
 
+	@GetMapping("/rdvs/bymonth/{month}/{year}")
+	public ResponseEntity<?> getRendezvousByMonthAndYear(
+			@PathVariable int month, @PathVariable int year) {
+		try {
+			Long userId = globalVariables.getConnectedUser().getId();
+			Medecin medecin = medecinService.getMedecinByUserId(userId);
+			List<Rendezvous> rdvs = rdvservice.getRendezVousByMedAndMonth(medecin.getId() , month , year);
+			return ResponseEntity.ok(rdvs);
+		} catch (NotFoundException e) {
+            return  ResponseEntity.notFound().build();
+        } catch (Exception e) {
+             return ResponseEntity.status(404).body("Erreur lors de la récupération des rendez-vous : " + e.getMessage());
+        }
+    }
+
 	////////////CHART
 	/*@GetMapping("/count-by-mode")
 	@PreAuthorize("hasAuthority('ROLE_MEDECIN')")

@@ -224,5 +224,7 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 							 @Param("endTime") LocalDateTime endTime,
 							 @Param("cancelledStatus") RdvStatutEnum cancelledStatus);
 
+	@Query("SELECT r FROM Rendezvous r WHERE r.medecin.id = :idmed AND FUNCTION('MONTH', r.start) = :month AND FUNCTION('YEAR', r.start) = :year")
+	List<Rendezvous> findByMedecinAndMonthAndYear(@Param("idmed") long idmed, @Param("month") int month, @Param("year") int year);
 }
 

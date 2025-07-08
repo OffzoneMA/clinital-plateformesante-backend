@@ -250,6 +250,7 @@ public class RendezvousService implements IDao<Rendezvous>  {
 		return rdvrepo.getRendezvousMedByWeek(week,id);
 	}
 	//Get Rdv By Day :
+
 	public List<Rendezvous> getRdvMedByMonth(long month,long id){
 		return rdvrepo.getRendezvousMedByMonth(month,id);
 	}
@@ -753,10 +754,16 @@ public class RendezvousService implements IDao<Rendezvous>  {
 	}
 
 	public List<Rendezvous> getRendezVousByMed(long idmed){
-	List<Rendezvous> rdvs= rdvrepo.findByMedecinIdAndStartAfterOrderByStartAsc(idmed, LocalDateTime.now());
+		List<Rendezvous> rdvs= rdvrepo.findByMedecinIdAndStartAfterOrderByStartAsc(idmed, LocalDateTime.now());
 
-	return rdvs;
+		return rdvs;
 	}
+
+	public List<Rendezvous> getRendezVousByMedAndMonth(long idmed, int month, int year) {
+		List<Rendezvous> rdvs = rdvrepo.findByMedecinAndMonthAndYear(idmed, month, year);
+		return rdvs;
+	}
+
 //	public List<RendezvousDTO> getRendezVousByMed(long idmed) {
 //		List<Rendezvous> rdvs = rdvrepo.findByMedecinId(idmed);
 //		List<RendezvousDTO> rdvDtos = new ArrayList<>();
