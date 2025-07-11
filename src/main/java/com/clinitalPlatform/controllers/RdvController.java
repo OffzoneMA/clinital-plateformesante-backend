@@ -514,7 +514,7 @@ public class RdvController {
 
 	// cancel Rdv For connected Patient : %OK%
 	@PutMapping("/patient/cancelRdv/{id}")
-	//@PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN')")
+	//@PreAuthorize("hasAnyRole('ROLE_PATIENT'  )")
 	public ResponseEntity<?> cancelRdvByPatient(@Valid @PathVariable Long id) throws Exception {
 		Patient pat = patientService.getPatientMoiByUserId(globalVariables.getConnectedUser().getId());
 
@@ -535,8 +535,9 @@ public class RdvController {
                     rdv.getPatient().getUser().getId(), rdv.getMedecin().getSpecialite().getLibelle() ,
                     "Votre rendez-vous du " + rdv.getStart().toLocalDate() + " a été annulé." ,
                     "Dr" + " " + rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med() ,
-                    rdv.getStart() , updatedrdv.getId()
+                    rdv.getStart() , updatedrdv.getId() , rdv.getMedecin().getId() , rdv.getPatient().getId()
             );
+
 			LOGGER.info("cancel rdv" + updatedrdv.getId());
 			return ResponseEntity.ok(mapper.map(updatedrdv, RendezvousResponse.class));
 		} else
@@ -559,14 +560,14 @@ public class RdvController {
         rdv.setCanceledAt(LocalDateTime.now());
         rdv.setStatut(RdvStatutEnum.ANNULE);
         Rendezvous updatedrdv = rdvrepository.save(rdv);
-        activityServices.createActivity(new Date(), "Update", "Patient Cancel Rdv ID : " + id,
+        activityServices.createActivity(new Date(), "Update", "Medecin Cancel Rdv ID : " + id,
                 globalVariables.getConnectedUser());
         LOGGER.info("Medecin Cancel Rdv ID : {}, UserID : {}", id, globalVariables.getConnectedUser().getId());
         pushNotificationService.sendAppointmentCancellation(
                 rdv.getMedecin().getUser().getId() , rdv.getMedecin().getSpecialite().getLibelle() ,
                 "Votre rendez-vous du " + rdv.getStart().toLocalDate() + " a été annulé." ,
                 "Dr" + " " + rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med() ,
-                rdv.getStart() , updatedrdv.getId()
+                rdv.getStart() , updatedrdv.getId() , rdv.getMedecin().getId() , rdv.getPatient().getId()
         );
         return ResponseEntity.ok(mapper.map(updatedrdv, RendezvousResponse.class));
 
@@ -588,7 +589,7 @@ public class RdvController {
                 rdv.getPatient().getUser().getId(), rdv.getMedecin().getSpecialite().getLibelle() ,
                 "Votre rendez-vous du " + rdv.getStart().toLocalDate() + " a été annulé." ,
                 "Dr" + " " + rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med() ,
-                rdv.getStart() , updatedrdv.getId()
+                rdv.getStart() , updatedrdv.getId() , rdv.getMedecin().getId() , rdv.getPatient().getId()
         );
         LOGGER.info("cancel rdv" + updatedrdv.getId());
         return ResponseEntity.ok(mapper.map(updatedrdv, RendezvousResponse.class));
@@ -634,7 +635,7 @@ public class RdvController {
 	 * Patient : RDV FOR Patient BY DAY :
 	 */
 	@GetMapping("/patient/rdvbyday/{day}")
-	@PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_MEDECIN' , 'ROLE_ADMIN')")
+	@PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_ADMIN')")
 	List<Rendezvous> rendezvousPatientByday(@Valid @PathVariable long day) throws Exception {
 		// UserDetailsImpl userDetails = (UserDetailsImpl)
 		// SecurityContextHolder.getContext().getAuthentication()

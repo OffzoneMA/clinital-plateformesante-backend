@@ -17,7 +17,7 @@ import java.util.List;
 
 @CrossOrigin(origins = "*")
 @RestController
-@RequestMapping("/api/moyens-paiement")
+@RequestMapping("/api/moyens-paiement/")
 public class MoyenPaiementController {
 
     @Autowired
@@ -30,7 +30,7 @@ public class MoyenPaiementController {
 
 
     //Récupérer tous les moyens de paiement
-    @GetMapping("/all")
+    @GetMapping("/all-methodes")
     public ResponseEntity<?> getAllPaymentMethods() {
         List<MoyenPaiementDTO> paymentMethods = moyenPaiementService.getAllMoyensPaiement();
         return ResponseEntity.ok(paymentMethods);

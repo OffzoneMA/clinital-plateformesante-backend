@@ -17,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class PushNotificationService {
@@ -40,11 +42,12 @@ public class PushNotificationService {
     @Transactional
     public void sendNotificationToUser(Long userId, String title, String message,
                                        String description , String autor, NotificationType type,
-                                       boolean requiresAction, String url , LocalDateTime rdvStart , Long rdvId) {
+                                       boolean requiresAction, String url , LocalDateTime rdvStart , Long rdvId , Long medecinId , Long patientId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found", "id", userId.toString()));
 
         Notification notification = new Notification();
+        Map<String, Object> data = new HashMap<>();
         notification.setUser(user);
         notification.setTitle(title);
         notification.setMessage(message);
@@ -64,6 +67,16 @@ public class PushNotificationService {
             notification.setRdvId(rdvId);
         }
 
+        if(medecinId != null){
+            //notification.setMedecinId(medecinId);
+            data.put("medecinId", medecinId);
+        }
+
+        if(patientId != null){
+            //notification.setPatientId(patientId);
+            data.put("patientId", patientId);
+        }
+        notification.setData(data);
         notification = notificationRepository.save(notification);
         NotificationDTO notificationDTO = notificationService.convertToDTO(notification);
 
@@ -81,7 +94,7 @@ public class PushNotificationService {
     }
 
     @Transactional
-    public void sendAppointmentReminder(Long userId, String message , String appointmentDetails , String autor , LocalDateTime rdvStart , Long rdvId) {
+    public void sendAppointmentReminder(Long userId, String message , String appointmentDetails , String autor , LocalDateTime rdvStart , Long rdvId , Long medecinId , Long patientId) {
         sendNotificationToUser(
                 userId,
                 "Rappel de rendez-vous",
@@ -92,12 +105,14 @@ public class PushNotificationService {
                 false,
                 "/agenda" ,
                 rdvStart ,
-                rdvId
+                rdvId,
+                medecinId,
+                patientId
         );
     }
 
     @Transactional
-    public void sendAppointmentCancellation(Long userId, String message , String appointmentDetails , String autor , LocalDateTime rdvStart , Long rdvId) {
+    public void sendAppointmentCancellation(Long userId, String message , String appointmentDetails , String autor , LocalDateTime rdvStart , Long rdvId , Long medecinId , Long patientId) {
 
         logger.info("rdv id cancel cancel" + " " + rdvId  );
         sendNotificationToUser(
@@ -110,7 +125,29 @@ public class PushNotificationService {
                 false,
                 "/agenda",
                 rdvStart ,
-                rdvId
+                rdvId ,
+                medecinId,
+                patientId
+        );
+    }
+
+
+    @Transactional
+    public void sendAppointmentCancellationToMedecin(Long userId, String message , String appointmentDetails , String autor , LocalDateTime rdvStart , Long rdvId , Long medecinId , Long patientId) {
+
+        sendNotificationToUser(
+                userId,
+                "Un patient a annulé son rendez-vous",
+                message ,
+                appointmentDetails,
+                autor,
+                NotificationType.ERROR,
+                false,
+                "/agenda",
+                rdvStart ,
+                rdvId ,
+                medecinId,
+                patientId
         );
     }
 

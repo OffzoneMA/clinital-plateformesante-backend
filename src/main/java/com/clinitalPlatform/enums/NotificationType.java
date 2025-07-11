@@ -5,7 +5,11 @@ public enum NotificationType {
     SUCCESS,
     WARNING,
     ERROR,
+    ERROR_MED ,
     REMINDER ,
     DOCUMENT ,
-    EMAIL
+    EMAIL ,
+    CONSULTE_DOCUMENT,
+    SHARED_DOCUMENT,
+    DOWNLOAD_DOCUMENT,
 }

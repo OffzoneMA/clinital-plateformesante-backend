@@ -1,5 +1,6 @@
 package com.clinitalPlatform.controllers;
 
+import com.clinitalPlatform.dto.ExpertisesMedecinDto;
 import com.clinitalPlatform.models.ExpertisesMedecin;
 import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.services.ExpertisesMedecinService;
@@ -34,10 +35,10 @@ public class ExpertisesMedecinController {
     }
 
     //Ajouter une nouvelle expertise
-    @PostMapping
-    public ResponseEntity<?> addExpertise(@RequestBody String nomExp) {
+    @PostMapping("/add")
+    public ResponseEntity<?> addExpertise(@RequestBody ExpertisesMedecinDto expertisesMedecinDto) {
         try {
-            ExpertisesMedecin exp = expertisesService.addExpertise(nomExp);
+            ExpertisesMedecin exp = expertisesService.addExpertise(expertisesMedecinDto.getNom_exp());
             return ResponseEntity.ok(exp);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

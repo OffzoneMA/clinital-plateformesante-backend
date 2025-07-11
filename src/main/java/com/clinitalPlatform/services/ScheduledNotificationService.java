@@ -46,7 +46,7 @@ public class ScheduledNotificationService {
                         + rdv.getStart().toLocalDate();
                 if(!notificationExists){
                     pushNotificationService.sendAppointmentReminder(patient.getUser().getId(), rdv.getMedecin().getSpecialite().getLibelle() , appointmentDetails ,
-                            "Dr" + " " + rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med() , rdv.getStart() , rdv.getId());
+                            "Dr" + " " + rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med() , rdv.getStart() , rdv.getId() , rdv.getMedecin().getId() , rdv.getPatient().getId());
                 }
 
             }
@@ -70,7 +70,26 @@ public class ScheduledNotificationService {
                             "Votre rendez-vous du " + rdv.getStart().toLocalDate() + " a été annulé.",
                             "Dr" + " " + rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med(),
                             rdv.getStart(),
-                            rdv.getId()
+                            rdv.getId() ,
+                            rdv.getMedecin().getId(),
+                            rdv.getPatient().getId()
+                    );
+                }
+            }
+
+            // Send notification to the doctor
+            if (rdv.getMedecin() != null) {
+                boolean notificationExistsForDoctor = notificationRepository.existsByRdvIdAndType(rdv.getId(), NotificationType.ERROR);
+
+                if(!notificationExistsForDoctor) {
+                    pushNotificationService.sendAppointmentCancellation(
+                            rdv.getMedecin().getUser().getId(), rdv.getPatient().getNom_pat() + " " + rdv.getPatient().getPrenom_pat(),
+                            "Le rendez-vous du " + rdv.getStart().toLocalDate() + " avec " + " a été annulé.",
+                            "Dr" + " " + rdv.getPatient().getNom_pat() + " " + rdv.getPatient().getPrenom_pat(),
+                            rdv.getStart(),
+                            rdv.getId() ,
+                            rdv.getMedecin().getId(),
+                            rdv.getPatient().getId()
                     );
                 }
             }

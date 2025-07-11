@@ -130,6 +130,8 @@ public class NotificationController {
                 (Boolean) notificationData.get("requiresAction"),
                 (String) notificationData.get("url") ,
                 null,
+                null ,
+                null,
                 null
         );
         return ResponseEntity.ok().build();
@@ -156,7 +158,7 @@ public class NotificationController {
             @RequestBody String autor ,
             @RequestBody LocalDateTime rdvStart ,
             @RequestBody Long rdvId) {
-        pushNotificationService.sendAppointmentReminder(userId, message , appointmentDetails ,autor, rdvStart , rdvId);
+        pushNotificationService.sendAppointmentReminder(userId, message , appointmentDetails ,autor, rdvStart , rdvId , null, null);
         return ResponseEntity.ok().build();
     }
 
@@ -168,7 +170,7 @@ public class NotificationController {
             @RequestBody String autor ,
             @RequestBody LocalDateTime rdvStart ,
             @RequestBody Long rdvId) {
-        pushNotificationService.sendAppointmentCancellation(userId, message , appointmentDetails , autor , rdvStart , rdvId);
+        pushNotificationService.sendAppointmentCancellation(userId, message , appointmentDetails , autor , rdvStart , rdvId , null, null);
         return ResponseEntity.ok().build();
     }
 }
