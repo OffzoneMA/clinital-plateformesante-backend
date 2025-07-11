@@ -30,7 +30,7 @@ public class MoyenPaiementController {
 
 
     //Récupérer tous les moyens de paiement
-    @GetMapping("/all-methodes")
+    @GetMapping("/all")
     public ResponseEntity<?> getAllPaymentMethods() {
         List<MoyenPaiementDTO> paymentMethods = moyenPaiementService.getAllMoyensPaiement();
         return ResponseEntity.ok(paymentMethods);

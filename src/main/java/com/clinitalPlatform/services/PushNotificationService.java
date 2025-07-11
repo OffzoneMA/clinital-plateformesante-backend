@@ -151,4 +151,39 @@ public class PushNotificationService {
         );
     }
 
+    public void sendConsulteDocumentNotification(Long userId, String title, String message , Long documentId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found", "id", userId.toString()));
+
+        Notification notification = new Notification();
+        Map<String, Object> data = new HashMap<>();
+        notification.setUser(user);
+        notification.setTitle(title);
+        notification.setMessage(message);
+        notification.setType(NotificationType.CONSULTE_DOCUMENT);
+        notification.setUrl("/historique-documents");
+        notification.setCreatedAt(LocalDateTime.now());
+        notification.setRead(false);
+
+        if(documentId != null){
+            //notification.setMedecinId(medecinId);
+            data.put("documentId", documentId);
+        }
+
+        notification.setData(data);
+        notification = notificationRepository.save(notification);
+        NotificationDTO notificationDTO = notificationService.convertToDTO(notification);
+
+        logger.info("📨 Notification envoyée: {}", notificationDTO);
+
+        // Envoyer la notification via WebSocket
+        messagingTemplate.convertAndSendToUser(
+                userId.toString(),
+                "/queue/notifications",
+                notificationDTO
+        );
+
+        logger.info("✅ Notification transmise via WebSocket à /user/{}/queue/notifications", userId);
+    }
+
 }
