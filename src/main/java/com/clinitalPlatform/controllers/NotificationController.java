@@ -9,7 +9,10 @@ import com.clinitalPlatform.repository.UserRepository;
 import com.clinitalPlatform.services.GlobalNotificationService;
 import com.clinitalPlatform.services.NotificationService;
 import com.clinitalPlatform.services.PushNotificationService;
+import com.clinitalPlatform.util.GlobalVariables;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,6 +38,10 @@ public class NotificationController {
 
     @Autowired
     private NotificationRepository notificationRepository;
+    @Autowired
+    private GlobalVariables globalVariables;
+
+    private final Logger LOGGER = LoggerFactory.getLogger(getClass());
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<NotificationDTO>> getUserNotifications(@PathVariable Long userId) {
@@ -131,7 +138,6 @@ public class NotificationController {
                 (String) notificationData.get("url") ,
                 null,
                 null ,
-                null,
                 null
         );
         return ResponseEntity.ok().build();
@@ -158,7 +164,7 @@ public class NotificationController {
             @RequestBody String autor ,
             @RequestBody LocalDateTime rdvStart ,
             @RequestBody Long rdvId) {
-        pushNotificationService.sendAppointmentReminder(userId, message , appointmentDetails ,autor, rdvStart , rdvId , null, null);
+        pushNotificationService.sendAppointmentReminder(userId, message , appointmentDetails ,autor, rdvStart , rdvId , null);
         return ResponseEntity.ok().build();
     }
 
@@ -170,7 +176,32 @@ public class NotificationController {
             @RequestBody String autor ,
             @RequestBody LocalDateTime rdvStart ,
             @RequestBody Long rdvId) {
-        pushNotificationService.sendAppointmentCancellation(userId, message , appointmentDetails , autor , rdvStart , rdvId , null, null);
+        pushNotificationService.sendAppointmentCancellation(userId, "Votre rendez-vous à été annulé" , message , appointmentDetails , autor , rdvStart , rdvId , null);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/send/document-notification")
+    public ResponseEntity<?> sendDocumentNotification(
+            @RequestBody Map<String, Object> notificationData) {
+        try {
+            Long userId = globalVariables.getConnectedUser().getId();
+
+            pushNotificationService.sendDocumentNotification(
+                    userId,
+                    (String) notificationData.get("title"),
+                    (String) notificationData.get("message"),
+                    (String) notificationData.get("description"),
+                    notificationData.get("documentId") != null
+                            ? ((Number) notificationData.get("documentId")).longValue()
+                            : null,
+                    NotificationType.valueOf((String) notificationData.get("type")),
+                    (String) notificationData.get("docType") ,
+                    (String) notificationData.get("autor")
+            );
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            LOGGER.error("Erreur lors de l'envoi de la notification : ", e);
+            return ResponseEntity.status(500).body(new ApiResponse(false, "Erreur lors de l'envoi de la notification : " + e.getMessage()));
+        }
     }
 }

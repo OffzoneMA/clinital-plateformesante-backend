@@ -532,11 +532,24 @@ public class RdvController {
 					globalVariables.getConnectedUser());
 			LOGGER.info("Patient Cancel Rdv ID : " + id + ", UserID : " + globalVariables.getConnectedUser().getId());
             pushNotificationService.sendAppointmentCancellation(
-                    rdv.getPatient().getUser().getId(), rdv.getMedecin().getSpecialite().getLibelle() ,
+                    rdv.getPatient().getUser().getId() ,
+					"Votre rendez-vous a été annulé"
+					, rdv.getMedecin().getSpecialite().getLibelle() ,
                     "Votre rendez-vous du " + rdv.getStart().toLocalDate() + " a été annulé." ,
                     "Dr" + " " + rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med() ,
-                    rdv.getStart() , updatedrdv.getId() , rdv.getMedecin().getId() , rdv.getPatient().getId()
+                    rdv.getStart() , updatedrdv.getId() , rdv
             );
+
+			pushNotificationService.sendAppointmentCancellationToMedecin(
+					rdv.getMedecin().getUser().getId(),
+					"Un patient a annulé son rendez-vous" ,
+					rdv.getPatient().getNom_pat() + " " + rdv.getPatient().getPrenom_pat(),
+					"Le rendez-vous du " + rdv.getStart().toLocalDate() + " a été annulé.",
+					"Dr " + rdv.getPatient().getNom_pat() + " " + rdv.getPatient().getPrenom_pat(),
+					rdv.getStart(),
+					updatedrdv.getId(),
+					rdv
+			);
 
 			LOGGER.info("cancel rdv" + updatedrdv.getId());
 			return ResponseEntity.ok(mapper.map(updatedrdv, RendezvousResponse.class));
@@ -563,12 +576,27 @@ public class RdvController {
         activityServices.createActivity(new Date(), "Update", "Medecin Cancel Rdv ID : " + id,
                 globalVariables.getConnectedUser());
         LOGGER.info("Medecin Cancel Rdv ID : {}, UserID : {}", id, globalVariables.getConnectedUser().getId());
+
         pushNotificationService.sendAppointmentCancellation(
-                rdv.getMedecin().getUser().getId() , rdv.getMedecin().getSpecialite().getLibelle() ,
+                rdv.getPatient().getUser().getId() ,
+				"Votre médecin a annulé votre rendez-vous" ,
+				rdv.getMedecin().getSpecialite().getLibelle() ,
                 "Votre rendez-vous du " + rdv.getStart().toLocalDate() + " a été annulé." ,
                 "Dr" + " " + rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med() ,
-                rdv.getStart() , updatedrdv.getId() , rdv.getMedecin().getId() , rdv.getPatient().getId()
+                rdv.getStart() , updatedrdv.getId() , rdv
         );
+
+		pushNotificationService.sendAppointmentCancellationToMedecin(
+				rdv.getMedecin().getUser().getId(),
+				"Votre rendez-vous a été annulé" ,
+				rdv.getPatient().getNom_pat() + " " + rdv.getPatient().getPrenom_pat(),
+				"Le rendez-vous du " + rdv.getStart().toLocalDate() + " a été annulé.",
+				"Dr " + rdv.getPatient().getNom_pat() + " " + rdv.getPatient().getPrenom_pat(),
+				rdv.getStart(),
+				updatedrdv.getId(),
+				rdv
+		);
+
         return ResponseEntity.ok(mapper.map(updatedrdv, RendezvousResponse.class));
 
     }
@@ -585,11 +613,14 @@ public class RdvController {
         activityServices.createActivity(new Date(), "Update", "Patient Cancel Rdv ID : " + id,
                 globalVariables.getConnectedUser());
         LOGGER.info("Patient Cancel Rdv ID : " + id + ", UserID : " + globalVariables.getConnectedUser().getId());
+
         pushNotificationService.sendAppointmentCancellation(
-                rdv.getPatient().getUser().getId(), rdv.getMedecin().getSpecialite().getLibelle() ,
+                rdv.getPatient().getUser().getId() ,
+				"Votre rendez-vous a été annulé",
+				rdv.getMedecin().getSpecialite().getLibelle() ,
                 "Votre rendez-vous du " + rdv.getStart().toLocalDate() + " a été annulé." ,
                 "Dr" + " " + rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med() ,
-                rdv.getStart() , updatedrdv.getId() , rdv.getMedecin().getId() , rdv.getPatient().getId()
+                rdv.getStart() , updatedrdv.getId() , rdv
         );
         LOGGER.info("cancel rdv" + updatedrdv.getId());
         return ResponseEntity.ok(mapper.map(updatedrdv, RendezvousResponse.class));

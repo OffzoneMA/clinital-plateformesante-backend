@@ -11,5 +11,6 @@ public enum NotificationType {
     EMAIL ,
     CONSULTE_DOCUMENT,
     SHARED_DOCUMENT,
+    SHARED_DOCUMENT_TO_PATIENT,
     DOWNLOAD_DOCUMENT,
 }

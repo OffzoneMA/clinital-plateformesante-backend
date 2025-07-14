@@ -51,8 +51,7 @@ public class ScheduledNotificationService {
                             "Dr " + rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med(),
                             rdv.getStart(),
                             rdv.getId(),
-                            rdv.getMedecin().getId(),
-                            patient.getId()
+                            rdv
                     );
                 }
 
@@ -64,8 +63,7 @@ public class ScheduledNotificationService {
                             "Dr " + rdv.getPatient().getNom_pat() + " " + rdv.getPatient().getPrenom_pat(),
                             rdv.getStart(),
                             rdv.getId(),
-                            rdv.getMedecin().getId(),
-                            rdv.getPatient().getId()
+                            rdv
                     );
                 }
             }
@@ -87,13 +85,13 @@ public class ScheduledNotificationService {
                 if (rdv.getPatient() != null && rdv.getPatient().getUser() != null) {
                     pushNotificationService.sendAppointmentCancellation(
                             rdv.getPatient().getUser().getId(),
+                            "Votre rendez-vous a été annulé",
                             rdv.getMedecin().getSpecialite().getLibelle(),
                             "Votre rendez-vous du " + rdv.getStart().toLocalDate() + " a été annulé.",
                             "Dr " + rdv.getMedecin().getNom_med() + " " + rdv.getMedecin().getPrenom_med(),
                             rdv.getStart(),
                             rdv.getId(),
-                            rdv.getMedecin().getId(),
-                            rdv.getPatient().getId()
+                            rdv
                     );
                 }
 
@@ -101,14 +99,14 @@ public class ScheduledNotificationService {
                 if (rdv.getMedecin() != null && rdv.getMedecin().getUser() != null) {
                     pushNotificationService.sendAppointmentCancellation(
                             rdv.getMedecin().getUser().getId(),
+                            "Un patient a annulé son rendez-vous",
                             rdv.getPatient().getNom_pat() + " " + rdv.getPatient().getPrenom_pat(),
                             "Le rendez-vous du " + rdv.getStart().toLocalDate() + " avec le patient " +
                                     rdv.getPatient().getNom_pat() + " " + rdv.getPatient().getPrenom_pat() + " a été annulé.",
                             rdv.getPatient().getNom_pat() + " " + rdv.getPatient().getPrenom_pat(),
                             rdv.getStart(),
                             rdv.getId(),
-                            rdv.getMedecin().getId(),
-                            rdv.getPatient().getId()
+                            rdv
                     );
                 }
             }

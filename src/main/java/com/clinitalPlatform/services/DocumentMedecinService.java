@@ -6,6 +6,7 @@ import com.clinitalPlatform.repository.DocumentMedecinRepository;
 import com.clinitalPlatform.repository.MedecinRepository;
 import com.clinitalPlatform.repository.PatientRepository;
 import com.clinitalPlatform.repository.TypeDocumentRepository;
+import com.clinitalPlatform.services.interfaces.MedecinService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,10 @@ public class DocumentMedecinService {
     private MedecinRepository medecinRepo;
     @Autowired
     private PatientRepository patientRepository;
+    @Autowired
+    private PushNotificationService pushNotificationService;
+    @Autowired
+    private MedecinService medecinService;
 
     public DocumentMedecin save(DocumentMedecin doc) {
         return repository.save(doc);
@@ -75,10 +80,12 @@ public class DocumentMedecinService {
         }
     }
 
-    public Medecin shareDocumentMedWithMedecin(Long medecinId, List<Long> documentIds) {
+    public Medecin shareDocumentMedWithMedecin(Long medecinId, List<Long> documentIds , Long userId) throws Exception {
         if(medecinId == null || documentIds == null || documentIds.isEmpty()) {
             throw new IllegalArgumentException("Medecin ID and Document IDs must not be null or empty");
         }
+
+        Medecin sender  = medecinService.getMedecinByUserId(userId);
 
         Medecin medecin = medecinRepo.findById(medecinId)
                 .orElseThrow(() -> new IllegalArgumentException("Medecin not found with ID: " + medecinId));
@@ -110,6 +117,10 @@ public class DocumentMedecinService {
             doc.getMedecinsPartages().add(medecin);
             repository.save(doc);
         });
+
+        // Envoie une notification au médecin
+
+        pushNotificationService.sendShareDocumentsToOneMedecinNotification(sender , medecin , sharedDocuments);
         return medecin;
     }
 
@@ -120,12 +131,14 @@ public class DocumentMedecinService {
         return repository.findByMedecinsPartagesId(medecinId);
     }
 
-    public Patient shareDocumentMedWithPatient(Long patientId, List<Long> documentIds) {
+    public Patient shareDocumentMedWithPatient(Long patientId, List<Long> documentIds , Long userId) throws Exception {
         if(patientId == null || documentIds == null || documentIds.isEmpty()) {
             throw new IllegalArgumentException("Patient ID and Document IDs must not be null or empty");
         }
 
         Patient patient = patientRepository.findById(patientId).orElseThrow(() -> new IllegalArgumentException("Patient not found with ID: " + patientId));
+
+        Medecin sender  = medecinService.getMedecinByUserId(userId);
 
         List<DocumentMedecin> documents = repository.findAllById(documentIds);
 
@@ -155,6 +168,9 @@ public class DocumentMedecinService {
             doc.getPatientsPartages().add(patient);
             repository.save(doc);
         });
+
+        // Envoie une notification au patient
+        pushNotificationService.sendShareDocumentsToPatientNotification(sender, patient, sharedDocuments);
         return patient;
     }
 

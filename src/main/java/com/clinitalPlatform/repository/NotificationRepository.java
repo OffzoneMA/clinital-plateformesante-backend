@@ -47,4 +47,22 @@ public interface NotificationRepository extends JpaRepository<Notification , Lon
     @Query("DELETE FROM Notification n WHERE n.user = :user AND n.isRead = true")
     void deleteAllReadByUser(@Param("user") User user);
 
+    @Query(value = """
+    SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
+    FROM notifications n
+    WHERE n.id = :userId
+      AND n.type = :type
+      AND JSON_EXTRACT(n.data, '$.documentId') = :documentId
+      AND JSON_EXTRACT(n.data, '$.docType') = :docType
+""", nativeQuery = true)
+    int countByUserIdAndTypeAndDataContaining( // 👈 int au lieu de boolean
+                                               @Param("userId") Long userId,
+                                               @Param("type") String type,
+                                               @Param("documentId") String documentId,
+                                               @Param("docType") String docType
+    );
+
+
+
+
 }

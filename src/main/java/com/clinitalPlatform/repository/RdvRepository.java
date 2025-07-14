@@ -80,7 +80,7 @@ public interface RdvRepository extends JpaRepository<Rendezvous, Long> {
 
 	// get RDV by ID :
 	@Query(value = "select * from Rendezvous  where id= :id", nativeQuery = true)
-	List<Rendezvous> getRendezvousById(Long id);
+	Rendezvous getRendezvousById(Long id);
 
 	// get RDV by Iduser and id Patient :
 	@Query(value = "SELECT r.* FROM rendezvous r , patients p WHERE r.patient= p.id and r.patient=?2 and p.user_id=?1", nativeQuery = true)

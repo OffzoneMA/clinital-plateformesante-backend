@@ -152,8 +152,10 @@ public class DocumentMedecinController {
         }
 
         try {
+            Long userId = globalVariables.getConnectedUser().getId();
+
             // Appeler le service pour partager les documents
-            Medecin medecin = documentMedecinService.shareDocumentMedWithMedecin(medecinId, documentIds);
+            Medecin medecin = documentMedecinService.shareDocumentMedWithMedecin(medecinId, documentIds , userId);
 
             // Retourner une réponse descriptive
             return ResponseEntity.ok(new ApiResponse(true, "Documents shared successfully!"));
@@ -180,8 +182,9 @@ public class DocumentMedecinController {
         }
 
         try {
+            Long userId = globalVariables.getConnectedUser().getId();
             // Appeler le service pour partager les documents
-            Patient patient = documentMedecinService.shareDocumentMedWithPatient(patientId, documentIds);
+            Patient patient = documentMedecinService.shareDocumentMedWithPatient(patientId, documentIds , userId );
 
             // Retourner une réponse descriptive
             return ResponseEntity.ok(new ApiResponse(true, "Documents shared successfully!"));

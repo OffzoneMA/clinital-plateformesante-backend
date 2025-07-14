@@ -2,6 +2,7 @@ package com.clinitalPlatform.dto;
 
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.Map;
 
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +22,7 @@ public class NotificationDTO {
 	private String rdvTime;
 	private boolean isRead;
 	private String url;
+	private Map<String, Object> data;
 
 	private UserDTO user;
 

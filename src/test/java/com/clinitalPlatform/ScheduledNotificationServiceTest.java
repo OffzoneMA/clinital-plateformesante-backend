@@ -76,8 +76,7 @@ class ScheduledNotificationServiceTest {
                 anyString(),
                 any(LocalDateTime.class),
                 eq(rendezvous.getId()) ,
-                eq(medecin.getId()),
-                eq(patient.getId())
+                rendezvous
         );
     }
 
@@ -97,10 +96,10 @@ class ScheduledNotificationServiceTest {
                 anyString(),
                 anyString(),
                 anyString(),
+                anyString(),
                 any(LocalDateTime.class),
                 eq(rendezvous.getId()) ,
-                eq(medecin.getId()),
-                eq(patient.getId())
+                rendezvous
         );
     }
 

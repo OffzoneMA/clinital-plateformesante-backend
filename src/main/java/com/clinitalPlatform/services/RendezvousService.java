@@ -217,7 +217,7 @@ public class RendezvousService implements IDao<Rendezvous>  {
 		return rdvrepo.findById(id);
 	}
 
-	public List<Rendezvous> getRendezvousById(long id){
+	public Rendezvous getRendezvousById(long id){
 		return rdvrepo.getRendezvousById(id);
 	}
 
