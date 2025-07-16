@@ -2,7 +2,9 @@ package com.clinitalPlatform.services;
 
 import com.clinitalPlatform.exception.ResourceNotFoundException;
 import com.clinitalPlatform.models.DossierMedical;
+import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.models.Observation;
+import com.clinitalPlatform.models.User;
 import com.clinitalPlatform.payload.request.ObservationRequest;
 import com.clinitalPlatform.repository.DossierMedicalRepository;
 import com.clinitalPlatform.repository.ObservationRepository;
@@ -20,17 +22,45 @@ public class ObservationService {
 
     @Autowired
     private DossierMedicalRepository dossierMedicalRepository;
+    @Autowired
+    private MedecinServiceImpl medecinServiceImpl;
 
-    public Observation ajouterObservation(ObservationRequest request ,  Long dossierId) {
+    public Observation ajouterObservation(ObservationRequest request, Long dossierId, User user) throws Exception {
+        // Vérifier l'existence du dossier
         DossierMedical dossier = dossierMedicalRepository.findById(dossierId)
                 .orElseThrow(() -> new ResourceNotFoundException("DossierMedical", "id", dossierId));
 
-        Observation obs = new Observation();
-        obs.setContenu(request.getContenu());
-        obs.setDateObservation(LocalDateTime.now());
-        obs.setDossier(dossier);
+        // Récupérer la dernière observation du dossier
+        List<Observation> observations = observationRepository.findByDossierId(dossierId);
+        Observation lastObservation = observations.isEmpty() ? null : observations.get(observations.size() - 1);
 
-        return observationRepository.save(obs);
+        // Récupérer le nom de l'utilisateur si c'est un médecin
+        String updatedBy = null;
+        if (user.getRole() != null && user.getRole().name().equals("ROLE_MEDECIN")) {
+            Medecin medecin = medecinServiceImpl.getMedecinByUserId(user.getId());
+            updatedBy = medecin.getNom_med() + " " + medecin.getPrenom_med();
+        }
+
+        // Cas 1 : Ajouter au contenu de la dernière observation si elle existe
+        if (lastObservation != null) {
+            String newContenu = request.getContenu();
+            lastObservation.setContenu(newContenu);
+            if (updatedBy != null) {
+                lastObservation.setUpdatedBy(updatedBy);
+            }
+            return observationRepository.save(lastObservation);
+        }
+
+        // Cas 2 : Créer une nouvelle observation
+        Observation newObservation = new Observation();
+        newObservation.setContenu(request.getContenu());
+        newObservation.setDateObservation(LocalDateTime.now());
+        newObservation.setDossier(dossier);
+        if (updatedBy != null) {
+            newObservation.setUpdatedBy(updatedBy);
+        }
+
+        return observationRepository.save(newObservation);
     }
 
     public List<Observation> getObservationsByDossier(Long dossierId) {

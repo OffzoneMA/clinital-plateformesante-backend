@@ -4,6 +4,8 @@ import com.clinitalPlatform.enums.AntecedentTypeEnum;
 import com.clinitalPlatform.exception.ResourceNotFoundException;
 import com.clinitalPlatform.models.Antecedents;
 import com.clinitalPlatform.models.DossierMedical;
+import com.clinitalPlatform.models.Medecin;
+import com.clinitalPlatform.models.User;
 import com.clinitalPlatform.payload.request.AntecedentRequest;
 import com.clinitalPlatform.repository.AntecedentsRepository;
 import com.clinitalPlatform.repository.DossierMedicalRepository;
@@ -23,6 +25,8 @@ public class AntecedentsService {
 
     @Autowired
     private DossierMedicalRepository dossierMedicalRepository;
+    @Autowired
+    private MedecinServiceImpl medecinServiceImpl;
 
     public Antecedents createAntecedent(AntecedentRequest request, Long dossierId) {
         DossierMedical dossier = dossierMedicalRepository.findById(dossierId)
@@ -31,7 +35,6 @@ public class AntecedentsService {
         Antecedents antecedent = new Antecedents();
         antecedent.setDossier(dossier);
         antecedent.setDescription(request.getDescription());
-        antecedent.setDate(LocalDate.now());
 
         try {
             AntecedentTypeEnum typeEnum = AntecedentTypeEnum.valueOf(request.getType().toUpperCase());
@@ -52,7 +55,6 @@ public class AntecedentsService {
         for (AntecedentRequest request : requests) {
             Antecedents antecedent = new Antecedents();
             antecedent.setDescription(request.getDescription());
-            antecedent.setDate(LocalDate.now());
             antecedent.setDossier(dossier);
 
             try {
@@ -68,7 +70,9 @@ public class AntecedentsService {
         return antecedentsRepository.saveAll(result);
     }
 
-    public List<Antecedents> createOrUpdateMultipleAntecedents(List<AntecedentRequest> requests, Long dossierId) {
+    public List<Antecedents> createOrUpdateMultipleAntecedents(List<AntecedentRequest> requests, Long dossierId , User user) throws Exception {
+        String userRole = user.getRole().name();
+
         DossierMedical dossier = dossierMedicalRepository.findById(dossierId)
                 .orElseThrow(() -> new ResourceNotFoundException("DossierMedical", "id", dossierId));
 
@@ -90,13 +94,16 @@ public class AntecedentsService {
             if (existingOptional.isPresent()) {
                 antecedent = existingOptional.get();
                 antecedent.setDescription(request.getDescription());
-                antecedent.setDate(LocalDate.now());
             } else {
                 antecedent = new Antecedents();
                 antecedent.setType(typeEnum);
                 antecedent.setDescription(request.getDescription());
-                antecedent.setDate(LocalDate.now());
                 antecedent.setDossier(dossier);
+            }
+
+            if(userRole.equals("ROLE_MEDECIN")) {
+                Medecin medecin = medecinServiceImpl.getMedecinByUserId(user.getId());
+                antecedent.setUpdatedBy(medecin.getNom_med() + " " + medecin.getPrenom_med());
             }
 
             result.add(antecedent);

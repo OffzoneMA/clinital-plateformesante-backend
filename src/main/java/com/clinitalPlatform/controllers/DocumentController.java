@@ -208,6 +208,7 @@ public class DocumentController {
             @RequestParam Long medecinId) throws Exception {
 
         try {
+            User user = globalVariables.getConnectedUser();
             // ------ Save Document
             Document savedDoc = docservices.create(document);
 
@@ -230,7 +231,7 @@ public class DocumentController {
 
             // ------ Partager le document avec le médecin
             List<Long> documentIds = Collections.singletonList(finalSavedDoc.getId_doc());
-            docservices.shareDocumentsWithMedecin(medecinId, documentIds);
+            docservices.shareDocumentsWithMedecin(medecinId, documentIds , user);
 
             // ------ Ajouter une activité
             activityServices.createActivity(
@@ -613,8 +614,9 @@ public class DocumentController {
         }
 
         try {
+            User user = globalVariables.getConnectedUser();
             // Appeler le service pour partager les documents
-            Medecin medecin = docservices.shareDocumentsWithMedecin(medecinId, documentIds);
+            Medecin medecin = docservices.shareDocumentsWithMedecin(medecinId, documentIds , user);
 
             // Retourner une réponse descriptive
             return ResponseEntity.ok(new ApiResponse(true, "Documents shared successfully!"));

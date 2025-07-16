@@ -10,6 +10,7 @@ import java.util.*;
 import com.clinitalPlatform.dto.MedecinDTO;
 import com.clinitalPlatform.enums.MotifConsultationEnum;
 import com.clinitalPlatform.enums.RdvStatutEnum;
+import com.clinitalPlatform.payload.request.MedecinRequest;
 import com.clinitalPlatform.services.interfaces.MedecinScheduleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,8 +93,8 @@ public class MedecinServiceImpl implements MedecinService {
         return clinitalModelMapper.map(med, Medecin.class);
     }
 
-    public Medecin updateMedecin (Long id , MedecinDTO medecinDTO) {
-        Medecin medecin = medecinRepository.findById(id).orElseThrow(() -> new RuntimeException("Médecin introuvable"));
+    public Medecin updateMedecin (Medecin medecin , MedecinRequest medecinDTO) {
+
         if(medecinDTO.getNom_med() != null && !medecinDTO.getNom_med().isEmpty()) {
             medecin.setNom_med(medecinDTO.getNom_med());
         }

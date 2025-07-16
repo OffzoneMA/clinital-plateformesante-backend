@@ -246,6 +246,50 @@ public class NotificationService {
             }
         }
 
+        if(notification.getType() == NotificationType.SHARED_DOCS_PATIENT) {
+            Long senderId = toLongSafe(data.get("senderId"));
+            Long receiverId = toLongSafe(data.get("receiverId"));
+            String senderType = (String) data.get("senderType");
+
+            if(senderType.equals("medecin")) {
+                Medecin senderMedOpt = medecinRepository.getById(senderId);
+                Map<String, Object> senderInfo = new HashMap<>();
+                senderInfo.put("name", senderMedOpt.getNom_med() + " " + senderMedOpt.getPrenom_med());
+                senderInfo.put("speciality", senderMedOpt.getSpecialite().getLibelle());
+                data.put("senderInfo", senderInfo);
+            }
+
+            if(senderType.equals("patient")) {
+                Patient patient = patientRepository.getById(senderId);
+                Map<String, Object> senderInfo = new HashMap<>();
+                senderInfo.put("name", patient.getNom_pat() + " " + patient.getPrenom_pat());
+                senderInfo.put("email", patient.getPatientEmail());
+                senderInfo.put("civilite", patient.getCivilite_pat());
+                data.put("senderInfo", senderInfo);
+            }
+
+            if (receiverId != null) {
+                Medecin receiverMedOpt = medecinRepository.getById(receiverId);
+                Map<String, Object> receiverInfo = new HashMap<>();
+                receiverInfo.put("name", receiverMedOpt.getNom_med() + " " + receiverMedOpt.getPrenom_med());
+                receiverInfo.put("speciality", receiverMedOpt.getSpecialite().getLibelle());
+                data.put("receiverInfo", receiverInfo);
+            }
+
+            List<Long> documentIds = Optional.ofNullable(notification.getData().get("documentIds"))
+                    .map(ids -> (List<?>) ids)
+                    .map(ids -> ids.stream()
+                            .map(id -> Long.valueOf(id.toString()))
+                            .toList())
+                    .orElse(List.of());
+
+            List<String> docTitles = documentRepository.findAllById(documentIds).stream()
+                    .map(Document::getTitre_doc)
+                    .toList();
+
+            data.put("documentTitles", docTitles);
+        }
+
             return NotificationDTO.builder()
                 .id_notif(notification.getId_notif())
                 .title(notification.getTitle())

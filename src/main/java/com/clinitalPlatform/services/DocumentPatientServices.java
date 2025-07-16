@@ -30,6 +30,8 @@ public class DocumentPatientServices {
 
     @Autowired
     private MedecinRepository medecinRepo;
+    @Autowired
+    private PushNotificationService pushNotificationService;
 
     public Document create(String document) throws Exception{
         try {
@@ -105,7 +107,7 @@ public class DocumentPatientServices {
     }*/
 
     @Transactional
-    public Medecin shareDocumentsWithMedecin(Long medecinId, List<Long> documentIds) {
+    public Medecin shareDocumentsWithMedecin(Long medecinId, List<Long> documentIds , User user) {
         // Vérification des paramètres
         if (medecinId == null) {
             throw new IllegalArgumentException("Medecin ID cannot be null");
@@ -148,6 +150,8 @@ public class DocumentPatientServices {
         // Sauvegarder les modifications
         Medecin updatedMedecin = medecinRepo.save(medecin);
 
+        // Sending notification to the user
+        pushNotificationService.sendSharePatientDocumentsNotification(medecin , newDocuments , user);
         // Log pour le suivi
 
         return updatedMedecin;

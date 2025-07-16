@@ -312,7 +312,7 @@ public class MedecinController {
 	}
 
 	@PutMapping("/updateMed")
-	public ResponseEntity<?> updateMedecin(@RequestBody MedecinDTO medecinDTO) {
+	public ResponseEntity<?> updateMedecin(@RequestBody MedecinRequest medecinDTO) {
 		try {
 			// Récupérer l'utilisateur connecté
 			User connectedUser = globalVariables.getConnectedUser();
@@ -327,7 +327,7 @@ public class MedecinController {
 			}
             LOGGER.info("Description : {}", medecinDTO);
 			// Mettre à jour le médecin
-			medecinService.updateMedecin(medecin.getId(), medecinDTO);
+			medecinService.updateMedecin(medecin , medecinDTO);
 
 			return ResponseEntity.ok(new ApiResponse(true, "Médecin mis à jour avec succès."));
 

@@ -36,6 +36,10 @@ public class PushNotificationService {
     private NotificationService notificationService;
 
     private static final Logger logger = LoggerFactory.getLogger(PushNotificationService.class);
+    @Autowired
+    private MedecinServiceImpl medecinServiceImpl;
+    @Autowired
+    private PatientService patientService;
 
 
     @Transactional
@@ -231,6 +235,14 @@ public class PushNotificationService {
 
         notificationRepository.save(notification);
 
+        // Send notification from socket to sender
+        NotificationDTO notificationDTO = notificationService.convertToDTO(notification);
+        messagingTemplate.convertAndSendToUser(
+                medecinSender.getUser().getId().toString(),
+                "/queue/notifications",
+                notificationDTO
+        );
+
         // Send notifcation to receiver
 
         Notification notificationReceiver = new Notification();
@@ -253,6 +265,14 @@ public class PushNotificationService {
         dataReceiver.put("documentIds", documentIdsReceiver);
         notificationReceiver.setData(dataReceiver);
         notificationRepository.save(notificationReceiver);
+
+        // Send notification from socket to receiver
+        NotificationDTO notificationReceiverDTO = notificationService.convertToDTO(notificationReceiver);
+        messagingTemplate.convertAndSendToUser(
+                medecinRecever.getUser().getId().toString(),
+                "/queue/notifications",
+                notificationReceiverDTO
+        );
     }
 
     public void sendShareDocumentToMedecins (Medecin medecinSender, List<Medecin> medecinsRecever, List<DocumentMedecin> docs) {
@@ -285,6 +305,14 @@ public class PushNotificationService {
 
         notificationRepository.save(notification);
 
+        // Send notification from socket to patient
+        NotificationDTO notificationDTO = notificationService.convertToDTO(notification);
+        messagingTemplate.convertAndSendToUser(
+                patient.getUser().getId().toString(),
+                "/queue/notifications",
+                notificationDTO
+        );
+
         // Send notification to sender
         Notification notificationSender = new Notification();
         notificationSender.setUser(medecinSender.getUser());
@@ -306,6 +334,148 @@ public class PushNotificationService {
         dataSender.put("documentIds", documentIdsSender);
         notificationSender.setData(dataSender);
         notificationRepository.save(notificationSender);
+
+        // Send notification from socket to sender
+        NotificationDTO notificationSenderDTO = notificationService.convertToDTO(notificationSender);
+        messagingTemplate.convertAndSendToUser(
+                medecinSender.getUser().getId().toString(),
+                "/queue/notifications",
+                notificationSenderDTO
+        );
     }
 
+    public void sendSharePatientDocumentsNotification (Medecin recever , List<Document> documents , User user) {
+        String user_role = user.getRole().name();
+        try {
+            if(user_role.equals("ROLE_MEDECIN")) {
+                Medecin medecin = medecinServiceImpl.getMedecinByUserId(user.getId());
+
+                // Création de la notification pour le médecin receveur
+                Notification notification = new Notification();
+                notification.setUser(recever.getUser());
+                String title = documents.size() > 1 ? "Vous avez reçu de nouveaux documents patient" : "Vous avez reçu un nouveau document patient";
+                notification.setTitle(title);
+                notification.setMessage(medecin.getNom_med() + " " + medecin.getPrenom_med() + " a partagé des documents avec vous");
+                String description = documents.size() > 1 ? "Les fichiers partagés sont désormais accessibles depuis votre compte." :
+                        "Le fichier partagé est désormais accessible depuis votre compte.";
+                notification.setDescription(description);
+                notification.setUrl("/share-documents");
+                notification.setType(NotificationType.SHARED_DOCS_PATIENT);
+                Map<String, Object> data = new HashMap<>();
+                data.put("senderId", medecin.getId());
+                data.put("receiverId", recever.getId());
+                data.put("senderType", "medecin");
+                List<Long> documentIds = new ArrayList<>();
+                for (Document doc : documents) {
+                    documentIds.add(doc.getId_doc());
+                }
+                data.put("documentIds", documentIds);
+                notification.setData(data);
+                notificationRepository.save(notification);
+                // Send notification from socket to receiver
+                NotificationDTO notificationDTO = notificationService.convertToDTO(notification);
+                messagingTemplate.convertAndSendToUser(
+                        recever.getUser().getId().toString(),
+                        "/queue/notifications",
+                        notificationDTO
+                );
+
+                // Création de la notification pour le médecin expéditeur
+                Notification notificationSender = new Notification();
+                notificationSender.setUser(medecin.getUser());
+                String titleSender = documents.size() > 1 ? "Vos documents patient ont été partagés avec succès" : "Votre document patient a été partagé avec succès";
+                notificationSender.setTitle(titleSender);
+                notificationSender.setMessage(recever.getNom_med() + " " + recever.getPrenom_med() + " a reçu vos documents patient");
+                String descriptionSender = documents.size() > 1 ? "Les fichiers partagés sont désormais accessibles au destinataire et consultables depuis son compte." :
+                        "Le fichier partagé est désormais accessible au destinataire et consultable depuis son compte.";
+                notificationSender.setDescription(descriptionSender);
+                notificationSender.setUrl("/share-documents");
+                notificationSender.setType(NotificationType.SHARED_DOCS_PATIENT);
+                Map<String, Object> dataSender = new HashMap<>();
+                dataSender.put("senderId", medecin.getId());
+                dataSender.put("receiverId", recever.getId());
+                dataSender.put("senderType", "medecin");
+                List<Long> documentIdsSender = new ArrayList<>();
+                for (Document doc : documents) {
+                    documentIdsSender.add(doc.getId_doc());
+                }
+                dataSender.put("documentIds", documentIdsSender);
+                notificationSender.setData(dataSender);
+                notificationRepository.save(notificationSender);
+                // Send notification from socket to sender
+                NotificationDTO notificationSenderDTO = notificationService.convertToDTO(notificationSender);
+                messagingTemplate.convertAndSendToUser(
+                        medecin.getUser().getId().toString(),
+                        "/queue/notifications",
+                        notificationSenderDTO
+                );
+
+            } else if(user_role.equals("ROLE_PATIENT")) {
+                // Récupération du patient à partir de l'utilisateur
+                Patient patient = patientService.getPatientMoiByUserId(user.getId());
+
+                // Création de la notification pour le médecin receveur
+                Notification notification = new Notification();
+                notification.setUser(recever.getUser());
+                String title = documents.size() > 1 ? "Vous avez reçu de nouveaux documents patient" : "Vous avez reçu un nouveau document patient";
+                notification.setTitle(title);
+                notification.setMessage(patient.getNom_pat() + " " + patient.getPrenom_pat() + " a partagé des documents avec vous");
+                String description = documents.size() > 1 ? "Les fichiers partagés sont désormais accessibles depuis votre compte." :
+                        "Le fichier partagé est désormais accessible depuis votre compte.";
+                notification.setDescription(description);
+                notification.setUrl("/share-documents");
+                notification.setType(NotificationType.SHARED_DOCS_PATIENT);
+                Map<String, Object> data = new HashMap<>();
+                data.put("senderId", patient.getId());
+                data.put("receiverId", recever.getId());
+                data.put("senderType", "patient");
+                List<Long> documentIds = new ArrayList<>();
+                for (Document doc : documents) {
+                    documentIds.add(doc.getId_doc());
+                }
+                data.put("documentIds", documentIds);
+                notification.setData(data);
+                notificationRepository.save(notification);
+                // Send notification from socket to receiver
+                NotificationDTO notificationDTO = notificationService.convertToDTO(notification);
+                messagingTemplate.convertAndSendToUser(
+                        recever.getUser().getId().toString(),
+                        "/queue/notifications",
+                        notificationDTO
+                );
+
+                // Création de la notification pour le patient expéditeur
+                Notification notificationSender = new Notification();
+                notificationSender.setUser(patient.getUser());
+                String titleSender = documents.size() > 1 ? "Vos documents patient ont été partagés avec succès" : "Votre document patient a été partagé avec succès";
+                notificationSender.setTitle(titleSender);
+                notificationSender.setMessage(recever.getNom_med() + " " + recever.getPrenom_med() + " a reçu vos documents patient");
+                String descriptionSender = documents.size() > 1 ? "Les fichiers partagés sont désormais accessibles au destinataire et consultables depuis son compte." :
+                        "Le fichier partagé est désormais accessible au destinataire et consultable depuis son compte.";
+                notificationSender.setDescription(descriptionSender);
+                notificationSender.setUrl("/share-documents");
+                notificationSender.setType(NotificationType.SHARED_DOCS_PATIENT);
+                Map<String, Object> dataSender = new HashMap<>();
+                dataSender.put("senderId", patient.getId());
+                dataSender.put("receiverId", recever.getId());
+                dataSender.put("senderType", "patient");
+                List<Long> documentIdsSender = new ArrayList<>();
+                for (Document doc : documents) {
+                    documentIdsSender.add(doc.getId_doc());
+                }
+                dataSender.put("documentIds", documentIdsSender);
+                notificationSender.setData(dataSender);
+                notificationRepository.save(notificationSender);
+                // Send notification from socket to sender
+                NotificationDTO notificationSenderDTO = notificationService.convertToDTO(notificationSender);
+                messagingTemplate.convertAndSendToUser(
+                        patient.getUser().getId().toString(),
+                        "/queue/notifications",
+                        notificationSenderDTO
+                );
+            }
+        } catch (Exception e) {
+            logger.error("Erreur lors de l'envoi de la notification de partage de documents au médecin {} : {}", recever.getId(), e.getMessage());
+        }
+    }
 }

@@ -18,9 +18,24 @@ public class Observation {
     @Column(columnDefinition = "TEXT")
     private String contenu;
 
-    private LocalDateTime dateObservation;
+    private LocalDateTime dateObservation = LocalDateTime.now();
 
     @ManyToOne
     @JoinColumn(name = "dossier_id", nullable = false)
     private DossierMedical dossier;
+
+    private String updatedBy;
+
+    private LocalDateTime updatedAt = LocalDateTime.now();
+
+    @PrePersist
+    protected void onUpdate() {
+        this.dateObservation = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdatePersist() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }

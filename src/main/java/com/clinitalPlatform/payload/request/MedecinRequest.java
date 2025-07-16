@@ -19,7 +19,7 @@ public class MedecinRequest {
     private String description_med;
     private String contact_urgence_med;
     @Enumerated(value = EnumType.STRING)
-    private CiviliteEnum civilite_med;
+    private CiviliteEnum civilite_med = CiviliteEnum.Mr;
     private Long ville;
     private Long specialite;
     private Long user;
