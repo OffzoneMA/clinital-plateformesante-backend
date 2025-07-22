@@ -87,5 +87,17 @@ public class FermetureExceptionnelleService {
         return fermetureRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Fermeture introuvable"));
     }
+
+    public List<FermetureExceptionnelle> getFermeturesParCabinet(Long cabinetId) {
+        List<FermetureExceptionnelle> fermetures = new ArrayList<>();
+        List<Medecin> medecins = medecinRepo.getAllMedecinsByCabinetId(cabinetId);
+
+        for (Medecin medecin : medecins) {
+            List<FermetureExceptionnelle> fermeturesMedecin = this.getFermeturesParMedecin(medecin.getId());
+            fermetures.addAll(fermeturesMedecin);
+        }
+
+        return fermetures;
+    }
 }
 

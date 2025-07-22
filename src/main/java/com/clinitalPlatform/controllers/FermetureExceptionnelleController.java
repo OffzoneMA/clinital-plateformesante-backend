@@ -54,6 +54,20 @@ public class FermetureExceptionnelleController {
         }
     }
 
+    @GetMapping("/by-cabinet")
+    public ResponseEntity<?> getFermeturesByCabinet() {
+        try {
+            Long userId = globalVariables.getConnectedUser().getId();
+            Medecin medecin = medecinRepository.getMedecinByUserId(userId);
+            Long cabinetId = medecin.getFirstCabinetId();
+
+            List<FermetureExceptionnelle> fermetures = fermetureService.getFermeturesParCabinet(cabinetId);
+            return ResponseEntity.ok(fermetures);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 
     @PostMapping("/create")
     public ResponseEntity<?> create(@RequestBody FermetureDTO fermetureDTO) {

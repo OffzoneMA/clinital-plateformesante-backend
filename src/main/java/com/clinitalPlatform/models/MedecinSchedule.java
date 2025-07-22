@@ -28,8 +28,11 @@ public class MedecinSchedule {
 
 	@DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
 	private LocalDateTime availabilityStart;
+
 	@DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
 	private LocalDateTime availabilityEnd;
+
+	private Boolean fermer = false;
 
 	@ManyToMany(cascade = CascadeType.MERGE)
 	@JoinTable(name = "modeschedules", 

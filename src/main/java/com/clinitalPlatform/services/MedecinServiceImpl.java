@@ -257,8 +257,15 @@ public class MedecinServiceImpl implements MedecinService {
         Medecin medecin = medecinRepository.findById(medecinId)
                 .orElseThrow(() -> new Exception("Médecin non trouvé pour l'ID: " + medecinId));
 
-
-        return medecin.getTarifs();
+        List<Tarif> tarifs = medecin.getTarifs();
+        // Filtrer les tarifs active
+        if (tarifs == null || tarifs.isEmpty()) {
+           return  Collections.emptyList();
+        }
+        // Filtrer les tarifs actifs
+        return  tarifs.stream()
+                .filter(Tarif::isActive)
+                .collect(Collectors.toList());
     }
 
     @Override
