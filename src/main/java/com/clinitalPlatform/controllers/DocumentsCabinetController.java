@@ -1,9 +1,11 @@
 package com.clinitalPlatform.controllers;
 
 import com.clinitalPlatform.dto.DocumentsCabinetDTO;
+import com.clinitalPlatform.enums.CabinetDocStateEnum;
 import com.clinitalPlatform.models.DocumentsCabinet;
 import com.clinitalPlatform.models.Medecin;
 import com.clinitalPlatform.payload.request.DocumentsCabinetRequest;
+import com.clinitalPlatform.repository.DocumentsCabinetRepository;
 import com.clinitalPlatform.repository.MedecinRepository;
 import com.clinitalPlatform.services.DocumentsCabinetServices;
 import com.clinitalPlatform.util.GlobalVariables;
@@ -37,6 +39,8 @@ public class DocumentsCabinetController {
     MedecinRepository medecinRepository;
 
     private static final ModelMapper modelMapper = new ModelMapper();
+    @Autowired
+    private DocumentsCabinetRepository documentsCabinetRepository;
 
     public DocumentsCabinetDTO toDTO(DocumentsCabinet document) {
         DocumentsCabinetDTO dto = new DocumentsCabinetDTO();
@@ -244,6 +248,34 @@ public class DocumentsCabinetController {
             return ResponseEntity.ok(documentsCabinetServices.validerDocument(documentId));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(null);
+        }
+    }
+
+    @PutMapping("/update-docs-status/bymedecin/{medecinId}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<?> updateDocumentsStatusByMedecin(@PathVariable Long medecinId, @RequestBody CabinetDocStateEnum status) {
+        try {
+            Optional<Medecin> optionalMedecin = medecinRepository.findById(medecinId);
+
+            // Vérifier si le médecin existe
+            if (optionalMedecin.isEmpty()) {
+                return ResponseEntity.status(404).body("Médecin non trouvé.");
+            }
+
+            Medecin medecin = optionalMedecin.get();
+
+            List<DocumentsCabinet> documents = documentsCabinetServices.getDocumentsByMedecin(medecin.getId());
+            if (documents.isEmpty()) {
+                return ResponseEntity.status(404).body("Aucun document trouvé pour ce médecin.");
+            }
+            // Mettre à jour le statut de chaque document
+            for (DocumentsCabinet document : documents) {
+                document.setValidationState(status);
+                documentsCabinetRepository.save(document);
+            }
+            return ResponseEntity.ok("Statuts des documents mis à jour avec succès pour le médecin ID: " + medecinId);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Erreur lors de la mise à jour des statuts : " + e.getMessage());
         }
     }
 

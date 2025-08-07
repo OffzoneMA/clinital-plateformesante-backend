@@ -67,7 +67,6 @@ public class Document {
           CascadeType.ALL,
       },
       mappedBy = "Meddoc")
-  	@JsonIgnore
   	private List<Medecin> medecins;
 
 	public Document() {

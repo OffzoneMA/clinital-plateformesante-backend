@@ -41,7 +41,7 @@ public class FermetureExceptionnelleService {
         List<MotifFermeture> motifs = motifRepo.findAllById(motifIds);
 
         // Vérifier les conflits de fermeture pour le même médecin
-        boolean conflit = fermetureRepo.existsByMedecinIdAndDateDebutLessThanEqualAndDateFinGreaterThanEqual(
+        /*boolean conflit = fermetureRepo.existsByMedecinIdAndDateDebutLessThanEqualAndDateFinGreaterThanEqual(
                 medecin.getId(),
                 fermetureDTO.getDateFin(),      // nouvelle date fin >= début existante
                 fermetureDTO.getDateDebut()     // nouvelle date début <= fin existante
@@ -49,7 +49,7 @@ public class FermetureExceptionnelleService {
 
         if (conflit) {
             throw new RuntimeException("Une fermeture existe déjà pour cette période.");
-        }
+        }*/
 
         // Créer la fermeture
         FermetureExceptionnelle fermeture = new FermetureExceptionnelle();

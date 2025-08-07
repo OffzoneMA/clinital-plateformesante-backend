@@ -1,5 +1,6 @@
 package com.clinitalPlatform.services;
 
+import com.clinitalPlatform.enums.CabinetDocStateEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,36 +25,37 @@ public class EmailSenderService {
 	@Autowired
 	private JavaMailSender javaMailSender;
 
-	private final Logger LOGGER=LoggerFactory.getLogger(getClass());
+	private final Logger LOGGER = LoggerFactory.getLogger(getClass());
 	@Value("${front.url}")
 	private String frontUrl;
 
 	public void sendMailConfirmation(String userEmail, String confirmationToken) {
 		final String BaseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-		System.out.println("this is the URL Root :"+BaseUrl);
-		try{
-		SimpleMailMessage mailMessage = new SimpleMailMessage();
-		System.out.println("this is the URL Root :"+userEmail);
-		mailMessage.setTo(userEmail);
-		mailMessage.setFrom("clinitalcontact@gmail.com");
-		mailMessage.setSubject("Activation du compte clinital!");
-		mailMessage.setText("Bonjour nous vous souhaitons la bienvenue sur la plateforme Clinital pour confirmer votre compte"
-				+ ", merci de cliquer sur le lien: "
-				+ BaseUrl+"/api/auth/confirmaccount?token=" + confirmationToken
-				+ "   Note: Ce lien va expirer après 10 minutes.");
-		javaMailSender.send(mailMessage);
-		LOGGER.info("A New Account has been Created, token activationis sent");
+		System.out.println("this is the URL Root :" + BaseUrl);
+		try {
+			SimpleMailMessage mailMessage = new SimpleMailMessage();
+			System.out.println("this is the URL Root :" + userEmail);
+			mailMessage.setTo(userEmail);
+			mailMessage.setFrom("clinitalcontact@gmail.com");
+			mailMessage.setSubject("Activation du compte clinital!");
+			mailMessage.setText("Bonjour nous vous souhaitons la bienvenue sur la plateforme Clinital pour confirmer votre compte"
+					+ ", merci de cliquer sur le lien: "
+					+ BaseUrl + "/api/auth/confirmaccount?token=" + confirmationToken
+					+ "   Note: Ce lien va expirer après 10 minutes.");
+			javaMailSender.send(mailMessage);
+			LOGGER.info("A New Account has been Created, token activationis sent");
 
-		}catch(Exception e){
-			LOGGER.error("Error while sending email : {}",e);
+		} catch (Exception e) {
+			LOGGER.error("Error while sending email : {}", e);
 			System.out.println(2);
 		}
-		
+
 	}
-//newlink email
+
+	//newlink email
 	public void sendMailConfirmationNewlink(String userEmail, String newLink) {
 		final String BaseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-		System.out.println("this is the URL Root :"+BaseUrl);
+		System.out.println("this is the URL Root :" + BaseUrl);
 		try {
 			SimpleMailMessage mailMessage = new SimpleMailMessage();
 			mailMessage.setTo(userEmail);
@@ -62,7 +64,7 @@ public class EmailSenderService {
 			mailMessage.setText("Bonjour, nous vous souhaitons la bienvenue sur la plateforme Clinital pour confirmer votre compte."
 					+ " Merci de cliquer sur le lien suivant pour activer votre compte : "
 
-					+ BaseUrl+"/api/auth/confirmaccount?token="+ newLink + ". Notez que ce lien expirera après 10 minutes.");
+					+ BaseUrl + "/api/auth/confirmaccount?token=" + newLink + ". Notez que ce lien expirera après 10 minutes.");
 			javaMailSender.send(mailMessage);
 			LOGGER.info("Un nouveau lien d'activation de compte a été envoyé à l'utilisateur: {}", userEmail);
 		} catch (Exception e) {
@@ -70,86 +72,88 @@ public class EmailSenderService {
 		}
 	}
 	//end new link emai
-	
-	public void sendMailDemandeValidation(Demande demande,String pw ) {
+
+	public void sendMailDemandeValidation(Demande demande, String pw) {
 		SimpleMailMessage mailMessage = new SimpleMailMessage();
 		mailMessage.setTo(demande.getMail());
 		mailMessage.setFrom("clinitalcontact@gmail.com");
-		mailMessage.setSubject("Activation de la partie pro pour le médecin :"+demande.getNom_med());
-		mailMessage.setText("Le Médecin :"+demande.getNom_med()+"veut accéder à la partie pro"
+		mailMessage.setSubject("Activation de la partie pro pour le médecin :" + demande.getNom_med());
+		mailMessage.setText("Le Médecin :" + demande.getNom_med() + "veut accéder à la partie pro"
 				+ "\n leurs cordonnées :  \n"
 				+ "Medecin:\r\n"
-				+ "Nom:"+demande.getNom_med()+"\n"
+				+ "Nom:" + demande.getNom_med() + "\n"
 				+ "\r\n"
-				+ "Prenom:"+demande.getPrenom_med()+"\n"
+				+ "Prenom:" + demande.getPrenom_med() + "\n"
 				+ "\r\n"
-				
-				+ "Password provisoire: "+pw);
-				
+
+				+ "Password provisoire: " + pw);
+
 		javaMailSender.send(mailMessage);
 		LOGGER.info("A New Demande has been created ");
 		System.out.println("Email sent");
 	}
+
 	public void sendMailConfirmationCode(String userEmail, String confirmationcode) {
-		
-	    try {
-	        String message = "Bonjour,\n\n"
-	                + "Vous avez demandé la suppression de votre compte sur la plateforme Clinital.\n\n"
-	                + "Si vous souhaitez toujours supprimer votre compte, voila  le code de confirmation "
-	                + "\n\n"
-	                + confirmationcode + "\n\n"
-	                + "vous pouvez ignorer cet email.";
 
-	        SimpleMailMessage mailMessage = new SimpleMailMessage();
-	        mailMessage.setTo(userEmail);
-	        mailMessage.setFrom("clinitalcontact@gmail.com");
-	        mailMessage.setSubject("Code de confirmation du suppression   de   votre compte clinital!");
-	        mailMessage.setText(message);
+		try {
+			String message = "Bonjour,\n\n"
+					+ "Vous avez demandé la suppression de votre compte sur la plateforme Clinital.\n\n"
+					+ "Si vous souhaitez toujours supprimer votre compte, voila  le code de confirmation "
+					+ "\n\n"
+					+ confirmationcode + "\n\n"
+					+ "vous pouvez ignorer cet email.";
 
-	        javaMailSender.send(mailMessage);
-	        LOGGER.info("Un email de  code de confirmation a été envoyé à l'adresse : {}", userEmail);
-	    } catch (Exception e) {
-	        LOGGER.error("Erreur lors de l'envoi de l'e-mail de confirmation : {}", e);
-	    }
+			SimpleMailMessage mailMessage = new SimpleMailMessage();
+			mailMessage.setTo(userEmail);
+			mailMessage.setFrom("clinitalcontact@gmail.com");
+			mailMessage.setSubject("Code de confirmation du suppression   de   votre compte clinital!");
+			mailMessage.setText(message);
+
+			javaMailSender.send(mailMessage);
+			LOGGER.info("Un email de  code de confirmation a été envoyé à l'adresse : {}", userEmail);
+		} catch (Exception e) {
+			LOGGER.error("Erreur lors de l'envoi de l'e-mail de confirmation : {}", e);
+		}
 	}
- 	 public void sendMailChangePassword(String userEmail) {
-		
-	    try {
-	    	 String message = "Bonjour,\n\n"
-	                    + "Votre mot de passe a été modifié avec succès sur la plateforme Clinital.\n\n"
-	                    + "Si vous n'avez pas effectué cette modification, veuillez contacter notre équipe de support.";
 
-	        SimpleMailMessage mailMessage = new SimpleMailMessage();
-	        mailMessage.setTo(userEmail);
-	        mailMessage.setFrom("clinitalcontact@gmail.com");
-	        mailMessage.setSubject("Changement du mot de passe de votre compte clinital!");
-	        mailMessage.setText(message);
-	        javaMailSender.send(mailMessage);
-            LOGGER.info("Un email de notification de changement de mot de passe a été envoyé à l'adresse : {}", userEmail);
-        } catch (Exception e) {
-            LOGGER.error("Erreur lors de l'envoi de l'e-mail de notification de changement de mot de passe : {}", e);
-        }
-    }
+	public void sendMailChangePassword(String userEmail) {
+
+		try {
+			String message = "Bonjour,\n\n"
+					+ "Votre mot de passe a été modifié avec succès sur la plateforme Clinital.\n\n"
+					+ "Si vous n'avez pas effectué cette modification, veuillez contacter notre équipe de support.";
+
+			SimpleMailMessage mailMessage = new SimpleMailMessage();
+			mailMessage.setTo(userEmail);
+			mailMessage.setFrom("clinitalcontact@gmail.com");
+			mailMessage.setSubject("Changement du mot de passe de votre compte clinital!");
+			mailMessage.setText(message);
+			javaMailSender.send(mailMessage);
+			LOGGER.info("Un email de notification de changement de mot de passe a été envoyé à l'adresse : {}", userEmail);
+		} catch (Exception e) {
+			LOGGER.error("Erreur lors de l'envoi de l'e-mail de notification de changement de mot de passe : {}", e);
+		}
+	}
 
 	public void sendMail(String userEmail, String confirmationToken) {
 
-		try{
+		try {
 			SimpleMailMessage mailMessage = new SimpleMailMessage();
 			final String BaseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-			System.out.println("this is the URL Root :"+BaseUrl);
-			System.out.println("this is the URL Root :"+userEmail);
+			System.out.println("this is the URL Root :" + BaseUrl);
+			System.out.println("this is the URL Root :" + userEmail);
 			mailMessage.setTo(userEmail);
 			mailMessage.setFrom("clinitalcontact@gmail.com");
 			mailMessage.setSubject("Activation du compte clinital!");
 			mailMessage.setText("Bonjour nous vous souhaiton la bienvenue sur la plateforme Clinital pour confirmer votre compte"
 					+ ", merci de cliquer sur le lien: "
-					+ BaseUrl+"/api/auth/confirmaccount?token=" + confirmationToken
+					+ BaseUrl + "/api/auth/confirmaccount?token=" + confirmationToken
 					+ "   Note: le lien va expirer après 10 minutes.");
 			javaMailSender.send(mailMessage);
 			LOGGER.info("A New Account has been Created, token activationis sent");
 
-		}catch(Exception e){
-			LOGGER.error("Error while sending email : {}",e);
+		} catch (Exception e) {
+			LOGGER.error("Error while sending email : {}", e);
 			System.out.println(2);
 		}
 
@@ -160,7 +164,7 @@ public class EmailSenderService {
 	public void sendResetPasswordMail(String userEmail, String resetToken) {
 		try {
 			SimpleMailMessage mailMessage = new SimpleMailMessage();
-			String resetPasswordUrl =frontUrl+ "login/reinitialize-password?reset=" + resetToken;
+			String resetPasswordUrl = frontUrl + "login/reinitialize-password?reset=" + resetToken;
 
 			mailMessage.setTo(userEmail);
 			mailMessage.setFrom("clinitalcontact@gmail.com");
@@ -178,37 +182,37 @@ public class EmailSenderService {
 		}
 	}
 
-    public void sendEmailChangeNotification(String oldEmail, String newEmail) {
-        final String BaseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-        try {
-            SimpleMailMessage mailMessage = new SimpleMailMessage();
+	public void sendEmailChangeNotification(String oldEmail, String newEmail) {
+		final String BaseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+		try {
+			SimpleMailMessage mailMessage = new SimpleMailMessage();
 
-            // E-mail vers l'ancienne adresse
-            mailMessage.setTo(oldEmail);
-            mailMessage.setFrom("clinitalcontact@gmail.com");
-            mailMessage.setSubject("Notification de changement d'adresse e-mail");
-            mailMessage.setText("Bonjour,\n\n"
-                    + "Votre adresse e-mail associée à votre compte Clinital a été modifiée avec succès.\n"
-                    + "Nouvelle adresse e-mail : " + newEmail + "\n\n"
-                    + "Si vous n'êtes pas à l'origine de cette modification, veuillez nous contacter immédiatement.\n\n"
-                    + "Cordialement,\nL'équipe Clinital");
-            javaMailSender.send(mailMessage);
+			// E-mail vers l'ancienne adresse
+			mailMessage.setTo(oldEmail);
+			mailMessage.setFrom("clinitalcontact@gmail.com");
+			mailMessage.setSubject("Notification de changement d'adresse e-mail");
+			mailMessage.setText("Bonjour,\n\n"
+					+ "Votre adresse e-mail associée à votre compte Clinital a été modifiée avec succès.\n"
+					+ "Nouvelle adresse e-mail : " + newEmail + "\n\n"
+					+ "Si vous n'êtes pas à l'origine de cette modification, veuillez nous contacter immédiatement.\n\n"
+					+ "Cordialement,\nL'équipe Clinital");
+			javaMailSender.send(mailMessage);
 
-            // E-mail vers la nouvelle adresse
-            //mailMessage.setTo(newEmail);
+			// E-mail vers la nouvelle adresse
+			//mailMessage.setTo(newEmail);
             /*mailMessage.setText("Bonjour,\n\n"
                     + "Votre adresse e-mail a été mise à jour avec succès dans notre système Clinital. "
                     + "Si vous n'avez pas demandé ce changement, veuillez nous contacter immédiatement.\n\n"
                     + "Cordialement,\nL'équipe Clinital");
             javaMailSender.send(mailMessage);*/
 
-            LOGGER.info("Notification de changement d'adresse e-mail envoyée à l'utilisateur (Ancienne : {}, Nouvelle : {})", oldEmail, newEmail);
+			LOGGER.info("Notification de changement d'adresse e-mail envoyée à l'utilisateur (Ancienne : {}, Nouvelle : {})", oldEmail, newEmail);
 
-        } catch (Exception e) {
-            LOGGER.error("Erreur lors de l'envoi de l'e-mail de notification de changement : {}", e.getMessage());
-            System.out.println("Erreur lors de l'envoi de l'e-mail");
-        }
-    }
+		} catch (Exception e) {
+			LOGGER.error("Erreur lors de l'envoi de l'e-mail de notification de changement : {}", e.getMessage());
+			System.out.println("Erreur lors de l'envoi de l'e-mail");
+		}
+	}
 
 
 	public void sendProcheDeletionNotification(String userEmail, String procheName) {
@@ -302,4 +306,68 @@ public class EmailSenderService {
 		}
 	}
 
+	public void sendUpdateMedecinCabinetDocsStatus(String userEmail, String newStatus) {
+		try {
+			CabinetDocStateEnum status = CabinetDocStateEnum.valueOf(newStatus);
+
+			String statusMessage;
+
+			switch (status) {
+				case EN_COURS:
+					statusMessage = "Vos documents ont bien été enregistrés et sont en attente de soumission finale.";
+					break;
+				case EN_TRAITEMENT:
+					statusMessage = "Vos documents sont actuellement en cours d'analyse par notre équipe.";
+					break;
+				case VALID:
+					statusMessage = "Félicitations ! Vos documents ont été validés avec succès.";
+					break;
+				case REJECTED:
+					statusMessage = "Malheureusement, certains de vos documents ont été rejetés. Veuillez consulter la plateforme pour plus de détails.";
+					break;
+				case INCOMPLET:
+					statusMessage = "Vos documents sont incomplets. Merci de les compléter afin de poursuivre la validation.";
+					break;
+				default:
+					statusMessage = "Le statut de vos documents a été mis à jour.";
+			}
+
+			// Nom statut en fonction de l'énumération
+			String statusName = "";
+			if(status.name().equals("EN_COURS")) {
+				statusName = "En cours";
+			} else if(status.name().equals("EN_TRAITEMENT")) {
+				statusName = "En traitement";
+			} else if(status.name().equals("VALID")) {
+				statusName = "Validé";
+			} else if(status.name().equals("REJECTED")) {
+				statusName = "Rejeté";
+			} else if(status.name().equals("INCOMPLET")) {
+				statusName = "Incomplet";
+			} else {
+				statusName = "Statut inconnu";
+			}
+
+
+			SimpleMailMessage mailMessage = new SimpleMailMessage();
+			mailMessage.setTo(userEmail);
+			mailMessage.setFrom("contact@gmail.com");
+			mailMessage.setSubject("Mise à jour du statut de vos documents de cabinet");
+			mailMessage.setText(
+					"Bonjour,\n\n" +
+							statusMessage + "\n\n" +
+							"Statut actuel : " + status + "\n\n" +
+							"Si vous avez des questions, n'hésitez pas à nous contacter via la plateforme.\n\n" +
+							"Cordialement,\nL'équipe Clinital"
+			);
+
+			javaMailSender.send(mailMessage);
+			LOGGER.info("Notification de mise à jour du statut des documents envoyée à : {}", userEmail);
+		} catch (IllegalArgumentException e) {
+			LOGGER.error("Statut invalide fourni : {}", newStatus);
+		} catch (Exception e) {
+			LOGGER.error("Erreur lors de l'envoi de la notification : {}", e.getMessage());
+		}
+	}
 }
+

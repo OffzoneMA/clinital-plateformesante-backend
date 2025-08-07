@@ -12,6 +12,7 @@ import com.clinitalPlatform.repository.RdvRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -33,6 +34,10 @@ public class CompteRenduRdvService {
 
     @Autowired
     private PatientRepository patientRepository;
+
+    private static final SecureRandom secureRandom = new SecureRandom();
+
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
 
     public List<CompteRenduRdv> findAll() {
         return compteRenduRdvRepository.findAll();
@@ -58,7 +63,8 @@ public class CompteRenduRdvService {
 
         String numero = generateNumero();
         cr.setNumero(numero);
-        cr.setNom_fichier("compte_rendu_" + numero + ".pdf");
+        String fileNameNo = generateNumero();
+        cr.setNom_fichier("compte_rendu_" + fileNameNo + ".pdf");
 
         return compteRenduRdvRepository.save(cr);
     }
@@ -91,11 +97,23 @@ public class CompteRenduRdvService {
         return compteRenduRdvRepository.findByRendezvousId(rdvId);
     }
 
-    private String generateNumero() {
-        String datePart = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        int random = new Random().nextInt(90000) + 10000;
-        return "CRD-" + datePart + "-" + random;
+    private String generateRandomCode(int length) {
+        String chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // Sans lettres ambiguës : O, I, 0, 1
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            int index = secureRandom.nextInt(chars.length());
+            sb.append(chars.charAt(index));
+        }
+        return sb.toString();
     }
+
+    private String generateNumero() {
+        String timestamp = LocalDateTime.now().format(formatter); // "yyyyMMdd-HHmmss"
+        String randomCode = generateRandomCode(6); // Exemple : "7K9XG2"
+        return "CRD-" + timestamp + "-" + randomCode;
+    }
+
+
 
 }
 

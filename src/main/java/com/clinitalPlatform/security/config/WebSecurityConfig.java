@@ -120,7 +120,9 @@ public class WebSecurityConfig {
                 "/api/motifs-fermeture/**",
                 "/swagger-ui/**", "/v3/api-docs/**",
                 "/api/moyens-paiement/**",
-                "/api/expertises/**"
+                "/api/expertises/**",
+                "/api/horaires-cabinet/medecin/**",
+                "/api/horaires-cabinet/delete/**"
         };
 
 
@@ -130,7 +132,8 @@ public class WebSecurityConfig {
                 "/api/rdv/patient/**","/api/rdv/today/**","/api/rdv/med/**", "/api/rdv/rdvs/medecin","/api/users/**", "/api/rdv/**",
                 "/api/medecinSchedule/fromCreno/**", "/api/documents-cabinet/**", "/api/documents-medecin/**" ,
                 "/api/rdv/rdvs/patient","/api/rdv/patient/rdvbyday", "/api/med/equipe","api/med/getAllPatients", "/api/subscriptions/**",
-                "/api/fermetures/**" , "/api/diplome/**" , "/api/experiences/**" , "/api/antecedents/**" , "/api/observations/**" , "/api/compte-rendu/**",
+                "/api/fermetures/**" , "/api/diplome/**" , "/api/experiences/**" , "/api/antecedents/**" , "/api/observations/**" , "/api/compte-rendu/**", "/api/horaires-cabinet/batch/connected-med",
+                "/api/horaires-cabinet/connected-medecin"
         };
 
 

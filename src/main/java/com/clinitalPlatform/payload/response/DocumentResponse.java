@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import java.util.Date;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 public class DocumentResponse {
@@ -22,5 +23,6 @@ public class DocumentResponse {
 	private Boolean archived;
 	private DossierMedicalResponse dossier;
 	private Medecin medecinAuteur;
+	private List<MedecinResponse> medecins;
 
 }

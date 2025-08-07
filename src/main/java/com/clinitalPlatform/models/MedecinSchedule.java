@@ -32,6 +32,7 @@ public class MedecinSchedule {
 	@DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
 	private LocalDateTime availabilityEnd;
 
+	@Column(name = "fermer" , nullable = false)
 	private Boolean fermer = false;
 
 	@ManyToMany(cascade = CascadeType.MERGE)

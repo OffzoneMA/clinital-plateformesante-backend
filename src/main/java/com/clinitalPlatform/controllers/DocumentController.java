@@ -6,6 +6,7 @@ import com.clinitalPlatform.models.*;
 import com.clinitalPlatform.payload.request.UpdateDocumentRequest;
 import com.clinitalPlatform.payload.response.ApiResponse;
 import com.clinitalPlatform.payload.response.DocumentResponse;
+import com.clinitalPlatform.payload.response.MedecinResponse;
 import com.clinitalPlatform.payload.response.TypeDocumentResponse;
 import com.clinitalPlatform.repository.DocumentRepository;
 import com.clinitalPlatform.repository.PatientRepository;
@@ -361,10 +362,19 @@ public class DocumentController {
                     globalVariables.getConnectedUser()
             );
 
-            // Mapper et retourner les résultats
+            // Mapper et retourner les résultats et au niveau de medecins garder que les infos mecessaires
             List<DocumentResponse> response = documents.stream()
-                    .map(doc -> mapper.map(doc, DocumentResponse.class))
-                    .collect(Collectors.toList());
+                    .map(doc -> {
+                        DocumentResponse docResponse = mapper.map(doc, DocumentResponse.class);
+                        // Si le document est partagé avec des médecins, on ne garde que les infos nécessaires
+                        if (doc.getMedecins() != null && !doc.getMedecins().isEmpty()) {
+                            docResponse.setMedecins(doc.getMedecins().stream()
+                                    .map(medecin -> mapper.map(medecin, MedecinResponse.class))
+                                    .collect(Collectors.toList()));
+                        }
+                        return docResponse;
+                    })
+                    .toList();
 
             LOGGER.info("Successfully retrieved {} documents for patient ID: {}", documents.size(), id);
 
