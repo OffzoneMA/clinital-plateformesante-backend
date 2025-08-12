@@ -139,21 +139,20 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
 
         List<MedecinSchedule> createdSchedules = new ArrayList<>();
 
-        // Process each available day
-        for (DayOfWeek day : multiScheduleRequest.getAvailableDays()) {
-            // Process each time slot for this day
-            for (MedecinMultiScheduleRequest.TimeSlot slot : multiScheduleRequest.getTimeSlots()) {
-                // Verify that end time is after start time
+        // Utilisation de la nouvelle Map schedules au lieu de availableDays et timeSlots
+        for (Map.Entry<DayOfWeek, List<MedecinMultiScheduleRequest.TimeSlot>> entry : multiScheduleRequest.getSchedules().entrySet()) {
+            DayOfWeek day = entry.getKey();
+            List<MedecinMultiScheduleRequest.TimeSlot> dayTimeSlots = entry.getValue();
+
+            for (MedecinMultiScheduleRequest.TimeSlot slot : dayTimeSlots) {
                 if (slot.getEndTime().isBefore(slot.getStartTime())) {
                     throw new BadRequestException("L'heure de fin doit être après l'heure de début pour le créneau: "
-                            + slot.getStartTime() + " - " + slot.getEndTime());
+                            + slot.getStartTime() + " - " + slot.getEndTime() + " le " + day);
                 }
 
-                // Check for conflicts with existing schedules for this day
                 List<MedecinSchedule> existingSchedules = medecinScheduleRepository.findByMedIdAndDay(medecin.getId(), day.getValue() - 1);
                 if (existingSchedules != null) {
                     for (MedecinSchedule existingSchedule : existingSchedules) {
-                        // Convert the request to a format compatible with the conflict check method
                         MedecinScheduleRequest tempRequest = new MedecinScheduleRequest();
                         tempRequest.setAvailabilityStart(slot.getStartTime());
                         tempRequest.setAvailabilityEnd(slot.getEndTime());
@@ -165,34 +164,31 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
                     }
                 }
 
-                // Create new schedule for this day and time slot
                 MedecinSchedule schedule = new MedecinSchedule();
                 schedule.setDay(day);
                 schedule.setAvailabilityStart(slot.getStartTime());
                 schedule.setAvailabilityEnd(slot.getEndTime());
+                schedule.setPeriod(slot.getPeriod());
                 schedule.setModeconsultation(multiScheduleRequest.getModesConsultation());
                 schedule.setMotifConsultation(multiScheduleRequest.getMotifsConsultation());
-
-                // Set the consultation duration
-                schedule.setPeriod(slot.getPeriod());
-
+                schedule.setIsnewpatient(multiScheduleRequest.getAllowNewPatients());
+                schedule.setIsFollowUpPatients(multiScheduleRequest.getAllowFollowUpPatients());
                 schedule.setMedecin(medecin);
                 schedule.setCabinet(cabinet);
 
-                // Set patient categories
-                schedule.setIsnewpatient(multiScheduleRequest.getAllowNewPatients());
-                schedule.setIsFollowUpPatients(multiScheduleRequest.getAllowFollowUpPatients());
-
-                // Save the schedule
                 medecinScheduleRepository.save(schedule);
                 createdSchedules.add(schedule);
 
-                // Log activity
-                activityServices.createActivity(new Date(), "Add", "Create New Schedule ID :" + schedule.getId(),
-                        globalVariables.getConnectedUser());
+                activityServices.createActivity(
+                        new Date(),
+                        "Add",
+                        "Create New Schedule ID :" + schedule.getId() + " for day: " + day,
+                        globalVariables.getConnectedUser()
+                );
                 LOGGER.info("Create New Schedule ID:" + schedule.getId() +
-                        ", UserID:" + (globalVariables.getConnectedUser() instanceof User ?
-                        globalVariables.getConnectedUser().getId() : ""));
+                        " for day: " + day +
+                        ", Par l'utilisateur ID:" +
+                        (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
             }
         }
 
@@ -262,11 +258,15 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
 
         List<MedecinSchedule> createdSchedules = new ArrayList<>();
 
-        for (DayOfWeek day : request.getAvailableDays()) {
-            for (MedecinMultiScheduleRequest.TimeSlot slot : request.getTimeSlots()) {
+        // Utilisation de la nouvelle Map schedules au lieu de availableDays et timeSlots
+        for (Map.Entry<DayOfWeek, List<MedecinMultiScheduleRequest.TimeSlot>> entry : request.getSchedules().entrySet()) {
+            DayOfWeek day = entry.getKey();
+            List<MedecinMultiScheduleRequest.TimeSlot> dayTimeSlots = entry.getValue();
+
+            for (MedecinMultiScheduleRequest.TimeSlot slot : dayTimeSlots) {
                 if (slot.getEndTime().isBefore(slot.getStartTime())) {
                     throw new BadRequestException("L'heure de fin doit être après l'heure de début pour le créneau: "
-                            + slot.getStartTime() + " - " + slot.getEndTime());
+                            + slot.getStartTime() + " - " + slot.getEndTime() + " le " + day);
                 }
 
                 List<MedecinSchedule> existingSchedules = medecinScheduleRepository.findByMedIdAndDay(medecin.getId(), day.getValue() - 1);
@@ -301,10 +301,11 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
                 activityServices.createActivity(
                         new Date(),
                         "Add",
-                        "Create New Schedule ID :" + schedule.getId(),
+                        "Create New Schedule ID :" + schedule.getId() + " for day: " + day,
                         globalVariables.getConnectedUser()
                 );
                 LOGGER.info("Create New Schedule ID:" + schedule.getId() +
+                        " for day: " + day +
                         ", Par l'utilisateur ID:" +
                         (globalVariables.getConnectedUser() instanceof User ? globalVariables.getConnectedUser().getId() : ""));
             }
@@ -319,77 +320,111 @@ public class MedecinScheduleServiceImpl implements MedecinScheduleService {
         }
 
         LOGGER.info("Updating schedule ID: {}", request.getId());
+        LOGGER.info("Request schedules: {}", request.getSchedules());
         MedecinSchedule originalSchedule = medecinScheduleRepository.getById(request.getId());
+        DayOfWeek originalDay = originalSchedule.getDay();
 
-        LOGGER.info("Original schedule: {}", originalSchedule.getId());
+        LOGGER.info("Original schedule: {} for day: {}", originalSchedule.getId(), originalDay);
 
         Medecin medecin = medecinservices.findById(request.getMedecinId());
         Cabinet cabinet = cabinetrepo.findById(medecin.getFirstCabinetId())
                 .orElseThrow(() -> new NotFoundException("Cabinet introuvable."));
 
-        // Étape 1 : supprimer uniquement le schedule sélectionné
-        LOGGER.info("Deleting schedule ID: {}", originalSchedule.getId());
-        medecinScheduleRepository.deleteById(originalSchedule.getId());
-
-        LOGGER.info("Deleted schedule ID success : {}", originalSchedule.getId());
-
         List<MedecinSchedule> resultSchedules = new ArrayList<>();
 
-        for (DayOfWeek day : request.getAvailableDays()) {
-            List<MedecinSchedule> existingSchedules = medecinScheduleRepository.findByMedIdAndDay(medecin.getId(), day.getValue() - 1);
+        // Traitement par jour
+        for (Map.Entry<DayOfWeek, List<MedecinMultiScheduleRequest.TimeSlot>> entry : request.getSchedules().entrySet()) {
+            DayOfWeek day = entry.getKey();
+            List<MedecinMultiScheduleRequest.TimeSlot> dayTimeSlots = entry.getValue();
 
-            for (MedecinMultiScheduleRequest.TimeSlot slot : request.getTimeSlots()) {
+            // Si c'est le jour du créneau original, on fait un update/replace
+            if (day.equals(originalDay)) {
+                LOGGER.info("Updating schedules for original day: {}", day);
 
-                if (slot.getEndTime().isBefore(slot.getStartTime())) {
-                    throw new BadRequestException("Heure de fin avant début : " + slot.getStartTime() + " → " + slot.getEndTime());
-                }
+                // Supprimer le creneau original
+                medecinScheduleRepository.deleteById(originalSchedule.getId());
+                LOGGER.info("Deleted original schedule ID: {}", originalSchedule.getId());
 
-                for (MedecinSchedule existing : existingSchedules) {
-                    if (overlaps(slot.getStartTime(), slot.getEndTime(), existing.getAvailabilityStart(), existing.getAvailabilityEnd())) {
-                        throw new ConflictException("Conflit avec un autre créneau existant pour le jour : " + day);
+                // Recréer tous les créneaux pour ce jour
+                for (MedecinMultiScheduleRequest.TimeSlot slot : dayTimeSlots) {
+                    if (slot.getEndTime().isBefore(slot.getStartTime())) {
+                        throw new BadRequestException("Heure de fin avant début : " + slot.getStartTime() + " → " + slot.getEndTime() + " le " + day);
                     }
+
+                    MedecinSchedule newSchedule = createScheduleFromSlot(slot, day, medecin, cabinet, request);
+                    medecinScheduleRepository.save(newSchedule);
+                    resultSchedules.add(newSchedule);
+
+                    activityServices.createActivity(
+                            new Date(),
+                            "Update",
+                            "Créneau mis à jour pour le jour : " + day + " ID: " + newSchedule.getId(),
+                            globalVariables.getConnectedUser()
+                    );
+
+                    LOGGER.info("Updated schedule jour: {}, début: {}, fin: {}, ID: {}",
+                            newSchedule.getDay(),
+                            newSchedule.getAvailabilityStart(),
+                            newSchedule.getAvailabilityEnd(),
+                            newSchedule.getId());
                 }
+            } else {
+                // Pour les autres jours, on duplique (ajoute de nouveaux créneaux)
+                LOGGER.info("Duplicating schedules for new day: {}", day);
 
-                LOGGER.info("Creating or Update new schedule for day: {}, start: {}, end: {}", day, slot.getStartTime(), slot.getEndTime());
+                List<MedecinSchedule> existingSchedules = medecinScheduleRepository.findByMedIdAndDay(medecin.getId(), day.getValue() - 1);
 
+                for (MedecinMultiScheduleRequest.TimeSlot slot : dayTimeSlots) {
+                    if (slot.getEndTime().isBefore(slot.getStartTime())) {
+                        throw new BadRequestException("Heure de fin avant début : " + slot.getStartTime() + " → " + slot.getEndTime() + " le " + day);
+                    }
 
-                LocalDateTime startTime = slot.getStartTime();
-                LocalDateTime endTime = slot.getEndTime();
+                    // Vérifier les conflits avec les créneaux existants
+                    for (MedecinSchedule existing : existingSchedules) {
+                        if (overlaps(slot.getStartTime(), slot.getEndTime(), existing.getAvailabilityStart(), existing.getAvailabilityEnd())) {
+                            throw new ConflictException("Conflit avec un autre créneau existant pour le jour : " + day);
+                        }
+                    }
 
-                // Création du nouveau planning
-                MedecinSchedule newSchedule = new MedecinSchedule();
-                newSchedule.setDay(day);
-                newSchedule.setAvailabilityStart(startTime);
-                newSchedule.setAvailabilityEnd(endTime);
-                newSchedule.setPeriod(slot.getPeriod());
-                newSchedule.setModeconsultation(request.getModesConsultation());
-                newSchedule.setMotifConsultation(request.getMotifsConsultation());
-                newSchedule.setIsnewpatient(request.getAllowNewPatients());
-                newSchedule.setIsFollowUpPatients(request.getAllowFollowUpPatients());
-                newSchedule.setMedecin(medecin);
-                newSchedule.setCabinet(cabinet);
+                    MedecinSchedule newSchedule = createScheduleFromSlot(slot, day, medecin, cabinet, request);
+                    medecinScheduleRepository.save(newSchedule);
+                    resultSchedules.add(newSchedule);
 
-                medecinScheduleRepository.save(newSchedule);
-                resultSchedules.add(newSchedule);
+                    activityServices.createActivity(
+                            new Date(),
+                            "Add",
+                            "Nouveau créneau dupliqué pour le jour : " + day + " ID: " + newSchedule.getId(),
+                            globalVariables.getConnectedUser()
+                    );
 
-                activityServices.createActivity(
-                        new Date(),
-                        "Add",
-                        "Nouveau créneau recréé pour le jour : " + day + " ID: " + newSchedule.getId(),
-                        globalVariables.getConnectedUser()
-                );
-
-                LOGGER.info("Recréé schedule jour: {}, début: {}, fin: {}, ID: {}",
-                        newSchedule.getDay(),
-                        newSchedule.getAvailabilityStart(),
-                        newSchedule.getAvailabilityEnd(),
-                        newSchedule.getId());
+                    LOGGER.info("Duplicated schedule jour: {}, début: {}, fin: {}, ID: {}",
+                            newSchedule.getDay(),
+                            newSchedule.getAvailabilityStart(),
+                            newSchedule.getAvailabilityEnd(),
+                            newSchedule.getId());
+                }
             }
         }
 
         return resultSchedules;
     }
 
+    // Méthode helper pour créer un MedecinSchedule à partir d'un TimeSlot
+    private MedecinSchedule createScheduleFromSlot(MedecinMultiScheduleRequest.TimeSlot slot, DayOfWeek day,
+                                                   Medecin medecin, Cabinet cabinet, MedecinMultiScheduleRequest request) {
+        MedecinSchedule schedule = new MedecinSchedule();
+        schedule.setDay(day);
+        schedule.setAvailabilityStart(slot.getStartTime());
+        schedule.setAvailabilityEnd(slot.getEndTime());
+        schedule.setPeriod(slot.getPeriod());
+        schedule.setModeconsultation(request.getModesConsultation());
+        schedule.setMotifConsultation(request.getMotifsConsultation());
+        schedule.setIsnewpatient(request.getAllowNewPatients());
+        schedule.setIsFollowUpPatients(request.getAllowFollowUpPatients());
+        schedule.setMedecin(medecin);
+        schedule.setCabinet(cabinet);
+        return schedule;
+    }
     private boolean overlaps(LocalDateTime start1, LocalDateTime end1, LocalDateTime start2, LocalDateTime end2) {
         return start1.isBefore(end2) && start2.isBefore(end1);
     }

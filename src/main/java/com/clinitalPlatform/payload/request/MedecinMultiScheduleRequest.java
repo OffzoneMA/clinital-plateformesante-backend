@@ -8,17 +8,15 @@ import lombok.Data;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Data
 public class MedecinMultiScheduleRequest {
     private Long id;
 
-    // Instead of single day, support multiple days
-    private Set<DayOfWeek> availableDays;
-
-    // Time slots with durations
-    private List<TimeSlot> timeSlots;
+    // Map pour stocker les créneaux par jour
+    private Map<DayOfWeek, List<TimeSlot>> schedules;
 
     // Categories
     private Boolean allowNewPatients;
