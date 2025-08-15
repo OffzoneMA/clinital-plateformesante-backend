@@ -200,13 +200,10 @@ public class UserService {
 	}
 	 public boolean changePassword(User user, String password) {
 	    	
-			user.setPassword(encoder.encode(password));
-			if (userRepository.save(user) != null) {
-				emailSenderService.sendMailChangePassword(user.getEmail());
-				return true;
-				
-			}
-			return false;
-		}
+		user.setPassword(encoder.encode(password));
+		userRepository.save(user);
+		emailSenderService.sendMailChangePassword(user.getEmail());
+		return true;
+     }
 
 }

@@ -53,6 +53,10 @@ public class Cabinet {
 	@JsonIgnore
 	private Medecin creator;
 
+	@OneToMany(cascade = CascadeType.ALL,mappedBy = "cabinet",fetch = FetchType.LAZY)
+	@JsonIgnore
+	private List<InvitationEquipe> invitationEquipes;
+
 	private Boolean state;
 
 	@OneToOne(cascade = CascadeType.ALL)

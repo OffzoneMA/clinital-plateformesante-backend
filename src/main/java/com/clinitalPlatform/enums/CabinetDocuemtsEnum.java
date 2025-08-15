@@ -1,6 +1,5 @@
 package com.clinitalPlatform.enums;
 
 public enum CabinetDocuemtsEnum  {
-	PATENTE, ICE ,RC , INPE , CIN
-   
+	PATENTE, ICE ,RC , INPE , CIN , AUTRE
 }

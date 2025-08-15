@@ -122,7 +122,8 @@ public class WebSecurityConfig {
                 "/api/moyens-paiement/**",
                 "/api/expertises/**",
                 "/api/horaires-cabinet/medecin/**",
-                "/api/horaires-cabinet/delete/**"
+                "/api/horaires-cabinet/delete/**",
+                "/api/invitations-equipe/**",
         };
 
 
@@ -133,7 +134,7 @@ public class WebSecurityConfig {
                 "/api/medecinSchedule/fromCreno/**", "/api/documents-cabinet/**", "/api/documents-medecin/**" ,
                 "/api/rdv/rdvs/patient","/api/rdv/patient/rdvbyday", "/api/med/equipe","api/med/getAllPatients", "/api/subscriptions/**",
                 "/api/fermetures/**" , "/api/diplome/**" , "/api/experiences/**" , "/api/antecedents/**" , "/api/observations/**" , "/api/compte-rendu/**", "/api/horaires-cabinet/batch/connected-med",
-                "/api/horaires-cabinet/connected-medecin"
+                "/api/horaires-cabinet/connected-medecin" , "/api/invitations-equipe/envoyer/connected-medecin", "/api/invitations-equipe/cabinet/connected-medecin",
         };
 
 

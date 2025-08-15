@@ -8,6 +8,7 @@ import com.clinitalPlatform.payload.request.DocumentsCabinetRequest;
 import com.clinitalPlatform.repository.DocumentsCabinetRepository;
 import com.clinitalPlatform.repository.MedecinRepository;
 import com.clinitalPlatform.services.DocumentsCabinetServices;
+import com.clinitalPlatform.services.EmailSenderService;
 import com.clinitalPlatform.util.GlobalVariables;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import javassist.NotFoundException;
@@ -38,7 +39,11 @@ public class DocumentsCabinetController {
     @Autowired
     MedecinRepository medecinRepository;
 
+    @Autowired
+    EmailSenderService emailSenderService;
+
     private static final ModelMapper modelMapper = new ModelMapper();
+
     @Autowired
     private DocumentsCabinetRepository documentsCabinetRepository;
 
@@ -272,6 +277,11 @@ public class DocumentsCabinetController {
             for (DocumentsCabinet document : documents) {
                 document.setValidationState(status);
                 documentsCabinetRepository.save(document);
+            }
+
+            // Envoyer un email de notification (si nécessaire)
+            if( status == CabinetDocStateEnum.VALID || status == CabinetDocStateEnum.REJECTED || status == CabinetDocStateEnum.EN_TRAITEMENT) {
+                emailSenderService.sendUpdateMedecinCabinetDocsStatus(medecin.getUser().getEmail() ,status);
             }
             return ResponseEntity.ok("Statuts des documents mis à jour avec succès pour le médecin ID: " + medecinId);
         } catch (Exception e) {

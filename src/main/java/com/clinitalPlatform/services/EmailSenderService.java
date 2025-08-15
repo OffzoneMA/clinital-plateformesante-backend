@@ -1,6 +1,9 @@
 package com.clinitalPlatform.services;
 
 import com.clinitalPlatform.enums.CabinetDocStateEnum;
+import com.clinitalPlatform.enums.ERole;
+import com.clinitalPlatform.models.Cabinet;
+import com.clinitalPlatform.models.Medecin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -306,13 +309,11 @@ public class EmailSenderService {
 		}
 	}
 
-	public void sendUpdateMedecinCabinetDocsStatus(String userEmail, String newStatus) {
+	public void sendUpdateMedecinCabinetDocsStatus(String userEmail, CabinetDocStateEnum newStatus) {
 		try {
-			CabinetDocStateEnum status = CabinetDocStateEnum.valueOf(newStatus);
-
 			String statusMessage;
 
-			switch (status) {
+			switch (newStatus) {
 				case EN_COURS:
 					statusMessage = "Vos documents ont bien été enregistrés et sont en attente de soumission finale.";
 					break;
@@ -334,20 +335,19 @@ public class EmailSenderService {
 
 			// Nom statut en fonction de l'énumération
 			String statusName = "";
-			if(status.name().equals("EN_COURS")) {
+			if(newStatus.name().equals("EN_COURS")) {
 				statusName = "En cours";
-			} else if(status.name().equals("EN_TRAITEMENT")) {
+			} else if(newStatus.name().equals("EN_TRAITEMENT")) {
 				statusName = "En traitement";
-			} else if(status.name().equals("VALID")) {
+			} else if(newStatus.name().equals("VALID")) {
 				statusName = "Validé";
-			} else if(status.name().equals("REJECTED")) {
+			} else if(newStatus.name().equals("REJECTED")) {
 				statusName = "Rejeté";
-			} else if(status.name().equals("INCOMPLET")) {
+			} else if(newStatus.name().equals("INCOMPLET")) {
 				statusName = "Incomplet";
 			} else {
 				statusName = "Statut inconnu";
 			}
-
 
 			SimpleMailMessage mailMessage = new SimpleMailMessage();
 			mailMessage.setTo(userEmail);
@@ -356,7 +356,7 @@ public class EmailSenderService {
 			mailMessage.setText(
 					"Bonjour,\n\n" +
 							statusMessage + "\n\n" +
-							"Statut actuel : " + status + "\n\n" +
+							"Statut actuel : " + newStatus + "\n\n" +
 							"Si vous avez des questions, n'hésitez pas à nous contacter via la plateforme.\n\n" +
 							"Cordialement,\nL'équipe Clinital"
 			);
@@ -365,6 +365,94 @@ public class EmailSenderService {
 			LOGGER.info("Notification de mise à jour du statut des documents envoyée à : {}", userEmail);
 		} catch (IllegalArgumentException e) {
 			LOGGER.error("Statut invalide fourni : {}", newStatus);
+		} catch (Exception e) {
+			LOGGER.error("Erreur lors de l'envoi de la notification : {}", e.getMessage());
+		}
+	}
+
+	public void sendInvitationEquipe(String email, ERole role, Cabinet cabinet , Medecin medecin) {
+		String statusName = "";
+		switch (role) {
+			case ROLE_MEDECIN:
+				statusName = "Médecin";
+				break;
+			case ROLE_SECRETAIRE:
+				statusName = "Secrétaire";
+				break;
+			case ROLE_ASSISTANT:
+				statusName = "Assistant/Assistante";
+				break;
+			case ROLE_INFIRMIER:
+				statusName = "Infirmière/Infirmier";
+				break;
+			default:
+				statusName = "Membre de l'équipe";
+				break;
+		}
+		String message = "Bonjour,\n\n" +
+				"Vous avez été invité à rejoindre l'équipe de Clinital en tant que " + statusName + " de la part de " + medecin.getNom_med() + " " + medecin.getPrenom_med() + ".\n\n" +
+				"Cabinet : " + cabinet.getNom() + "\n" +
+				"Adresse : " + cabinet.getAdresse() + "\n" +
+				"Ville : " + cabinet.getVille().getNom_ville() + "\n\n" +
+				"Pour accepter l'invitation, veuillez vous connecter à votre compte Clinital.\n\n" +
+				"Cordialement,\nL'équipe Clinital";
+
+		try {
+
+			SimpleMailMessage mailMessage = new SimpleMailMessage();
+			mailMessage.setTo(email);
+			mailMessage.setFrom("contact@gmail.com");
+			mailMessage.setSubject("Invitation à rejoindre une équipe");
+			mailMessage.setText(message);
+
+			javaMailSender.send(mailMessage);
+			LOGGER.info("Notification de mise à jour du statut des documents envoyée à : {}", email);
+		} catch (IllegalArgumentException e) {
+			LOGGER.error("Statut invalide fourni : {}", role);
+		} catch (Exception e) {
+			LOGGER.error("Erreur lors de l'envoi de la notification : {}", e.getMessage());
+		}
+	}
+
+	public void sendCabinetSubscriptionStatus(String email , String status) {
+		String statusMessage = "";
+		switch (status) {
+			case "EN_COURS":
+				statusMessage = "Votre demande d'ajout de cabinet a été prise en compte.";
+				break;
+				case "EN_TRAITEMENT":
+				statusMessage = "Votre demande d'ajout de cabinet est en cours de traitement.";
+				break;
+			case "VALID":
+				statusMessage = "Votre cabinet a été validé avec succès.";
+				break;
+			case "REJECTED":
+				statusMessage = "Votre demande d'ajout de cabinet a été rejetée. Veuillez vérifier les documents soumis.";
+				break;
+			case "INCOMPLET":
+				statusMessage = "Votre demande d'ajout de cabinet est incomplète. Veuillez soumettre les documents manquants.";
+				break;
+			default:
+				statusMessage = "Le statut de votre demande d'ajout de cabinet a été mis à jour.";
+				break;
+
+
+
+		}
+
+		SimpleMailMessage mailMessage = new SimpleMailMessage();
+		mailMessage.setTo(email);
+		mailMessage.setFrom("contact@gmail.com");
+		mailMessage.setSubject("Mise à jour du statut de votre demande d'ajout de cabinet");
+		mailMessage.setText(
+				"Bonjour,\n\n" +
+				statusMessage + "\n\n" +
+				"Si vous avez des questions, n'hésitez pas à nous contacter via la plateforme.\n\n" +
+				"Cordialement,\nL'équipe Clinital"
+		);
+		try {
+			javaMailSender.send(mailMessage);
+			LOGGER.info("Notification de mise à jour du statut de la demande d'ajout de cabinet envoyée à : {}", email);
 		} catch (Exception e) {
 			LOGGER.error("Erreur lors de l'envoi de la notification : {}", e.getMessage());
 		}

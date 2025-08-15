@@ -22,6 +22,8 @@ public class SubscriptionService {
 
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private EmailSenderService emailSenderService;
 
     // Souscrire à un abonnement
     public Subscription subscribe(Long userId, Long planId) {
@@ -127,7 +129,11 @@ public class SubscriptionService {
         if (optionalSubscription.isPresent()) {
             Subscription subscription = optionalSubscription.get();
             subscription.setPaymentStatus(newStatus);  // Mettre à jour le statut de paiement
-            return subscriptionRepository.save(subscription);  // Sauvegarder l'abonnement mis à jour
+            Subscription savedSubscription =  subscriptionRepository.save(subscription);  // Sauvegarder l'abonnement mis à jour
+
+            // Send notification
+            emailSenderService.sendCabinetSubscriptionStatus(savedSubscription.getUser().getEmail(), newStatus);
+            return savedSubscription;  // Retourner l'abonnement mis à jour
         } else {
             throw new RuntimeException("Aucun abonnement actif trouvé pour cet utilisateur");
         }

@@ -613,7 +613,7 @@ public class AuthController {
     }
 
 	@PostMapping("/checkPassword")
-	@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_PATIENT')")
+	@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_PATIENT' , 'ROLE_MEDECIN')")
 	public ResponseEntity<?> checkPassword(@Valid @RequestBody String password)throws Exception {
 		User user = userRepository.getById(globalVariables.getConnectedUser().getId());
 	    
