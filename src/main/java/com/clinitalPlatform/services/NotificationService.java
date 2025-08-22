@@ -213,6 +213,12 @@ public class NotificationService {
             patientInfo.put("telephone", patient.getPatientTelephone());
 
             data.put("patientInfo", patientInfo);
+
+            List<String> docTitles = documentMedecinRepository.findAllById(documentIds).stream()
+                    .map(DocumentMedecin::getTitre_doc)
+                    .toList();
+
+            data.put("documentTitles", docTitles);
         }
 
         if(notification.getType() == NotificationType.REMINDER || notification.getType() == NotificationType.ERROR ||

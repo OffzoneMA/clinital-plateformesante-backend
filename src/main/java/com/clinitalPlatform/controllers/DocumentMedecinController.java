@@ -223,7 +223,7 @@ public class DocumentMedecinController {
     }
 
     @GetMapping("/shared-documents/with-patient/{patientId}")
-    @PreAuthorize("hasAnyRole('ROLE_MEDECIN' , 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_PATIENT' , 'ROLE_ADMIN' , 'ROLE_MEDECIN')")
     public ResponseEntity<?> getAllSharedDocumentsWithPatient(@PathVariable Long patientId) {
         try {
             List<DocumentMedecin> sharedDocuments = documentMedecinService.getSharedDocumentsWithPatient(patientId);
@@ -233,5 +233,19 @@ public class DocumentMedecinController {
                     .body(new ApiResponse(false, "Error retrieving shared documents: " + e.getMessage()));
         }
     }
+
+    @GetMapping("/shared-documents/with-patient/connected")
+    @PreAuthorize("hasAnyRole('ROLE_PATIENT')")
+    public ResponseEntity<?> getAllSharedDocumentsWithPatientConnected() {
+        try {
+            Long userId = globalVariables.getConnectedUser().getId();
+            List<DocumentMedecin> sharedDocuments = documentMedecinService.getSharedDocumentsWithPatientAndProches(userId);
+            return ResponseEntity.ok(sharedDocuments);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "Error retrieving shared documents: " + e.getMessage()));
+        }
+    }
+
 
 }

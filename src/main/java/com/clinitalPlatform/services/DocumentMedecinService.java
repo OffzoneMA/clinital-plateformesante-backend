@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -186,6 +187,35 @@ public class DocumentMedecinService {
             throw new IllegalArgumentException("Patient ID must not be null");
         }
         return repository.findByPatientsPartagesId(patientId);
+    }
+
+    public List<DocumentMedecin> getSharedDocumentsWithPatientAndProches(Long userId) {
+        if(userId == null) {
+            throw new IllegalArgumentException("Patient ID must not be null");
+        }
+        List<Patient> patients = patientRepository.getPatientByUserId(userId);
+        if(patients.isEmpty()) {
+            throw new IllegalArgumentException("No patients found for user ID: " + userId);
+        }
+        List<Long> patientIds = patients.stream()
+                .map(Patient::getId)
+                .toList();
+
+        List<DocumentMedecin> documentMedecins = new ArrayList<>();
+        if(patientIds.isEmpty()) {
+            throw new IllegalArgumentException("No patient IDs found for user ID: " + userId);
+        }
+        // Recuperer tous les patients : le patient user et ses proches
+        for (Long patientId : patientIds) {
+            List<DocumentMedecin> sharedDocuments = repository.findByPatientsPartagesId(patientId);
+            if (sharedDocuments != null && !sharedDocuments.isEmpty()) {
+                documentMedecins.addAll(sharedDocuments);
+            }
+        }
+        if(documentMedecins.isEmpty()) {
+            throw new IllegalStateException("No shared documents found for the patient and its proches");
+        }
+        return documentMedecins;
     }
 }
 
