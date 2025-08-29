@@ -155,6 +155,9 @@ public class MedecinController {
 	@Autowired
 	private FermetureExceptionnelleRepository fermetureRepo;
 
+	@Autowired
+	private ObjectMapper objectMapper;
+
 
 	public static boolean checkday = false;
 	//end zakia
@@ -530,6 +533,17 @@ public class MedecinController {
 		} else
 			throw new BadRequestException("You are Not Allowed");
 
+	}
+
+	@PutMapping("/updatecabinet/{id}/cabinet-files")
+	public ResponseEntity<?> updateCabinet( @PathVariable Long id, @RequestPart("data") String data, @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
+		try {
+			CabinetRequest request = objectMapper.readValue(data, CabinetRequest.class);
+			Cabinet updated = cabservice.updateCabinetWithFiles(request, id, files);
+			return ResponseEntity.ok(updated);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating cabinet: " + e.getMessage());
+		}
 	}
 
 	// delete a cabinet :

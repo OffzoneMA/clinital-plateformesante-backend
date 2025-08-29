@@ -7,7 +7,10 @@ import java.util.stream.Collectors;
 
 import com.clinitalPlatform.dto.CabinetDTO;
 import com.clinitalPlatform.dto.MedecinDTO;
+import com.clinitalPlatform.enums.CabinetDocStateEnum;
+import com.clinitalPlatform.enums.CabinetDocuemtsEnum;
 import com.clinitalPlatform.models.*;
+import com.clinitalPlatform.payload.request.DocumentsCabinetRequest;
 import com.clinitalPlatform.repository.PaymentInfoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +24,8 @@ import com.clinitalPlatform.repository.MedecinRepository;
 import com.clinitalPlatform.repository.CabinetRepository;
 import com.clinitalPlatform.services.interfaces.CabinetService;
 import com.clinitalPlatform.util.ClinitalModelMapper;
+import org.springframework.web.multipart.MultipartFile;
+
 @Transactional
 @Service
 public class CabinetServiceImpl implements CabinetService{
@@ -35,6 +40,9 @@ public class CabinetServiceImpl implements CabinetService{
 	private VilleRepository villerepo;
 	@Autowired
 	private MedecinRepository medrepo;
+
+	@Autowired
+	private DocumentsCabinetServices documentsCabinetServices;
 
 	@Autowired
 	private PaymentInfoRepository paymentInfoRepository;
@@ -132,4 +140,44 @@ public class CabinetServiceImpl implements CabinetService{
 	return cabinetRepository.save(cabinet);
   }
 
+	public Cabinet updateCabinetWithFiles(CabinetRequest cabinetRequest, Long id , List<MultipartFile> files) throws Exception {
+		Cabinet cabinet = cabinetRepository.findById(id)
+				.orElseThrow(() -> new Exception("Cabinet not found"));
+
+		Ville ville = villerepo.findById(cabinetRequest.getId_ville())
+				.orElseThrow(() -> new Exception("Ville not found"));
+
+		cabinet.setNom(cabinetRequest.getNom());
+		cabinet.setAdresse(cabinetRequest.getAdresse());
+		cabinet.setCode_post(cabinetRequest.getCode_post());
+		cabinet.setPhoneNumber(cabinetRequest.getPhoneNumber());
+		cabinet.setLongitude(cabinetRequest.getLongitude());
+		cabinet.setLatitude(cabinetRequest.getLatitude());
+		cabinet.setVille(ville);
+
+		Cabinet savedCabinet = cabinetRepository.save(cabinet);
+
+		if (files != null && !files.isEmpty()) {
+			for (MultipartFile file : files) {
+				DocumentsCabinetRequest docRequest = new DocumentsCabinetRequest();
+				docRequest.setType(CabinetDocuemtsEnum.AUTRE);
+				docRequest.setFichier_doc(file.getOriginalFilename());
+				docRequest.setNom_fichier(file.getOriginalFilename());
+
+				try {
+					// Supposons que le créateur du cabinet est le médecin associé
+					Medecin creatorMedecin = savedCabinet.getCreator();
+					if (creatorMedecin == null) {
+						throw new Exception("Le cabinet n'a pas de médecin créateur associé.");
+					}
+					documentsCabinetServices.create(docRequest, creatorMedecin);
+				} catch (Exception e) {
+					LOGGER.error("Erreur lors de l'ajout du document pour le cabinet ID {}: {}", savedCabinet.getId_cabinet(), e.getMessage());
+					// Vous pouvez choisir de continuer ou d'arrêter le processus en fonction de vos besoins
+				}
+			}
+		}
+
+		return savedCabinet;
+	}
 }
